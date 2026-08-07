@@ -2,11 +2,26 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="HouseholdManagerMobileApp.Views.RegistrationPage"
-             Title="RegistrationPage">
-    <VerticalStackLayout>
-        <Label 
-            Text="Welcome to .NET MAUI!"
-            VerticalOptions="Center" 
-            HorizontalOptions="Center" />
+             Title="Registration Page">
+    
+    <VerticalStackLayout Padding="30" Spacing="15" VerticalOptions="Center">
+        <Entry Placeholder="Felhasználónév" Text="{Binding Username}"/>
+        <Entry Placeholder="Jelszó" IsPassword="True" Text="{Binding Password}"/>
+        <Entry Placeholder="Jelszó megerősítése" IsPassword="True" Text="{Binding ConfirmPassword}"/>
+
+        <Button Text="Regisztráció" Command="{Binding RegisterButtonCommand}"/>
+
+        <ActivityIndicator IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}"/>
+
+        <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="5">
+            <Label Text="Van fiókod? "/>
+            <Label Text="Jelentkezz be!" TextDecorations="Underline">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding NavigateToLoginCommand}"/>
+                </Label.GestureRecognizers>
+            </Label>
+        </StackLayout>
+
+        <Label Text="{Binding ErrorMessage}" HorizontalOptions="Center"/>
     </VerticalStackLayout>
 </ContentPage>

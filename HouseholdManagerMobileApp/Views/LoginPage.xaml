@@ -10,6 +10,8 @@
 
         <Button Text="Bejelentkezés" Command="{Binding LoginButtonCommand}"/>
 
+        <ActivityIndicator IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}"/>
+
         <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="5">
             <Label Text="Nincs fiókod? "/>
             <Label Text="Regisztrálj!" TextDecorations="Underline">
