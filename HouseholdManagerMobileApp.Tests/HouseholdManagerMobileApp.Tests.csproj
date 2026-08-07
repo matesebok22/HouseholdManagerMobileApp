@@ -24,6 +24,10 @@
   </ItemGroup>
 
   <ItemGroup>
+	<ProjectReference Include="..\HouseholdManagerMobileApp.Core\HouseholdManagerMobileApp.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="NUnit.Framework" />
   </ItemGroup>
 
