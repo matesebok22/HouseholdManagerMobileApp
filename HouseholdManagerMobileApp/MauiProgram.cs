@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
+using HouseholdManagerMobileApp.Core.ViewModels;
+using HouseholdManagerMobileApp.Views;
 
 namespace HouseholdManagerMobileApp
 {
@@ -15,8 +17,16 @@ namespace HouseholdManagerMobileApp
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
 
+            // ViewModel-ek regisztrálása:
+            builder.Services.AddTransient<LoginViewModel>();
+            builder.Services.AddTransient<RegistrationViewModel>();
+
+            // View-k regisztrálása:
+            builder.Services.AddTransient<LoginPage>();
+            builder.Services.AddTransient<RegistrationPage>();
+
 #if DEBUG
-    		builder.Logging.AddDebug();
+            builder.Logging.AddDebug();
 #endif
 
             return builder.Build();

@@ -20,6 +20,8 @@
 
 	<ItemGroup>
 	  <Compile Remove="Class1.cs" />
+	  <Compile Remove="Models\RegisterViewModel.cs" />
+	  <Compile Remove="ViewModels\RegisterViewModel.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -29,10 +31,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Commands\" />
 	  <Folder Include="Helpers\" />
 	  <Folder Include="Models\" />
-	  <Folder Include="ViewModels\" />
 	  <Folder Include="Services\" />
 	</ItemGroup>
 
