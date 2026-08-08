@@ -10,4 +10,5 @@
 
     <ShellContent Title="Login" ContentTemplate="{DataTemplate views:LoginPage}" Route="LoginPage"/>
     <ShellContent Title="Registration" ContentTemplate="{DataTemplate views:RegistrationPage}" Route="RegistrationPage"/>
+    <ShellContent Title="User" ContentTemplate="{DataTemplate views:UserPage}" Route="UserPage"/>
 </Shell>

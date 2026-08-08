@@ -5,12 +5,15 @@ using System.Text;
 using System.Threading.Tasks;
 
 using HouseholdManagerMobileApp.Core.Commands;
+using HouseholdManagerMobileApp.Core.Services;
 using Supabase;
 
 namespace HouseholdManagerMobileApp.Core.ViewModels;
 
 public class LoginViewModel : ViewModelBase
 {
+    private readonly IAuthService _authService;
+
     private string username = string.Empty;
     public string Username
     {
@@ -63,8 +66,10 @@ public class LoginViewModel : ViewModelBase
     public RelayCommand LoginButtonCommand { get; }
     public RelayCommand NavigateToRegistrationCommand { get; }
 
-    public LoginViewModel()
+    public LoginViewModel(IAuthService authService)
     {
+        _authService = authService;
+
         LoginButtonCommand = new RelayCommand(async _ => await LoginAsync(), _ => !IsLoading);
         NavigateToRegistrationCommand = new RelayCommand(async _ => await Shell.Current.GoToAsync("//RegistrationPage"));
     }
@@ -81,7 +86,7 @@ public class LoginViewModel : ViewModelBase
 
         IsLoading = true;
         
-        bool success = await SupabaseLoginAsync(Username, Password);
+        bool success = await _authService.LoginAsync(Username, Password);
 
         if (success)
             await Shell.Current.GoToAsync("//UserPage");
@@ -89,18 +94,5 @@ public class LoginViewModel : ViewModelBase
             ErrorMessage = "Hibás felhasználónév vagy jelszó!";
         
         IsLoading = false;
-    }
-
-    private async Task<bool> SupabaseLoginAsync(string username, string password)
-    {
-        try
-        {
-            return true; // Replace with actual Supabase login logic
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = $"Hiba történt a regisztráció során: {ex.Message}";
-            return false;
-        }
     }
 }

@@ -31,6 +31,7 @@ namespace HouseholdManagerMobileApp
             // ViewModel-ek regisztrálása:
             builder.Services.AddTransient<LoginViewModel>();
             builder.Services.AddTransient<RegistrationViewModel>();
+            builder.Services.AddTransient<UserViewModel>();
 
             // View-k regisztrálása:
             builder.Services.AddTransient<LoginPage>();
