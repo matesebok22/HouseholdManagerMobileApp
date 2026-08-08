@@ -36,6 +36,7 @@ namespace HouseholdManagerMobileApp
             // View-k regisztrálása:
             builder.Services.AddTransient<LoginPage>();
             builder.Services.AddTransient<RegistrationPage>();
+            builder.Services.AddTransient<UserPage>();
 
 #if DEBUG
             builder.Logging.AddDebug();

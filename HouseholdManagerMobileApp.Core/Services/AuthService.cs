@@ -1,24 +1,28 @@
 ﻿using Supabase;
 
+using HouseholdManagerMobileApp.Core.Models;
+
 namespace HouseholdManagerMobileApp.Core.Services;
 
 public class AuthService : IAuthService
 {
     private readonly Client _supabaseClient;
     public string CurrentUsername { get; private set; } = string.Empty;
+    public string Nickname { get; private set; } = string.Empty;
 
     public AuthService(Client supabaseClient)
     {
         _supabaseClient = supabaseClient;
     }
 
-    public async Task<bool> RegisterAsync(string username, string password)
+    public async Task<bool> RegisterAsync(string username, string nickname, string password)
     {
         try
         {
             Dictionary<string, object> parameters = new()
             {
                 { "p_username", username },
+                { "p_nickname", nickname },
                 { "p_raw_password", password }
             };
 
@@ -48,7 +52,12 @@ public class AuthService : IAuthService
             var response = await _supabaseClient.Rpc("login_user", parameters);
 
             if (response.Content != null && response.Content.Trim() == "true")
+            {
+                CurrentUsername = username;
+                var result = await _supabaseClient.From<User>().Where(u => u.Username == username).Select("u_nick").Get();
+                Nickname = result.Models.FirstOrDefault()?.Nickname ?? string.Empty;
                 return true;
+            }
 
             return false;
         }
@@ -56,5 +65,11 @@ public class AuthService : IAuthService
         {
             return false;
         }
+    }
+
+    public async Task LogoutAsync()
+    {
+        CurrentUsername = Nickname = string.Empty;
+        await Shell.Current.GoToAsync("//LoginPage");
     }
 }

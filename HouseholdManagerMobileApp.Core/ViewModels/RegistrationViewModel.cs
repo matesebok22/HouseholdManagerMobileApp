@@ -19,6 +19,18 @@ public class RegistrationViewModel : ViewModelBase
         }
     }
 
+    private string nickname = string.Empty;
+    public string Nickname
+    {
+        get => nickname;
+        set
+        {
+            if (nickname == value) return;
+            nickname = value;
+            OnPropertyChanged();
+        }
+    }
+
     private string password = string.Empty;
     public string Password
     {
@@ -84,7 +96,7 @@ public class RegistrationViewModel : ViewModelBase
 
         ErrorMessage = string.Empty;
 
-        if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password) || string.IsNullOrWhiteSpace(ConfirmPassword))
+        if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Nickname) || string.IsNullOrWhiteSpace(Password) || string.IsNullOrWhiteSpace(ConfirmPassword))
         {
             ErrorMessage = "Kérlek tölts ki minden mezőt!";
             return;
@@ -97,7 +109,7 @@ public class RegistrationViewModel : ViewModelBase
 
         IsLoading = true;
 
-        bool success = await _authService.RegisterAsync(Username, Password);
+        bool success = await _authService.RegisterAsync(Username, Nickname, Password);
 
         if (success)
             await Shell.Current.GoToAsync("//LoginPage");

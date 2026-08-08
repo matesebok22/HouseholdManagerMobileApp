@@ -1,10 +1,27 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="HouseholdManagerMobileApp.Views.UserPage"
-             Title="User Page">
-    
-    <VerticalStackLayout>
-        <Label Text="{Binding WelcomeMessage}" VerticalOptions="Center" HorizontalOptions="Center"/>
-    </VerticalStackLayout>
+             x:Class="HouseholdManagerMobileApp.Views.UserPage">
+
+    <Grid RowDefinitions="Auto,*" Padding="0">
+        <!-- Fejléc -->
+        <Grid ColumnDefinitions="Auto,*" Padding="10" BackgroundColor="Grey">
+            <Button Grid.Column="0" Text="☰" FontSize="24" Command="{Binding ToggleMenuButtonCommand}" BackgroundColor="Grey" TextColor="White" Padding="0" WidthRequest="44"/>
+            <Label Grid.Column="1" Text="{Binding Nickname}" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" Margin="10,0,0,0"/>
+        </Grid>
+
+        <!-- Menü -->
+        <Grid Grid.Row="1" IsVisible="{Binding IsMenuVisible}" BackgroundColor="DarkGrey" WidthRequest="250" ZIndex="30" Padding="0" HorizontalOptions="Start">
+            <VerticalStackLayout Padding="20" Spacing="10">
+                <Button Text="Kilépés" Command="{Binding LogoutButtonCommand}" BackgroundColor="#F44336" TextColor="White"/>
+            </VerticalStackLayout>
+        </Grid>
+
+        <BoxView Grid.Row="1" BackgroundColor="Black" Opacity="0.7" IsVisible="{Binding IsMenuVisible}" ZIndex="20"/>
+
+        <!-- Fő tartalom -->
+        <VerticalStackLayout Grid.Row="1" Padding="20" VerticalOptions="Center" HorizontalOptions="Center">
+            <Label Text="{Binding WelcomeMessage}" FontSize="18"/>
+        </VerticalStackLayout>
+    </Grid>
 </ContentPage>

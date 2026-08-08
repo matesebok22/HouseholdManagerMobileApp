@@ -6,6 +6,7 @@
     
     <VerticalStackLayout Padding="30" Spacing="15" VerticalOptions="Center">
         <Entry Placeholder="Felhasználónév" Text="{Binding Username}"/>
+        <Entry Placeholder="Becenév" Text="{Binding Nickname}"/>
         <Entry Placeholder="Jelszó" IsPassword="True" Text="{Binding Password}"/>
         <Entry Placeholder="Jelszó megerősítése" IsPassword="True" Text="{Binding ConfirmPassword}"/>
 

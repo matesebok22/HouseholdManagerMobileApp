@@ -17,4 +17,7 @@ public class User : BaseModel
 
     [Column("u_currenthh")]
     public string CurrentHousehold { get; set; } = string.Empty;
+
+    [Column("u_nick")]
+    public string Nickname { get; set; } = string.Empty;
 }
