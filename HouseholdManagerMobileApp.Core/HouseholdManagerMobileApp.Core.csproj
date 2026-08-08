@@ -30,8 +30,4 @@
 		<PackageReference Include="Supabase" Version="1.5.0" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="Services\" />
-	</ItemGroup>
-
 </Project>

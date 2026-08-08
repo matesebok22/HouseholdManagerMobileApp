@@ -1,19 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using HouseholdManagerMobileApp.Core.Commands;
-using HouseholdManagerMobileApp.Core.Models;
-using Supabase;
+﻿using HouseholdManagerMobileApp.Core.Commands;
+using HouseholdManagerMobileApp.Core.Services;
 
 namespace HouseholdManagerMobileApp.Core.ViewModels;
 
 public class RegistrationViewModel : ViewModelBase
 {
-    // Tesztelés service nélkül:
-
+    private readonly IAuthService _authService;
 
     private string username = string.Empty;
     public string Username
@@ -79,8 +71,10 @@ public class RegistrationViewModel : ViewModelBase
     public RelayCommand RegisterButtonCommand { get; }
     public RelayCommand NavigateToLoginCommand { get; }
 
-    public RegistrationViewModel()
+    public RegistrationViewModel(IAuthService authService)
     {
+        _authService = authService;
+
         RegisterButtonCommand = new RelayCommand(async _ => await RegisterAsync(), _ => !IsLoading);
         NavigateToLoginCommand = new RelayCommand(async _ => await Shell.Current.GoToAsync("//LoginPage"));
     }
@@ -103,36 +97,13 @@ public class RegistrationViewModel : ViewModelBase
 
         IsLoading = true;
 
-        bool success = await SupabaseRegisterAsync(Username, Password);
+        bool success = await _authService.RegisterAsync(Username, Password);
 
         if (success)
             await Shell.Current.GoToAsync("//LoginPage");
         else
-            ErrorMessage = "A regisztráció sikertelen. Próbálj meg később!";
+            ErrorMessage = "A regisztráció sikertelen. Próbáld meg később!";
 
         IsLoading = false;
-    }
-
-    private async Task<bool> SupabaseRegisterAsync(string username, string password)
-    {
-        try
-        {
-            SupabaseOptions options = new() { AutoConnectRealtime = true };
-
-            Client supabase = new(Helpers.Constants.SupabaseUrl, Helpers.Constants.SupabaseKey, options);
-            await supabase.InitializeAsync();
-
-            // Új felhasználó létrehozása:
-            User newUser = new() { Username = username, Password = password };
-
-            var response = await supabase.From<User>().Insert(newUser);
-            
-            return response != null && response.Models.Count > 0;
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = $"Hiba történt a regisztráció során: {ex.Message}";
-            return false;
-        }
     }
 }
