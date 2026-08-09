@@ -89,7 +89,10 @@ public class LoginViewModel : ViewModelBase
         bool success = await _authService.LoginAsync(Username, Password);
 
         if (success)
-            await Shell.Current.GoToAsync("//UserPage");
+        {
+            if (Shell.Current != null) // Tesztelés ne akadjon meg.
+                await Shell.Current.GoToAsync("//UserPage");
+        }
         else
             ErrorMessage = "Hibás felhasználónév vagy jelszó!";
         

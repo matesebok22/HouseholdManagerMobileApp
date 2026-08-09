@@ -112,7 +112,10 @@ public class RegistrationViewModel : ViewModelBase
         bool success = await _authService.RegisterAsync(Username, Nickname, Password);
 
         if (success)
-            await Shell.Current.GoToAsync("//LoginPage");
+        {
+            if (Shell.Current != null) // Tesztelés ne akadjon meg.
+                await Shell.Current.GoToAsync("//LoginPage");
+        }
         else
             ErrorMessage = "A regisztráció sikertelen. Próbáld meg később!";
 
