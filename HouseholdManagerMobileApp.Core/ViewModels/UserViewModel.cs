@@ -25,19 +25,7 @@ public class UserViewModel : ViewModelBase
         }
     }
 
-    private string nickname = string.Empty;
-    public string Nickname
-    {
-        get => nickname;
-        set
-        {
-            if (nickname == value) return;
-            nickname = value;
-            OnPropertyChanged();
-        }
-    }
-
-    private bool isMenuVisible;
+    private bool isMenuVisible = false;
     public bool IsMenuVisible
     {
         get => isMenuVisible;
@@ -50,6 +38,7 @@ public class UserViewModel : ViewModelBase
     }
 
     public RelayCommand ToggleMenuButtonCommand { get; }
+    public RelayCommand NavigateSettingsButtonCommand { get; }
     public RelayCommand LogoutButtonCommand { get; }
 
     public UserViewModel(IAuthService authService)
@@ -57,14 +46,33 @@ public class UserViewModel : ViewModelBase
         _authService = authService;
 
         ToggleMenuButtonCommand = new RelayCommand(async _ => await Task.Run(() => IsMenuVisible = !IsMenuVisible));
-        LogoutButtonCommand = new RelayCommand(async _ => await Task.Run(async () =>
-        {
-            IsMenuVisible = false;
-            Nickname = WelcomeMessage = string.Empty;
-            await _authService.LogoutAsync();
-        }));
+        NavigateSettingsButtonCommand = new RelayCommand(async _ => await NavigateToSettingsAsync());
+        LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
 
-        Nickname = _authService.Nickname;
-        WelcomeMessage = $"Üdvözöllek, {Nickname}!";
+        WelcomeMessage = $"Üdv, {_authService.Nickname}";
+    }
+
+    private async Task NavigateToSettingsAsync()
+    {
+        try
+        {
+            if (_authService.Nickname == string.Empty)
+                throw new InvalidOperationException("Nickname is empty. Cannot navigate to settings.");
+
+            IsMenuVisible = false;
+            await Shell.Current.GoToAsync("//SettingsPage");
+        }
+        catch (InvalidOperationException)
+        {
+            _ = Shell.Current.DisplayAlert("Hiba", "A beállításokhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.", "OK");
+            await LogoutAsync();
+        }
+    }
+
+    private async Task LogoutAsync()
+    {
+        IsMenuVisible = false;
+        WelcomeMessage = string.Empty;
+        await _authService.LogoutAsync();
     }
 }

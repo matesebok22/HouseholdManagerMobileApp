@@ -32,11 +32,13 @@ namespace HouseholdManagerMobileApp
             builder.Services.AddTransient<LoginViewModel>();
             builder.Services.AddTransient<RegistrationViewModel>();
             builder.Services.AddTransient<UserViewModel>();
+            builder.Services.AddTransient<SettingsViewModel>();
 
             // View-k regisztrálása:
             builder.Services.AddTransient<LoginPage>();
             builder.Services.AddTransient<RegistrationPage>();
             builder.Services.AddTransient<UserPage>();
+            builder.Services.AddTransient<SettingsPage>();
 
 #if DEBUG
             builder.Logging.AddDebug();

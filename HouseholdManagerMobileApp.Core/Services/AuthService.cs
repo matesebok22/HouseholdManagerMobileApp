@@ -67,6 +67,30 @@ public class AuthService : IAuthService
         }
     }
 
+    public async Task<bool> ChangePasswordAsync(string oldPassword, string newPassword)
+    {
+        try
+        {
+            Dictionary<string, object> parameters = new()
+            {
+                { "p_username", CurrentUsername },
+                { "p_old_password", oldPassword },
+                { "p_new_password", newPassword }
+            };
+
+            var response = await _supabaseClient.Rpc("change_user_password", parameters);
+
+            if (response.Content != null && response.Content.Trim() == "true")
+                return true;
+
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     public async Task LogoutAsync()
     {
         CurrentUsername = Nickname = string.Empty;

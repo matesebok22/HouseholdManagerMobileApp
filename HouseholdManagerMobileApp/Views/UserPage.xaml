@@ -7,13 +7,15 @@
         <!-- Fejléc -->
         <Grid ColumnDefinitions="Auto,*" Padding="10" BackgroundColor="Grey">
             <Button Grid.Column="0" Text="☰" FontSize="24" Command="{Binding ToggleMenuButtonCommand}" BackgroundColor="Grey" TextColor="White" Padding="0" WidthRequest="44"/>
-            <Label Grid.Column="1" Text="{Binding Nickname}" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" Margin="10,0,0,0"/>
+            <Label Grid.Column="1" Text="{Binding WelcomeMessage}" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" Margin="10,0,0,0"/>
         </Grid>
 
         <!-- Menü -->
         <Grid Grid.Row="1" IsVisible="{Binding IsMenuVisible}" BackgroundColor="DarkGrey" WidthRequest="250" ZIndex="30" Padding="0" HorizontalOptions="Start">
             <VerticalStackLayout Padding="20" Spacing="10">
-                <Button Text="Kilépés" Command="{Binding LogoutButtonCommand}" BackgroundColor="#F44336" TextColor="White"/>
+                <Button Text="Kezdőlap"  IsEnabled="False" BackgroundColor="DarkGrey" TextColor="White"/>
+                <Button Text="Beállítások" Command="{Binding NavigateSettingsButtonCommand}" BackgroundColor="DarkGrey" TextColor="White"/>
+                <Button Text="Kijelentkezés" Command="{Binding LogoutButtonCommand}" BackgroundColor="#F44336" TextColor="White"/>
             </VerticalStackLayout>
         </Grid>
 

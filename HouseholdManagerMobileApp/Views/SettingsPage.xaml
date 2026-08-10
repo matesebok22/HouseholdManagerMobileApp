@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="HouseholdManagerMobileApp.Views.SettingsPage">
+
+    <Grid RowDefinitions="Auto,*" Padding="0">
+        <!-- Fejléc -->
+        <Grid ColumnDefinitions="Auto,*" Padding="10" BackgroundColor="Grey">
+            <Button Grid.Column="0" Text="☰" FontSize="24" Command="{Binding ToggleMenuButtonCommand}" BackgroundColor="Grey" TextColor="White" Padding="0" WidthRequest="44"/>
+            <Label Grid.Column="1" Text="{Binding WelcomeMessage}" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" Margin="10,0,0,0"/>
+        </Grid>
+
+        <!-- Menü -->
+        <Grid Grid.Row="1" IsVisible="{Binding IsMenuVisible}" BackgroundColor="DarkGrey" WidthRequest="250" ZIndex="30" Padding="0" HorizontalOptions="Start">
+            <VerticalStackLayout Padding="20" Spacing="10">
+                <Button Text="Kezdőlap" Command="{Binding NavigateHomeButtonCommand}" BackgroundColor="DarkGrey" TextColor="White"/>
+                <Button Text="Beállítások" IsEnabled="False" BackgroundColor="DarkGrey" TextColor="White"/>
+                <Button Text="Kijelentkezés" Command="{Binding LogoutButtonCommand}" BackgroundColor="#F44336" TextColor="White"/>
+            </VerticalStackLayout>
+        </Grid>
+
+        <BoxView Grid.Row="1" BackgroundColor="Black" Opacity="0.7" IsVisible="{Binding IsMenuVisible}" ZIndex="20"/>
+
+        <!-- Fő tartalom -->
+        <VerticalStackLayout Grid.Row="1" Padding="10">
+            <Label Text="Beállítások" FontSize="Large"/>
+
+            <!-- Háztartás kezelés (WIP) -->
+            <Label Text="Háztartások kezelése" FontSize="Medium"/>
+            
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                <Label Grid.Column="0" Text="Jelenlegi háztartás: " VerticalOptions="Center"/>
+                <Picker Grid.Column="1"/>
+            </Grid>
+
+            <BoxView Color="LightGray" HeightRequest="1" Margin="0,10,0,10"/>
+
+            <!-- Jelszó kezelés -->
+            <Label Text="Jelszó változtatása" FontSize="Medium"/>
+
+            <Entry Placeholder="Régi jelszó" IsPassword="True" Text="{Binding OldPassword}"/>
+            <Entry Placeholder="Új jelszó" IsPassword="True" Text="{Binding NewPassword}"/>
+            <Entry Placeholder="Új jelszó megerősítése" IsPassword="True" Text="{Binding ConfirmNewPassword}"/>
+
+            <Button Text="Jelszó megváltoztatása" Command="{Binding ChangePasswordButtonCommand}"/>
+
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>
