@@ -49,6 +49,42 @@ public class SettingsViewModel : ViewModelBase
         }
     }
 
+    private bool isJoinHouseholdVisible = false;
+    public bool IsJoinHouseholdVisible
+    {
+        get => isJoinHouseholdVisible;
+        set
+        {
+            if (isJoinHouseholdVisible == value) return;
+            isJoinHouseholdVisible = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private bool isCreateHouseholdVisible = false;
+    public bool IsCreateHouseholdVisible
+    {
+        get => isCreateHouseholdVisible;
+        set
+        {
+            if (isCreateHouseholdVisible == value) return;
+            isCreateHouseholdVisible = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private bool isEditHouseholdVisible = false;
+    public bool IsEditHouseholdVisible
+    {
+        get => isEditHouseholdVisible;
+        set
+        {
+            if (isEditHouseholdVisible == value) return;
+            isEditHouseholdVisible = value;
+            OnPropertyChanged();
+        }
+    }
+
     private string oldPassword = string.Empty;
     public string OldPassword
     {
@@ -87,6 +123,9 @@ public class SettingsViewModel : ViewModelBase
 
     public RelayCommand ToggleMenuButtonCommand { get; }
     public RelayCommand NavigateHomeButtonCommand { get; }
+    public RelayCommand ShowJoinHouseholdButtonCommand { get; }
+    public RelayCommand ShowCreateHouseholdButtonCommand { get; }
+    public RelayCommand ShowEditHouseholdButtonCommand { get; }
     public RelayCommand ChangePasswordButtonCommand { get; }
     public RelayCommand LogoutButtonCommand { get; }
 
@@ -96,6 +135,9 @@ public class SettingsViewModel : ViewModelBase
 
         ToggleMenuButtonCommand = new RelayCommand(async _ => await Task.Run(() => IsMenuVisible = !IsMenuVisible));
         NavigateHomeButtonCommand = new RelayCommand(async _ => await NavigateToHomeAsync());
+        ShowJoinHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(1, IsJoinHouseholdVisible)));
+        ShowCreateHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(2, IsCreateHouseholdVisible)));
+        ShowEditHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(3, IsEditHouseholdVisible)));
         ChangePasswordButtonCommand = new RelayCommand(async _ => await ChangePasswordAsync());
         LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
 
@@ -165,5 +207,17 @@ public class SettingsViewModel : ViewModelBase
         ErrorMessage = message;
         if (Shell.Current != null)
             await Shell.Current.DisplayAlert("Hiba", ErrorMessage, "OK");
+    }
+
+    private void ChangeVisibility(int optionNum, bool param)
+    {
+        bool isVisible = param;
+        IsJoinHouseholdVisible = IsCreateHouseholdVisible = IsEditHouseholdVisible = false;
+        switch (optionNum)
+        {
+            case 1: IsJoinHouseholdVisible = !isVisible; break;
+            case 2: IsCreateHouseholdVisible = !isVisible; break;
+            case 3: IsEditHouseholdVisible = !isVisible; break;
+        }
     }
 }

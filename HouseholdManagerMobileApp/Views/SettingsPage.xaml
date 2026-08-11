@@ -27,11 +27,58 @@
 
             <!-- Háztartás kezelés (WIP) -->
             <Label Text="Háztartások kezelése" FontSize="Medium"/>
-            
+
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
                 <Label Grid.Column="0" Text="Jelenlegi háztartás: " VerticalOptions="Center"/>
                 <Picker Grid.Column="1"/>
             </Grid>
+
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="5" Padding="10">
+                <Button Grid.Column="0" Text="Csatlakozás háztartásba" Command="{Binding ShowJoinHouseholdButtonCommand}" LineBreakMode="WordWrap" BackgroundColor="Aqua"/>
+                <Button Grid.Column="1" Text="Új háztartás készítése" Command="{Binding ShowCreateHouseholdButtonCommand}" LineBreakMode="WordWrap" BackgroundColor="Aqua"/>
+                <Button Grid.Column="2" Text="Kilépés a jelenlegi háztartásból" Command="{Binding LeaveHouseholdButtonCommand}" LineBreakMode="WordWrap" TextColor="White" BackgroundColor="#F44336"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="5" Padding="10">
+                <Button Grid.Column="0" Text="Jelenlegi háztartás módosítása" Command="{Binding ShowEditHouseholdButtonCommand}" LineBreakMode="WordWrap"  BackgroundColor="Aqua"/>
+                <Button Grid.Column="1" Text="Jelenlegi háztartás felbontása" Command="{Binding DisbandHouseholdButtonCommand}" LineBreakMode="WordWrap" TextColor="White" BackgroundColor="#F44336"/>
+            </Grid>
+            
+            <!-- Háztartás: Új háztartás csatlakozás kezelés -->
+            <VerticalStackLayout IsVisible="{Binding IsJoinHouseholdVisible}">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                    <Label Grid.Column="0" Text="Csatlakozás háztartásba: " VerticalOptions="Center"/>
+                    <Entry Grid.Column="1" Text="{Binding HouseholdAccessCode}" Placeholder="Azonosító kód (6 karakter)"/>
+                </Grid>
+
+                <Button Text="Csatlakozás" Command="{Binding JoinHouseholdButtonCommand}" WidthRequest="200"/>
+            </VerticalStackLayout>
+
+            <!-- Háztartás: Új háztartás készítés kezelés -->
+            <VerticalStackLayout IsVisible="{Binding IsCreateHouseholdVisible}">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                    <Label Grid.Column="0" Text="Új háztartás neve: " VerticalOptions="Center"/>
+                    <Entry Grid.Column="1" Text="{Binding NewHouseholdName}" Placeholder="3-10 karakter"/>
+                </Grid>
+
+                <Button Text="Új háztartás" Command="{Binding CreateHouseholdButtonCommand}" WidthRequest="200"/>
+            </VerticalStackLayout>
+
+            <!-- Háztartás: Háztartás módosítás kezelés -->
+            <VerticalStackLayout IsVisible="{Binding IsEditHouseholdVisible}">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                    <Label Grid.Column="0" Text="Háztartás átnevezése: " VerticalOptions="Center"/>
+                    <Entry Grid.Column="1" Placeholder="3-10 karakter"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                    <Label Grid.Column="0" Text="Havi összeg módosítása: " VerticalOptions="Center"/>
+                    <Entry Grid.Column="1" Placeholder="3-10 karakter"/>
+                </Grid>
+
+                <Button Text="Módosítás" Command="{Binding EditHouseholdButtonCommand}" WidthRequest="200"/>
+            </VerticalStackLayout>
+
 
             <BoxView Color="LightGray" HeightRequest="1" Margin="0,10,0,10"/>
 
