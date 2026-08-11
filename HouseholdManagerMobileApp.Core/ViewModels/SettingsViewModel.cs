@@ -25,6 +25,18 @@ public class SettingsViewModel : ViewModelBase
         }
     }
 
+    private string errorMessage = string.Empty;
+    public string ErrorMessage
+    {
+        get => errorMessage;
+        set
+        {
+            if (errorMessage == value) return;
+            errorMessage = value;
+            OnPropertyChanged();
+        }
+    }
+
     private bool isMenuVisible = false;
     public bool IsMenuVisible
     {
@@ -92,71 +104,66 @@ public class SettingsViewModel : ViewModelBase
 
     private async Task NavigateToHomeAsync()
     {
-        try
+        if (_authService.CurrentUsername == string.Empty)
         {
-            if (_authService.CurrentUsername == string.Empty)
-                throw new InvalidNavigationException("Username is empty. Cannot navigate to home.");
-
-            IsMenuVisible = false;
-            await Shell.Current.GoToAsync("//UserPage");
-        }
-        catch (InvalidNavigationException)
-        {
-            _ = Shell.Current.DisplayAlert("Hiba", "A kezdőlaphoz való navigálás sikertelen. Kérlek, jelentkezz be újra.", "OK");
+            await DisplayErrorAsync("A kezdőlaphoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();
         }
+
+        IsMenuVisible = false;
+        await Shell.Current.GoToAsync("//UserPage");
     }
     
     private async Task ChangePasswordAsync()
     {
-        try
+        if (_authService.CurrentUsername == string.Empty)
         {
-            if (_authService.CurrentUsername == string.Empty)
-                throw new InvalidNavigationException("Username is empty. Cannot change password.");
-
-            if (string.IsNullOrEmpty(OldPassword) || string.IsNullOrEmpty(NewPassword) || string.IsNullOrEmpty(ConfirmNewPassword))
-            {
-                _ = Shell.Current.DisplayAlert("Hiba", "Minden jelszó mezőt ki kell tölteni.", "OK");
-                throw new InvalidOperationException();
-            }
-
-            if (OldPassword == NewPassword || OldPassword == ConfirmNewPassword)
-            {
-                _ = Shell.Current.DisplayAlert("Hiba", "A régi jelszó nem egyezhet az új jelszóval.", "OK");
-                throw new InvalidOperationException();
-            }
-
-            if (NewPassword != ConfirmNewPassword)
-            {
-                _ = Shell.Current.DisplayAlert("Hiba", "Az új jelszavak nem egyeznek.", "OK");
-                throw new InvalidOperationException();
-            }
-
-            bool success = await _authService.ChangePasswordAsync(OldPassword, NewPassword);
-
-            if (success)
-            {
-                _ = Shell.Current.DisplayAlert("Siker", "A jelszó sikeresen megváltozott.", "OK");
-                OldPassword = NewPassword = ConfirmNewPassword = string.Empty;
-            }
-            else
-                _ = Shell.Current.DisplayAlert("Hiba", "A régi és a jelenlegi jelszó nem egyezik!", "OK");
-        }
-        catch (InvalidNavigationException)
-        {
-            _ = Shell.Current.DisplayAlert("Hiba", "A jelszó megváltoztatása sikertelen. Kérlek, jelentkezz be újra.", "OK");
+            await DisplayErrorAsync("A jelszó megváltoztatása sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();
-        }
-        catch (InvalidOperationException)
-        {
             return;
         }
+
+        if (string.IsNullOrEmpty(OldPassword) || string.IsNullOrEmpty(NewPassword) || string.IsNullOrEmpty(ConfirmNewPassword))
+        {
+            await DisplayErrorAsync("Minden jelszó mezőt ki kell tölteni.");
+            return;
+        }
+
+        if (OldPassword == NewPassword || OldPassword == ConfirmNewPassword)
+        {
+            await DisplayErrorAsync("A régi jelszó nem egyezhet az új jelszóval.");
+            return;
+        }
+
+        if (NewPassword != ConfirmNewPassword)
+        {
+            await DisplayErrorAsync("Az új jelszavak nem egyeznek.");
+            return;
+        }
+
+        bool success = await _authService.ChangePasswordAsync(OldPassword, NewPassword);
+
+        if (success)
+        {
+            if (Shell.Current != null)
+                _ = Shell.Current.DisplayAlert("Siker", "A jelszó sikeresen megváltozott.", "OK");
+            OldPassword = NewPassword = ConfirmNewPassword = string.Empty;
+        }
+        else
+            await DisplayErrorAsync("A régi és a jelenlegi jelszó nem egyezik!");
     }
 
     private async Task LogoutAsync()
     {
         IsMenuVisible = false;
-        WelcomeMessage = string.Empty;
+        WelcomeMessage = ErrorMessage = string.Empty;
         await _authService.LogoutAsync();
+    }
+
+    private async Task DisplayErrorAsync(string message)
+    {
+        ErrorMessage = message;
+        if (Shell.Current != null)
+            await Shell.Current.DisplayAlert("Hiba", ErrorMessage, "OK");
     }
 }

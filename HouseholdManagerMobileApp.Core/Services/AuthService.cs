@@ -94,6 +94,7 @@ public class AuthService : IAuthService
     public async Task LogoutAsync()
     {
         CurrentUsername = Nickname = string.Empty;
-        await Shell.Current.GoToAsync("//LoginPage");
+        if (Shell.Current != null) // Tesztelés ne akadjon meg.
+            await Shell.Current.GoToAsync("//LoginPage");
     }
 }

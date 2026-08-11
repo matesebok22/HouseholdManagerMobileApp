@@ -54,19 +54,14 @@ public class UserViewModel : ViewModelBase
 
     private async Task NavigateToSettingsAsync()
     {
-        try
-        {
-            if (_authService.Nickname == string.Empty)
-                throw new InvalidOperationException("Nickname is empty. Cannot navigate to settings.");
-
-            IsMenuVisible = false;
-            await Shell.Current.GoToAsync("//SettingsPage");
-        }
-        catch (InvalidOperationException)
+        if (_authService.CurrentUsername == string.Empty)
         {
             _ = Shell.Current.DisplayAlert("Hiba", "A beállításokhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.", "OK");
             await LogoutAsync();
         }
+
+        IsMenuVisible = false;
+        await Shell.Current.GoToAsync("//SettingsPage");
     }
 
     private async Task LogoutAsync()
