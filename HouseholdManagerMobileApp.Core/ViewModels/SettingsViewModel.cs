@@ -12,6 +12,7 @@ namespace HouseholdManagerMobileApp.Core.ViewModels;
 public class SettingsViewModel : ViewModelBase
 {
     private readonly IAuthService _authService;
+    private readonly IDatabaseService _databaseService;
 
     private string welcomeMessage = string.Empty;
     public string WelcomeMessage
@@ -85,6 +86,18 @@ public class SettingsViewModel : ViewModelBase
         }
     }
 
+    private string newHouseholdName = string.Empty;
+    public string NewHouseholdName
+    {
+        get => newHouseholdName;
+        set
+        {
+            if (newHouseholdName == value) return;
+            newHouseholdName = value;
+            OnPropertyChanged();
+        }
+    }
+
     private string oldPassword = string.Empty;
     public string OldPassword
     {
@@ -126,18 +139,21 @@ public class SettingsViewModel : ViewModelBase
     public RelayCommand ShowJoinHouseholdButtonCommand { get; }
     public RelayCommand ShowCreateHouseholdButtonCommand { get; }
     public RelayCommand ShowEditHouseholdButtonCommand { get; }
+    public RelayCommand CreateHouseholdButtonCommand { get;  }
     public RelayCommand ChangePasswordButtonCommand { get; }
     public RelayCommand LogoutButtonCommand { get; }
 
-    public SettingsViewModel(IAuthService authService)
+    public SettingsViewModel(IAuthService authService, IDatabaseService databaseService)
     {
         _authService = authService;
+        _databaseService = databaseService;
 
         ToggleMenuButtonCommand = new RelayCommand(async _ => await Task.Run(() => IsMenuVisible = !IsMenuVisible));
         NavigateHomeButtonCommand = new RelayCommand(async _ => await NavigateToHomeAsync());
         ShowJoinHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(1, IsJoinHouseholdVisible)));
         ShowCreateHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(2, IsCreateHouseholdVisible)));
         ShowEditHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(3, IsEditHouseholdVisible)));
+        CreateHouseholdButtonCommand = new RelayCommand(async _ => await CreateHouseholdAsync());
         ChangePasswordButtonCommand = new RelayCommand(async _ => await ChangePasswordAsync());
         LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
 
@@ -150,10 +166,38 @@ public class SettingsViewModel : ViewModelBase
         {
             await DisplayErrorAsync("A kezdőlaphoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();
+            return;
         }
 
         IsMenuVisible = false;
         await Shell.Current.GoToAsync("//UserPage");
+    }
+
+    private async Task CreateHouseholdAsync()
+    {
+        if (_authService.CurrentUsername == string.Empty)
+        {
+            await DisplayErrorAsync("Új háztartás készítése sikertelen. Kérlek, jelentkezz be újra.");
+            await LogoutAsync();
+            return;
+        }
+
+        if (NewHouseholdName.Trim() == string.Empty)
+        {
+            await DisplayErrorAsync("Háztartásnév megadása kötelező!");
+            return;
+        }
+
+        bool success = await _databaseService.CreateHouseholdAsync(_authService.CurrentUsername, NewHouseholdName);
+
+        if (success)
+        {
+            _ = Shell.Current.DisplayAlert("Siker", "Háztartás sikeresen létrehozva.", "OK");
+            NewHouseholdName = string.Empty;
+            IsCreateHouseholdVisible = false;
+        }
+        else
+            await DisplayErrorAsync("Hiba a háztartás elkészítése közben.");
     }
     
     private async Task ChangePasswordAsync()
