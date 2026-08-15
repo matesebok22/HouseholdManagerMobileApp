@@ -18,6 +18,15 @@ public class User : BaseModel
     [Column("u_currenthh")]
     public string CurrentHousehold { get; set; } = string.Empty;
 
+    [Column("hh_1")]
+    public string HouseHold1 { get; set; } = string.Empty;
+
+    [Column("hh_2")]
+    public string HouseHold2 { get; set; } = string.Empty;
+
+    [Column("hh_3")]
+    public string HouseHold3 { get; set; } = string.Empty;
+
     [Column("u_nick")]
     public string Nickname { get; set; } = string.Empty;
 }

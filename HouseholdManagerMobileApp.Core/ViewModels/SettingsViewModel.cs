@@ -98,6 +98,42 @@ public class SettingsViewModel : ViewModelBase
         }
     }
 
+    private List<string> householdsList = [];
+    public List<string> HouseholdsList
+    {
+        get => householdsList;
+        set
+        {
+            if (householdsList == value) return;
+            householdsList = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private string selectedHousehold = string.Empty;
+    public string SelectedHousehold
+    {
+        get => selectedHousehold;
+        set
+        {
+            if (selectedHousehold == value) return;
+            selectedHousehold = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private string householdAccessCode = string.Empty;
+    public string HouseholdAccessCode
+    {
+        get => householdAccessCode;
+        set
+        {
+            if (householdAccessCode == value) return;
+            householdAccessCode = value;
+            OnPropertyChanged();
+        }
+    }
+
     private string oldPassword = string.Empty;
     public string OldPassword
     {
@@ -139,7 +175,8 @@ public class SettingsViewModel : ViewModelBase
     public RelayCommand ShowJoinHouseholdButtonCommand { get; }
     public RelayCommand ShowCreateHouseholdButtonCommand { get; }
     public RelayCommand ShowEditHouseholdButtonCommand { get; }
-    public RelayCommand CreateHouseholdButtonCommand { get;  }
+    public RelayCommand CreateHouseholdButtonCommand { get; }
+    public RelayCommand JoinHouseholdButtonCommand { get; }
     public RelayCommand ChangePasswordButtonCommand { get; }
     public RelayCommand LogoutButtonCommand { get; }
 
@@ -154,10 +191,12 @@ public class SettingsViewModel : ViewModelBase
         ShowCreateHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(2, IsCreateHouseholdVisible)));
         ShowEditHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(3, IsEditHouseholdVisible)));
         CreateHouseholdButtonCommand = new RelayCommand(async _ => await CreateHouseholdAsync());
+        JoinHouseholdButtonCommand = new RelayCommand(async _ => await JoinHouseholdAsync());
         ChangePasswordButtonCommand = new RelayCommand(async _ => await ChangePasswordAsync());
         LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
 
         WelcomeMessage = $"Üdv, {_authService.Nickname}";
+        //LoadHouseholds();
     }
 
     private async Task NavigateToHomeAsync()
@@ -171,6 +210,50 @@ public class SettingsViewModel : ViewModelBase
 
         IsMenuVisible = false;
         await Shell.Current.GoToAsync("//UserPage");
+    }
+
+    private void LoadHouseholds()
+    {
+        HouseholdsList.Clear();
+        var households = _databaseService.LoadHouseholdsAsync(_authService.CurrentUsername).Result;
+        foreach ((string, string) household in households)
+            HouseholdsList.Add($"{household.Item1} - {household.Item2}");
+
+        if (HouseholdsList.Count > 0)
+        {
+            for (int i = 0; i < HouseholdsList.Count; i++)
+            {
+                if (HouseholdsList[i].Split(" - ")[0] == _databaseService.CurrentHouseholdName)
+                    SelectedHousehold = HouseholdsList[i];
+            }
+        }
+    }
+
+    private async Task JoinHouseholdAsync()
+    {
+        if (_authService.CurrentUsername == string.Empty)
+        {
+            await DisplayErrorAsync("Háztartáshoz csatlakozás sikertelen. Kérlek, jelentkezz be újra.");
+            await LogoutAsync();
+            return;
+        }
+
+        if (HouseholdAccessCode.Trim() == string.Empty)
+        {
+            await DisplayErrorAsync("Háztartás azonosító megadása kötelező!");
+            return;
+        }
+
+        bool success = await _databaseService.JoinHouseholdAsync(_authService.CurrentUsername, HouseholdAccessCode);
+
+        if (success)
+        {
+            _ = Shell.Current.DisplayAlert("Siker", "Háztartáshoz sikeresen csatlakozva.", "OK");
+            HouseholdAccessCode = string.Empty;
+            IsJoinHouseholdVisible = false;
+        }
+        else
+            await DisplayErrorAsync("Hiba a háztartáshoz csatlakozás közben.");
     }
 
     private async Task CreateHouseholdAsync()
