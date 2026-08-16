@@ -6,6 +6,7 @@ namespace HouseholdManagerMobileApp.Core.Services;
 public class DatabaseService : IDatabaseService
 {
     private readonly Client _supabaseClient;
+    public bool CurrentHouseholdOwner { get; private set; } = false;
     public string CurrentHouseholdName { get; private set; } = string.Empty;
     public string CurrentHouseholdAccess { get; private set; } = string.Empty;
 
@@ -29,6 +30,10 @@ public class DatabaseService : IDatabaseService
 
     public async Task<List<(string, string)>> LoadHouseholdsAsync(string username)
     {
+        CurrentHouseholdOwner = false;
+        CurrentHouseholdName = string.Empty;
+        CurrentHouseholdAccess = string.Empty;
+
         User? user = await _supabaseClient.From<User>().Where(x => x.Username == username).Single();
         if (user == null)
             return [];
@@ -37,6 +42,7 @@ public class DatabaseService : IDatabaseService
         if (currentHousehold == null)
             return [];
 
+        CurrentHouseholdOwner = currentHousehold.HouseholdOwner == user.UID ? true : false;
         CurrentHouseholdName = currentHousehold.HouseholdName;
         CurrentHouseholdAccess = currentHousehold.HouseholdAccess;
 
@@ -89,6 +95,7 @@ public class DatabaseService : IDatabaseService
                 if (currentHousehold == null)
                     return false;
 
+                CurrentHouseholdOwner = true;
                 CurrentHouseholdName = currentHousehold.HouseholdName;
                 CurrentHouseholdAccess = currentHousehold.HouseholdAccess;
 
@@ -122,6 +129,7 @@ public class DatabaseService : IDatabaseService
             user.CurrentHousehold = household.HHID;
             await user.Update<User>();
 
+            CurrentHouseholdOwner = false;
             CurrentHouseholdName = household.HouseholdName;
             CurrentHouseholdAccess = household.HouseholdAccess;
             return true;
@@ -132,6 +140,7 @@ public class DatabaseService : IDatabaseService
             user.CurrentHousehold = household.HHID;
             await user.Update<User>();
 
+            CurrentHouseholdOwner = false;
             CurrentHouseholdName = household.HouseholdName;
             CurrentHouseholdAccess = household.HouseholdAccess;
             return true;
@@ -142,6 +151,7 @@ public class DatabaseService : IDatabaseService
             user.CurrentHousehold = household.HHID;
             await user.Update<User>();
 
+            CurrentHouseholdOwner = false;
             CurrentHouseholdName = household.HouseholdName;
             CurrentHouseholdAccess = household.HouseholdAccess;
             return true;
@@ -160,6 +170,7 @@ public class DatabaseService : IDatabaseService
         if (user == null)
             return false;
 
+        CurrentHouseholdOwner = household.HouseholdOwner == user.UID ? true : false;
         user.CurrentHousehold = household.HHID;
         await user.Update<User>();
         CurrentHouseholdName = household.HouseholdName;
@@ -173,8 +184,52 @@ public class DatabaseService : IDatabaseService
         throw new NotImplementedException();
     }
 
-    public Task<bool> IsHouseholdOwnerAsync(string username)
+    public async Task<bool> LeaveHouseholdAsync(string username)
     {
-        throw new NotImplementedException();
+        User? user = await _supabaseClient.From<User>().Where(x => x.Username == username).Single();
+        if (user == null)
+            return false;
+
+        Household? household = await _supabaseClient.From<Household>().Where(x => x.HouseholdAccess == CurrentHouseholdAccess).Single();
+        if (household == null)
+            return false;
+
+        if (user.HouseHold1 == household.HHID)
+        {
+            user.HouseHold1 = null;
+            if (user.HouseHold2 != null)
+                user.CurrentHousehold = user.HouseHold2;
+            if (user.HouseHold3 != null)
+                user.CurrentHousehold = user.HouseHold3;
+        }
+            
+        if (user.HouseHold2 == household.HHID)
+        {
+            user.HouseHold2 = null;
+            if (user.HouseHold1 != null)
+                user.CurrentHousehold = user.HouseHold1;
+            if (user.HouseHold3 != null)
+                user.CurrentHousehold = user.HouseHold3;
+        }
+            
+        if (user.HouseHold3 == household.HHID)
+        {
+            user.HouseHold3 = null;
+            if (user.HouseHold1 != null)
+                user.CurrentHousehold = user.HouseHold1;
+            if (user.HouseHold2 != null)
+                user.CurrentHousehold = user.HouseHold2;
+        }
+
+        if (user.HouseHold1 == null && user.HouseHold2 == null && user.HouseHold3 == null)
+            user.CurrentHousehold = "";
+
+        await user.Update<User>();
+
+        CurrentHouseholdOwner = false;
+        CurrentHouseholdName = string.Empty;
+        CurrentHouseholdAccess = string.Empty;
+
+        return true;
     }
 }

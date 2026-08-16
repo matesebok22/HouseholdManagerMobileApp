@@ -197,6 +197,8 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
     public RelayCommand CreateHouseholdButtonCommand { get; }
     public RelayCommand JoinHouseholdButtonCommand { get; }
     public RelayCommand ChangePasswordButtonCommand { get; }
+    public RelayCommand LeaveHouseholdButtonCommand { get; }
+    public RelayCommand DisbandHouseholdButtonCommand { get; }
     public RelayCommand LogoutButtonCommand { get; }
 
     public SettingsViewModel(IAuthService authService, IDatabaseService databaseService)
@@ -208,10 +210,12 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         NavigateHomeButtonCommand = new RelayCommand(async _ => await NavigateToHomeAsync());
         ShowJoinHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(1, IsJoinHouseholdVisible)));
         ShowCreateHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(2, IsCreateHouseholdVisible)));
-        ShowEditHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(3, IsEditHouseholdVisible)));
+        ShowEditHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(3, IsEditHouseholdVisible)), _ => _databaseService.CurrentHouseholdOwner);
         CreateHouseholdButtonCommand = new RelayCommand(async _ => await CreateHouseholdAsync());
         JoinHouseholdButtonCommand = new RelayCommand(async _ => await JoinHouseholdAsync());
         ChangePasswordButtonCommand = new RelayCommand(async _ => await ChangePasswordAsync());
+        LeaveHouseholdButtonCommand = new RelayCommand(async _ => await LeaveHouseholdAsync());
+        DisbandHouseholdButtonCommand = new RelayCommand(async _ => await ChangePasswordAsync(), _ => _databaseService.CurrentHouseholdOwner);
         LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
 
         WelcomeMessage = $"Üdv, {_authService.Nickname}";
@@ -247,8 +251,6 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
 
         if (HouseholdsList.Count > 0)
             SelectedHousehold = $"{_databaseService.CurrentHouseholdName} - {_databaseService.CurrentHouseholdAccess}";
-
-        await Shell.Current.DisplayAlert("Debug", $"{SelectedHousehold}", "OK");
     }
 
     private async Task UpdateSelectedHouseholdAsync()
@@ -261,7 +263,12 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
                 string householdAccessCode = parts[1];
                 bool success = await _databaseService.ChangeSelectedHouseholdAsync(_authService.CurrentUsername, householdAccessCode);
 
-                if (!success)
+                if (success)
+                {
+                    ShowEditHouseholdButtonCommand.RefreshCanExecute();
+                    DisbandHouseholdButtonCommand.RefreshCanExecute();
+                }
+                else
                     await DisplayErrorAsync("Háztartás váltás sikertelen!");
             }
         }
@@ -293,6 +300,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
             _ = Shell.Current.DisplayAlert("Siker", "Háztartáshoz sikeresen csatlakozva.", "OK");
             HouseholdAccessCode = string.Empty;
             IsJoinHouseholdVisible = false;
+            _ = LoadHouseholdsAsync();
         }
         else
             await DisplayErrorAsync("Hiba a háztartáshoz csatlakozás közben.");
@@ -320,11 +328,25 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
             _ = Shell.Current.DisplayAlert("Siker", "Háztartás sikeresen létrehozva.", "OK");
             NewHouseholdName = string.Empty;
             IsCreateHouseholdVisible = false;
+            _ = LoadHouseholdsAsync();
         }
         else
             await DisplayErrorAsync("Hiba a háztartás elkészítése közben.");
     }
-    
+
+    private async Task LeaveHouseholdAsync()
+    {
+        bool success = await _databaseService.LeaveHouseholdAsync(_authService.CurrentUsername);
+
+        if (success)
+        {
+            _ = Shell.Current.DisplayAlert("Siker", "Háztartásból sikeresen kilépve.", "OK");
+            _ = LoadHouseholdsAsync();
+        }
+        else
+            await DisplayErrorAsync("Hiba a háztartásból kilépés közben.");
+    }
+
     private async Task ChangePasswordAsync()
     {
         if (_authService.CurrentUsername == string.Empty)

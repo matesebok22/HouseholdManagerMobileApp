@@ -2,6 +2,7 @@
 
 public interface IDatabaseService
 {
+    public bool CurrentHouseholdOwner { get; }
     public string CurrentHouseholdName { get; }
     public string CurrentHouseholdAccess { get; }
     Task InitializeAsync();
@@ -10,5 +11,5 @@ public interface IDatabaseService
     Task<bool> JoinHouseholdAsync(string username, string householdAccess);
     Task<bool> ChangeSelectedHouseholdAsync(string username, string currentHousehold);
     Task<bool> UpdateHouseholdAsync(string newHouseholdName, DateTime householdBudgetMonth, int newHouseholdBudget);
-    Task<bool> IsHouseholdOwnerAsync(string username);
+    Task<bool> LeaveHouseholdAsync(string username);
 }

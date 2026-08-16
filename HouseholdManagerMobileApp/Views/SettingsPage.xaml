@@ -15,7 +15,7 @@
             <VerticalStackLayout Padding="20" Spacing="10">
                 <Button Text="Kezdőlap" Command="{Binding NavigateHomeButtonCommand}" BackgroundColor="DarkGrey" TextColor="White"/>
                 <Button Text="Beállítások" IsEnabled="False" BackgroundColor="DarkGrey" TextColor="White"/>
-                <Button Text="Kijelentkezés" Command="{Binding LogoutButtonCommand}" BackgroundColor="#F44336" TextColor="White"/>
+                <Button Text="Kijelentkezés" Command="{Binding LogoutButtonCommand}" BackgroundColor="#e65247" TextColor="White"/>
             </VerticalStackLayout>
         </Grid>
 
@@ -36,12 +36,12 @@
             <Grid ColumnDefinitions="*,*,*" ColumnSpacing="5" Padding="10">
                 <Button Grid.Column="0" Text="Csatlakozás háztartásba" Command="{Binding ShowJoinHouseholdButtonCommand}" LineBreakMode="WordWrap" BackgroundColor="Aqua"/>
                 <Button Grid.Column="1" Text="Új háztartás készítése" Command="{Binding ShowCreateHouseholdButtonCommand}" LineBreakMode="WordWrap" BackgroundColor="Aqua"/>
-                <Button Grid.Column="2" Text="Kilépés a jelenlegi háztartásból" Command="{Binding LeaveHouseholdButtonCommand}" LineBreakMode="WordWrap" TextColor="White" BackgroundColor="#F44336"/>
+                <Button Grid.Column="2" Text="Kilépés a jelenlegi háztartásból" Command="{Binding LeaveHouseholdButtonCommand}" LineBreakMode="WordWrap" BackgroundColor="#e65247"/>
             </Grid>
 
             <Grid ColumnDefinitions="*,*" ColumnSpacing="5" Padding="10">
                 <Button Grid.Column="0" Text="Jelenlegi háztartás módosítása" Command="{Binding ShowEditHouseholdButtonCommand}" LineBreakMode="WordWrap"  BackgroundColor="Aqua"/>
-                <Button Grid.Column="1" Text="Jelenlegi háztartás felbontása" Command="{Binding DisbandHouseholdButtonCommand}" LineBreakMode="WordWrap" TextColor="White" BackgroundColor="#F44336"/>
+                <Button Grid.Column="1" Text="Jelenlegi háztartás felbontása" Command="{Binding DisbandHouseholdButtonCommand}" LineBreakMode="WordWrap" BackgroundColor="#e65247"/>
             </Grid>
             
             <!-- Háztartás: Új háztartás csatlakozás kezelés -->
