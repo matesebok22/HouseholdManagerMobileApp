@@ -61,7 +61,7 @@ public class UserViewModel : ViewModelBase
         }
 
         IsMenuVisible = false;
-        await Shell.Current.GoToAsync("//SettingsPage");
+        await Shell.Current.GoToAsync("//SettingsPage?test=asd123");
     }
 
     private async Task LogoutAsync()

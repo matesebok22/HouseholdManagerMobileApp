@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,7 +10,7 @@ using HouseholdManagerMobileApp.Core.Services;
 
 namespace HouseholdManagerMobileApp.Core.ViewModels;
 
-public class SettingsViewModel : ViewModelBase
+public class SettingsViewModel : ViewModelBase, IQueryAttributable
 {
     private readonly IAuthService _authService;
     private readonly IDatabaseService _databaseService;
@@ -98,14 +99,26 @@ public class SettingsViewModel : ViewModelBase
         }
     }
 
-    private List<string> householdsList = [];
-    public List<string> HouseholdsList
+    private ObservableCollection<string> householdsList = [];
+    public ObservableCollection<string> HouseholdsList
     {
         get => householdsList;
         set
         {
             if (householdsList == value) return;
             householdsList = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private string selectedHouseholdID = string.Empty;
+    public string SelectedHouseholdID
+    {
+        get => selectedHouseholdID;
+        set
+        {
+            if (selectedHouseholdID == value) return;
+            selectedHouseholdID = value;
             OnPropertyChanged();
         }
     }
@@ -119,6 +132,12 @@ public class SettingsViewModel : ViewModelBase
             if (selectedHousehold == value) return;
             selectedHousehold = value;
             OnPropertyChanged();
+
+            // Frissítsd az adatbázist, amikor új háztartást választ ki
+            if (!string.IsNullOrEmpty(selectedHousehold))
+            {
+                _ = UpdateSelectedHouseholdAsync();
+            }
         }
     }
 
@@ -196,7 +215,12 @@ public class SettingsViewModel : ViewModelBase
         LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
 
         WelcomeMessage = $"Üdv, {_authService.Nickname}";
-        //LoadHouseholds();
+    }
+
+    // Csak akkor fut le, ha van paraméter az útvonal végén (? után)
+    public void ApplyQueryAttributes(IDictionary<string, object> query)
+    {
+        _ = LoadHouseholdsAsync();
     }
 
     private async Task NavigateToHomeAsync()
@@ -212,20 +236,38 @@ public class SettingsViewModel : ViewModelBase
         await Shell.Current.GoToAsync("//UserPage");
     }
 
-    private void LoadHouseholds()
+    private async Task LoadHouseholdsAsync()
     {
         HouseholdsList.Clear();
-        var households = _databaseService.LoadHouseholdsAsync(_authService.CurrentUsername).Result;
+
+        var households = await _databaseService.LoadHouseholdsAsync(_authService.CurrentUsername);
+
         foreach ((string, string) household in households)
             HouseholdsList.Add($"{household.Item1} - {household.Item2}");
 
         if (HouseholdsList.Count > 0)
+            SelectedHousehold = $"{_databaseService.CurrentHouseholdName} - {_databaseService.CurrentHouseholdAccess}";
+
+        await Shell.Current.DisplayAlert("Debug", $"{SelectedHousehold}", "OK");
+    }
+
+    private async Task UpdateSelectedHouseholdAsync()
+    {
+        try
         {
-            for (int i = 0; i < HouseholdsList.Count; i++)
+            string[] parts = selectedHousehold.Split(" - ");
+            if (parts.Length == 2)
             {
-                if (HouseholdsList[i].Split(" - ")[0] == _databaseService.CurrentHouseholdName)
-                    SelectedHousehold = HouseholdsList[i];
+                string householdAccessCode = parts[1];
+                bool success = await _databaseService.ChangeSelectedHouseholdAsync(_authService.CurrentUsername, householdAccessCode);
+
+                if (!success)
+                    await DisplayErrorAsync("Háztartás váltás sikertelen!");
             }
+        }
+        catch (Exception ex)
+        {
+            await DisplayErrorAsync($"Hiba a háztartás váltásakor: {ex.Message}");
         }
     }
 

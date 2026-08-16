@@ -8,6 +8,7 @@ public interface IDatabaseService
     Task<List<(string, string)>> LoadHouseholdsAsync(string username);
     Task<bool> CreateHouseholdAsync(string username, string householdName);
     Task<bool> JoinHouseholdAsync(string username, string householdAccess);
+    Task<bool> ChangeSelectedHouseholdAsync(string username, string currentHousehold);
     Task<bool> UpdateHouseholdAsync(string newHouseholdName, DateTime householdBudgetMonth, int newHouseholdBudget);
     Task<bool> IsHouseholdOwnerAsync(string username);
 }

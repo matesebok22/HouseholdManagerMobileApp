@@ -33,6 +33,13 @@ public class DatabaseService : IDatabaseService
         if (user == null)
             return [];
 
+        Household? currentHousehold = await _supabaseClient.From<Household>().Where(x => x.HHID == user.CurrentHousehold).Single();
+        if (currentHousehold == null)
+            return [];
+
+        CurrentHouseholdName = currentHousehold.HouseholdName;
+        CurrentHouseholdAccess = currentHousehold.HouseholdAccess;
+
         List<(string, string)> households = [];
 
         if (user.HouseHold1 != null)
@@ -73,7 +80,20 @@ public class DatabaseService : IDatabaseService
             var response = await _supabaseClient.Rpc("create_household", parameters);
 
             if (response.Content != null && response.Content.Trim() == "true")
+            {
+                User? user = await _supabaseClient.From<User>().Where(x => x.Username == username).Single();
+                if (user == null)
+                    return false;
+
+                Household? currentHousehold = await _supabaseClient.From<Household>().Where(x => x.HHID == user.CurrentHousehold).Single();
+                if (currentHousehold == null)
+                    return false;
+
+                CurrentHouseholdName = currentHousehold.HouseholdName;
+                CurrentHouseholdAccess = currentHousehold.HouseholdAccess;
+
                 return true;
+            }
 
             return false;
         }
@@ -128,6 +148,24 @@ public class DatabaseService : IDatabaseService
         }
 
         return false;
+    }
+
+    public async Task<bool> ChangeSelectedHouseholdAsync(string username, string currentHousehold)
+    {
+        Household? household = await _supabaseClient.From<Household>().Where(x => x.HouseholdAccess == currentHousehold).Single();
+        if (household == null)
+            return false;
+
+        User? user = await _supabaseClient.From<User>().Where(x => x.Username == username).Single();
+        if (user == null)
+            return false;
+
+        user.CurrentHousehold = household.HHID;
+        await user.Update<User>();
+        CurrentHouseholdName = household.HouseholdName;
+        CurrentHouseholdAccess = household.HouseholdAccess;
+
+        return true;
     }
 
     public Task<bool> UpdateHouseholdAsync(string newHouseholdName, DateTime householdBudgetMonth, int newHouseholdBudget)
