@@ -9,6 +9,7 @@ public class DatabaseService : IDatabaseService
     public bool CurrentHouseholdOwner { get; private set; } = false;
     public string CurrentHouseholdName { get; private set; } = string.Empty;
     public string CurrentHouseholdAccess { get; private set; } = string.Empty;
+    public List<Budget> CurrentHouseholdBudgets { get; private set; } = [];
 
     public DatabaseService(Client supabaseClient)
     {
@@ -33,10 +34,17 @@ public class DatabaseService : IDatabaseService
         CurrentHouseholdOwner = false;
         CurrentHouseholdName = string.Empty;
         CurrentHouseholdAccess = string.Empty;
+        CurrentHouseholdBudgets.Clear();
 
         User? user = await _supabaseClient.From<User>().Where(x => x.Username == username).Single();
         if (user == null)
             return [];
+
+        if (user.HouseHold1 == null && user.HouseHold2 == null && user.HouseHold3 == null)
+        {
+            user.CurrentHousehold = string.Empty;
+            await user.Update<User>();
+        }
 
         Household? currentHousehold = await _supabaseClient.From<Household>().Where(x => x.HHID == user.CurrentHousehold).Single();
         if (currentHousehold == null)
@@ -70,6 +78,11 @@ public class DatabaseService : IDatabaseService
             households.Add((response.HouseholdName, response.HouseholdAccess));
         }
 
+        // Jelenlegi háztartásban elérhető költségkeretek:
+        var budgets = await _supabaseClient.From<Budget>().Where(x => x.BudgetHousehold == currentHousehold.HHID).Get();
+        foreach (Budget budget in budgets.Models)
+            CurrentHouseholdBudgets.Add(budget);
+            
         return households;
     }
 
@@ -225,6 +238,14 @@ public class DatabaseService : IDatabaseService
             user.CurrentHousehold = "";
 
         await user.Update<User>();
+
+        // Ha a jelenlegi háztartás tulajdonosa, akkor megszünteti a háztartást is.
+        if (CurrentHouseholdOwner)
+        {
+            household.HouseholdOwner = null;
+            await household.Update<Household>();
+            await household.Delete<Household>();
+        }
 
         CurrentHouseholdOwner = false;
         CurrentHouseholdName = string.Empty;

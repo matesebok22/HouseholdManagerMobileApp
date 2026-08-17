@@ -1,10 +1,13 @@
-﻿namespace HouseholdManagerMobileApp.Core.Services;
+﻿using HouseholdManagerMobileApp.Core.Models;
+
+namespace HouseholdManagerMobileApp.Core.Services;
 
 public interface IDatabaseService
 {
     public bool CurrentHouseholdOwner { get; }
     public string CurrentHouseholdName { get; }
     public string CurrentHouseholdAccess { get; }
+    public List<Budget> CurrentHouseholdBudgets { get; }
     Task InitializeAsync();
     Task<List<(string, string)>> LoadHouseholdsAsync(string username);
     Task<bool> CreateHouseholdAsync(string username, string householdName);

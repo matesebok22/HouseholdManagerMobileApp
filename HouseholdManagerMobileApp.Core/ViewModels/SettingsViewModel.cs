@@ -6,7 +6,9 @@ using System.Text;
 using System.Threading.Tasks;
 
 using HouseholdManagerMobileApp.Core.Commands;
+using HouseholdManagerMobileApp.Core.Models;
 using HouseholdManagerMobileApp.Core.Services;
+using Supabase.Storage;
 
 namespace HouseholdManagerMobileApp.Core.ViewModels;
 
@@ -153,6 +155,44 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         }
     }
 
+    private string editHouseholdName = string.Empty;
+    public string EditHouseholdName
+    {
+        get => editHouseholdName;
+        set
+        {
+            if (editHouseholdName == value) return;
+            editHouseholdName = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private DateTime editHouseholdDate = DateTime.Today;
+    public DateTime EditHouseholdDate
+    {
+        get => editHouseholdDate;
+        set
+        {
+            if (editHouseholdDate == value) return;
+            editHouseholdDate = value;
+            OnPropertyChanged();
+
+            LoadSelectedMonthBudgetAsync();
+        }
+    }
+
+    private int editHouseholdBudget;
+    public int EditHouseholdBudget
+    {
+        get => editHouseholdBudget;
+        set
+        {
+            if (editHouseholdBudget == value) return;
+            editHouseholdBudget = value;
+            OnPropertyChanged();
+        }
+    }
+
     private string oldPassword = string.Empty;
     public string OldPassword
     {
@@ -215,7 +255,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         JoinHouseholdButtonCommand = new RelayCommand(async _ => await JoinHouseholdAsync());
         ChangePasswordButtonCommand = new RelayCommand(async _ => await ChangePasswordAsync());
         LeaveHouseholdButtonCommand = new RelayCommand(async _ => await LeaveHouseholdAsync());
-        DisbandHouseholdButtonCommand = new RelayCommand(async _ => await ChangePasswordAsync(), _ => _databaseService.CurrentHouseholdOwner);
+        DisbandHouseholdButtonCommand = new RelayCommand(async _ => await DisbandHouseholdAsync(), _ => _databaseService.CurrentHouseholdOwner);
         LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
 
         WelcomeMessage = $"Üdv, {_authService.Nickname}";
@@ -251,12 +291,16 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
 
         if (HouseholdsList.Count > 0)
             SelectedHousehold = $"{_databaseService.CurrentHouseholdName} - {_databaseService.CurrentHouseholdAccess}";
+
+        LoadSelectedMonthBudgetAsync();
     }
 
     private async Task UpdateSelectedHouseholdAsync()
     {
         try
         {
+            IsCreateHouseholdVisible = IsEditHouseholdVisible = isJoinHouseholdVisible = false;
+
             string[] parts = selectedHousehold.Split(" - ");
             if (parts.Length == 2)
             {
@@ -336,6 +380,9 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
 
     private async Task LeaveHouseholdAsync()
     {
+        if (await Shell.Current.DisplayAlert("Alert", "Biztosan kilép a jelenlegi háztartásból?", "Igen", "Nem") == false)
+            return;
+
         bool success = await _databaseService.LeaveHouseholdAsync(_authService.CurrentUsername);
 
         if (success)
@@ -345,6 +392,22 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         }
         else
             await DisplayErrorAsync("Hiba a háztartásból kilépés közben.");
+    }
+
+    private async Task DisbandHouseholdAsync()
+    {
+        if (await Shell.Current.DisplayAlert("Alert", "Biztosan felbontja a jelenlegi háztartást?", "Igen", "Nem") == false)
+            return;
+
+        bool success = await _databaseService.LeaveHouseholdAsync(_authService.CurrentUsername);
+
+        if (success)
+        {
+            _ = Shell.Current.DisplayAlert("Siker", "Háztartás sikeresen felbontva.", "OK");
+            _ = LoadHouseholdsAsync();
+        }
+        else
+            await DisplayErrorAsync("Hiba a háztartás felbontása közben.");
     }
 
     private async Task ChangePasswordAsync()
@@ -409,6 +472,18 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
             case 1: IsJoinHouseholdVisible = !isVisible; break;
             case 2: IsCreateHouseholdVisible = !isVisible; break;
             case 3: IsEditHouseholdVisible = !isVisible; break;
+        }
+    }
+
+    private void LoadSelectedMonthBudgetAsync()
+    {
+        EditHouseholdBudget = 0;
+        string selectedDate = $"{EditHouseholdDate.Year}. {EditHouseholdDate.Month}.";
+
+        foreach (Budget budget in _databaseService.CurrentHouseholdBudgets)
+        {
+            if (selectedDate == $"{budget.BudgetDate.Year}. {budget.BudgetDate.Month}.")
+                EditHouseholdBudget = budget.BudgetAmount;
         }
     }
 }
