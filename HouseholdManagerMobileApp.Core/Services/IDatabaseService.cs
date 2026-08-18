@@ -13,6 +13,6 @@ public interface IDatabaseService
     Task<bool> CreateHouseholdAsync(string username, string householdName);
     Task<bool> JoinHouseholdAsync(string username, string householdAccess);
     Task<bool> ChangeSelectedHouseholdAsync(string username, string currentHousehold);
-    Task<bool> UpdateHouseholdAsync(string newHouseholdName, DateTime householdBudgetMonth, int newHouseholdBudget);
+    Task<bool> EditHouseholdAsync(string newHouseholdName, DateTime householdBudgetMonth, int newHouseholdBudget);
     Task<bool> LeaveHouseholdAsync(string username);
 }

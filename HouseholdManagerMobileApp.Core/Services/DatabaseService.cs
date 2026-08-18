@@ -198,9 +198,39 @@ public class DatabaseService : IDatabaseService
         return true;
     }
 
-    public Task<bool> UpdateHouseholdAsync(string newHouseholdName, DateTime householdBudgetMonth, int newHouseholdBudget)
+    public async Task<bool> EditHouseholdAsync(string newHouseholdName, DateTime householdBudgetMonth, int newHouseholdBudget)
     {
-        throw new NotImplementedException();
+        string currentDate = $"{householdBudgetMonth.Year}. {householdBudgetMonth.Month}.";
+
+        Household? household = await _supabaseClient.From<Household>().Where(x => x.HouseholdAccess == CurrentHouseholdAccess).Single();
+        if (household == null)
+            return false;
+
+        // Háztartáshoz tartozó összes költségkeret lekérése:
+        var budgets = await _supabaseClient.From<Budget>().Where(x => x.BudgetHousehold == household.HHID).Get();
+        Budget? budget = budgets.Models.FirstOrDefault(x => $"{x.BudgetDate.Year}. {x.BudgetDate.Month}." == currentDate);
+        if (budget == null)
+        {
+            // Ha nem talált meglévő hónapot, akkor készít egy új rekordot a "budgets" táblázatba
+            DateTime newDate = new(householdBudgetMonth.Year, householdBudgetMonth.Month, 1);
+            await _supabaseClient.From<Budget>().Insert(new Budget() { BudgetHousehold = household.HHID, BudgetDate = newDate, BudgetAmount = newHouseholdBudget });
+        }
+        else
+        {
+            if (budget.BudgetAmount != newHouseholdBudget)
+            {
+                budget.BudgetAmount = newHouseholdBudget;
+                await budget.Update<Budget>();
+            }
+        }
+
+        if (household.HouseholdName != newHouseholdName)
+        {
+            household.HouseholdName = newHouseholdName;
+            await household.Update<Household>();
+        }
+        
+        return true;
     }
 
     public async Task<bool> LeaveHouseholdAsync(string username)

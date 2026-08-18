@@ -137,7 +137,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
             // Frissítsd az adatbázist, amikor új háztartást választ ki
             if (!string.IsNullOrEmpty(selectedHousehold))
             {
-                _ = UpdateSelectedHouseholdAsync();
+                _ = ChangeSelectedHouseholdAsync();
             }
         }
     }
@@ -235,6 +235,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
     public RelayCommand ShowEditHouseholdButtonCommand { get; }
     public RelayCommand CreateHouseholdButtonCommand { get; }
     public RelayCommand JoinHouseholdButtonCommand { get; }
+    public RelayCommand EditHouseholdButtonCommand { get; }
     public RelayCommand ChangePasswordButtonCommand { get; }
     public RelayCommand LeaveHouseholdButtonCommand { get; }
     public RelayCommand DisbandHouseholdButtonCommand { get; }
@@ -252,6 +253,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         ShowEditHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(3, IsEditHouseholdVisible)), _ => _databaseService.CurrentHouseholdOwner);
         CreateHouseholdButtonCommand = new RelayCommand(async _ => await CreateHouseholdAsync());
         JoinHouseholdButtonCommand = new RelayCommand(async _ => await JoinHouseholdAsync());
+        EditHouseholdButtonCommand = new RelayCommand(async _ => await EditHouseholdAsync());
         ChangePasswordButtonCommand = new RelayCommand(async _ => await ChangePasswordAsync());
         LeaveHouseholdButtonCommand = new RelayCommand(async _ => await LeaveHouseholdAsync());
         DisbandHouseholdButtonCommand = new RelayCommand(async _ => await DisbandHouseholdAsync(), _ => _databaseService.CurrentHouseholdOwner);
@@ -292,7 +294,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
             SelectedHousehold = $"{_databaseService.CurrentHouseholdName} - {_databaseService.CurrentHouseholdAccess}";
     }
 
-    private async Task UpdateSelectedHouseholdAsync()
+    private async Task ChangeSelectedHouseholdAsync()
     {
         try
         {
@@ -309,7 +311,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
                     ShowEditHouseholdButtonCommand.RefreshCanExecute();
                     DisbandHouseholdButtonCommand.RefreshCanExecute();
 
-                    EditHouseholdName = string.Empty;
+                    EditHouseholdName = _databaseService.CurrentHouseholdName;
                     EditHouseholdDate = DateTime.Today;
                     LoadSelectedMonthBudget();
                 }
@@ -377,6 +379,21 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         }
         else
             await DisplayErrorAsync("Hiba a háztartás elkészítése közben.");
+    }
+
+    private async Task EditHouseholdAsync()
+    {
+        bool success = await _databaseService.EditHouseholdAsync(EditHouseholdName, EditHouseholdDate, EditHouseholdBudget);
+
+        if (success)
+        {
+            _ = Shell.Current.DisplayAlert("Siker", "Háztartás sikeresen módosítva.", "OK");
+
+            IsEditHouseholdVisible = false;
+            _ = LoadHouseholdsAsync();
+        }
+        else
+            await DisplayErrorAsync("Hiba a háztartás módosítása közben.");
     }
 
     private async Task LeaveHouseholdAsync()
