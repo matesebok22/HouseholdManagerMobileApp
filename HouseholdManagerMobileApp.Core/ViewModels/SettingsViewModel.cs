@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using HouseholdManagerMobileApp.Core.Commands;
 using HouseholdManagerMobileApp.Core.Models;
 using HouseholdManagerMobileApp.Core.Services;
-using Supabase.Storage;
 
 namespace HouseholdManagerMobileApp.Core.ViewModels;
 
@@ -177,7 +176,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
             editHouseholdDate = value;
             OnPropertyChanged();
 
-            LoadSelectedMonthBudgetAsync();
+            LoadSelectedMonthBudget();
         }
     }
 
@@ -291,17 +290,15 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
 
         if (HouseholdsList.Count > 0)
             SelectedHousehold = $"{_databaseService.CurrentHouseholdName} - {_databaseService.CurrentHouseholdAccess}";
-
-        LoadSelectedMonthBudgetAsync();
     }
 
     private async Task UpdateSelectedHouseholdAsync()
     {
         try
         {
-            IsCreateHouseholdVisible = IsEditHouseholdVisible = isJoinHouseholdVisible = false;
+            IsCreateHouseholdVisible = IsEditHouseholdVisible = IsJoinHouseholdVisible = false;
 
-            string[] parts = selectedHousehold.Split(" - ");
+            string[] parts = SelectedHousehold.Split(" - ");
             if (parts.Length == 2)
             {
                 string householdAccessCode = parts[1];
@@ -311,6 +308,10 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
                 {
                     ShowEditHouseholdButtonCommand.RefreshCanExecute();
                     DisbandHouseholdButtonCommand.RefreshCanExecute();
+
+                    EditHouseholdName = string.Empty;
+                    EditHouseholdDate = DateTime.Today;
+                    LoadSelectedMonthBudget();
                 }
                 else
                     await DisplayErrorAsync("Háztartás váltás sikertelen!");
@@ -475,7 +476,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         }
     }
 
-    private void LoadSelectedMonthBudgetAsync()
+    private void LoadSelectedMonthBudget()
     {
         EditHouseholdBudget = 0;
         string selectedDate = $"{EditHouseholdDate.Year}. {EditHouseholdDate.Month}.";

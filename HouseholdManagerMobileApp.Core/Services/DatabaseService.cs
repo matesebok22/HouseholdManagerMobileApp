@@ -188,6 +188,12 @@ public class DatabaseService : IDatabaseService
         await user.Update<User>();
         CurrentHouseholdName = household.HouseholdName;
         CurrentHouseholdAccess = household.HouseholdAccess;
+        CurrentHouseholdBudgets.Clear();
+
+        // Jelenlegi háztartásban elérhető költségkeretek:
+        var budgets = await _supabaseClient.From<Budget>().Where(x => x.BudgetHousehold == household.HHID).Get();
+        foreach (Budget budget in budgets.Models)
+            CurrentHouseholdBudgets.Add(budget);
 
         return true;
     }
