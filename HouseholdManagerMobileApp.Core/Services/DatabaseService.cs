@@ -135,6 +135,10 @@ public class DatabaseService : IDatabaseService
         if (user == null)
             return false;
 
+        // Már tagja-e a felhasználó a háztartásnak:
+        if (user.HouseHold1 == household.HHID || user.HouseHold2 == household.HHID || user.HouseHold3 == household.HHID)
+            return false;
+
         // Van-e szabad háztartás hely a felhasználónak:
         if (user.HouseHold1 == null)
         {

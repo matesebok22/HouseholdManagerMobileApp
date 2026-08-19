@@ -344,7 +344,8 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
 
         if (success)
         {
-            _ = Shell.Current.DisplayAlert("Siker", "Háztartáshoz sikeresen csatlakozva.", "OK");
+            if (Shell.Current != null)
+                _ = Shell.Current.DisplayAlert("Siker", "Háztartáshoz sikeresen csatlakozva.", "OK");
             HouseholdAccessCode = string.Empty;
             IsJoinHouseholdVisible = false;
             _ = LoadHouseholdsAsync();
@@ -372,7 +373,8 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
 
         if (success)
         {
-            _ = Shell.Current.DisplayAlert("Siker", "Háztartás sikeresen létrehozva.", "OK");
+            if (Shell.Current != null)
+                _ = Shell.Current.DisplayAlert("Siker", "Háztartás sikeresen létrehozva.", "OK");
             NewHouseholdName = string.Empty;
             IsCreateHouseholdVisible = false;
             _ = LoadHouseholdsAsync();
@@ -387,8 +389,8 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
 
         if (success)
         {
-            _ = Shell.Current.DisplayAlert("Siker", "Háztartás sikeresen módosítva.", "OK");
-
+            if (Shell.Current != null)
+                _ = Shell.Current.DisplayAlert("Siker", "Háztartás sikeresen módosítva.", "OK");
             IsEditHouseholdVisible = false;
             _ = LoadHouseholdsAsync();
         }
@@ -398,14 +400,18 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
 
     private async Task LeaveHouseholdAsync()
     {
-        if (await Shell.Current.DisplayAlert("Alert", "Biztosan kilép a jelenlegi háztartásból?", "Igen", "Nem") == false)
-            return;
+        if (Shell.Current != null)
+        {
+            if (await Shell.Current.DisplayAlert("Alert", "Biztosan kilép a jelenlegi háztartásból?", "Igen", "Nem") == false)
+                return;
+        }
 
         bool success = await _databaseService.LeaveHouseholdAsync(_authService.CurrentUsername);
 
         if (success)
         {
-            _ = Shell.Current.DisplayAlert("Siker", "Háztartásból sikeresen kilépve.", "OK");
+            if (Shell.Current != null)
+                _ = Shell.Current.DisplayAlert("Siker", "Háztartásból sikeresen kilépve.", "OK");
             _ = LoadHouseholdsAsync();
         }
         else
@@ -414,14 +420,18 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
 
     private async Task DisbandHouseholdAsync()
     {
-        if (await Shell.Current.DisplayAlert("Alert", "Biztosan felbontja a jelenlegi háztartást?", "Igen", "Nem") == false)
-            return;
+        if (Shell.Current != null)
+        {
+            if (await Shell.Current.DisplayAlert("Alert", "Biztosan felbontja a jelenlegi háztartást?", "Igen", "Nem") == false)
+                return;
+        }
 
         bool success = await _databaseService.LeaveHouseholdAsync(_authService.CurrentUsername);
 
         if (success)
         {
-            _ = Shell.Current.DisplayAlert("Siker", "Háztartás sikeresen felbontva.", "OK");
+            if (Shell.Current != null)
+                _ = Shell.Current.DisplayAlert("Siker", "Háztartás sikeresen felbontva.", "OK");
             _ = LoadHouseholdsAsync();
         }
         else
