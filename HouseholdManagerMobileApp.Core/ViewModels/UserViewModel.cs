@@ -25,6 +25,18 @@ public class UserViewModel : ViewModelBase
         }
     }
 
+    private string errorMessage = string.Empty;
+    public string ErrorMessage
+    {
+        get => errorMessage;
+        set
+        {
+            if (errorMessage == value) return;
+            errorMessage = value;
+            OnPropertyChanged();
+        }
+    }
+
     private bool isMenuVisible = false;
     public bool IsMenuVisible
     {
@@ -39,6 +51,7 @@ public class UserViewModel : ViewModelBase
 
     public RelayCommand ToggleMenuButtonCommand { get; }
     public RelayCommand NavigateSettingsButtonCommand { get; }
+    public RelayCommand NavigateEventLogButtonCommand { get; }
     public RelayCommand LogoutButtonCommand { get; }
 
     public UserViewModel(IAuthService authService)
@@ -47,6 +60,7 @@ public class UserViewModel : ViewModelBase
 
         ToggleMenuButtonCommand = new RelayCommand(async _ => await Task.Run(() => IsMenuVisible = !IsMenuVisible));
         NavigateSettingsButtonCommand = new RelayCommand(async _ => await NavigateToSettingsAsync());
+        NavigateEventLogButtonCommand = new RelayCommand(async _ => await NavigateToEventLogAsync());
         LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
 
         WelcomeMessage = $"Üdv, {_authService.Nickname}";
@@ -56,7 +70,7 @@ public class UserViewModel : ViewModelBase
     {
         if (_authService.CurrentUsername == string.Empty)
         {
-            _ = Shell.Current.DisplayAlert("Hiba", "A beállításokhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.", "OK");
+            await DisplayErrorAsync("A beállításokhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();
         }
 
@@ -64,10 +78,30 @@ public class UserViewModel : ViewModelBase
         await Shell.Current.GoToAsync("//SettingsPage?test=asd123");
     }
 
+    private async Task NavigateToEventLogAsync()
+    {
+        if (_authService.CurrentUsername == string.Empty)
+        {
+            await DisplayErrorAsync("Az eseménynaplóhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
+            await LogoutAsync();
+            return;
+        }
+
+        IsMenuVisible = false;
+        await Shell.Current.GoToAsync("//EventLogPage");
+    }
+
     private async Task LogoutAsync()
     {
         IsMenuVisible = false;
         WelcomeMessage = string.Empty;
         await _authService.LogoutAsync();
+    }
+
+    private async Task DisplayErrorAsync(string message)
+    {
+        ErrorMessage = message;
+        if (Shell.Current != null)
+            await Shell.Current.DisplayAlert("Hiba", ErrorMessage, "OK");
     }
 }

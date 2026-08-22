@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="HouseholdManagerMobileApp.Views.NewEventPage">
+
+    <Grid RowDefinitions="Auto,*" Padding="0">
+        <!-- Fejléc -->
+        <Grid ColumnDefinitions="Auto,*" Padding="10" BackgroundColor="Grey">
+            <Button Grid.Column="0" Text="☰" FontSize="24" IsEnabled="False" BackgroundColor="Grey" TextColor="White" Padding="0" WidthRequest="44"/>
+            <Label Grid.Column="1" Text="{Binding WelcomeMessage}" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" Margin="10,0,0,0"/>
+        </Grid>
+
+        <!-- Fő tartalom -->
+        <VerticalStackLayout Grid.Row="1" Padding="10">
+            <Label Text="Most az esemény létrehozó ablakban vagy!" HorizontalOptions="Center"/>
+            <Button Text="Vissza az eseménynaplóba" Command="{Binding NavigateEventLogButtonCommand}"/>
+            <Button Text="Esemény létrehozása" Command="{Binding CreateEventButtonCommand}"/>
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>

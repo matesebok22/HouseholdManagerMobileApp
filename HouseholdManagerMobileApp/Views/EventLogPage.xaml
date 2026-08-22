@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="HouseholdManagerMobileApp.Views.EventLogPage">
+
+    <Grid RowDefinitions="Auto,*" Padding="0">
+        <!-- Fejléc -->
+        <Grid ColumnDefinitions="Auto,*" Padding="10" BackgroundColor="Grey">
+            <Button Grid.Column="0" Text="☰" FontSize="24" Command="{Binding ToggleMenuButtonCommand}" BackgroundColor="Grey" TextColor="White" Padding="0" WidthRequest="44"/>
+            <Label Grid.Column="1" Text="{Binding WelcomeMessage}" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" Margin="10,0,0,0"/>
+        </Grid>
+
+        <!-- Menü -->
+        <Grid Grid.Row="1" IsVisible="{Binding IsMenuVisible}" BackgroundColor="DarkGrey" WidthRequest="250" ZIndex="30" Padding="0" HorizontalOptions="Start">
+            <VerticalStackLayout Padding="20" Spacing="10">
+                <Button Text="Kezdőlap" Command="{Binding NavigateHomeButtonCommand}" BackgroundColor="DarkGrey" TextColor="White"/>
+                <Button Text="Eseménynapló" IsEnabled="False" BackgroundColor="DarkGrey" TextColor="White"/>
+                <Button Text="Beállítások" Command="{Binding NavigateSettingsButtonCommand}" BackgroundColor="DarkGrey" TextColor="White"/>
+                <Button Text="Kijelentkezés" Command="{Binding LogoutButtonCommand}" BackgroundColor="#e65247" TextColor="White"/>
+            </VerticalStackLayout>
+        </Grid>
+
+        <BoxView Grid.Row="1" BackgroundColor="Black" Opacity="0.7" IsVisible="{Binding IsMenuVisible}" ZIndex="20"/>
+
+        <!-- Fő tartalom -->
+        <VerticalStackLayout Grid.Row="1" Padding="10">
+            <Label Text="TESZTHÁZTARTÁS" HorizontalOptions="Center" FontSize="30"/>
+            <Button Text="Új esemény létrehozása" Command="{Binding NavigateNewEventButtonCommand}"/>
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>

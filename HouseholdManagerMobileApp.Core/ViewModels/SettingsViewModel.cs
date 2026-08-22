@@ -230,6 +230,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
 
     public RelayCommand ToggleMenuButtonCommand { get; }
     public RelayCommand NavigateHomeButtonCommand { get; }
+    public RelayCommand NavigateEventLogButtonCommand { get; }
     public RelayCommand ShowJoinHouseholdButtonCommand { get; }
     public RelayCommand ShowCreateHouseholdButtonCommand { get; }
     public RelayCommand ShowEditHouseholdButtonCommand { get; }
@@ -248,6 +249,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
 
         ToggleMenuButtonCommand = new RelayCommand(async _ => await Task.Run(() => IsMenuVisible = !IsMenuVisible));
         NavigateHomeButtonCommand = new RelayCommand(async _ => await NavigateToHomeAsync());
+        NavigateEventLogButtonCommand = new RelayCommand(async _ => await NavigateToEventLogAsync());
         ShowJoinHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(1, IsJoinHouseholdVisible)));
         ShowCreateHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(2, IsCreateHouseholdVisible)));
         ShowEditHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(3, IsEditHouseholdVisible)), _ => _databaseService.CurrentHouseholdOwner);
@@ -279,6 +281,19 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
 
         IsMenuVisible = false;
         await Shell.Current.GoToAsync("//UserPage");
+    }
+
+    private async Task NavigateToEventLogAsync()
+    {
+        if (_authService.CurrentUsername == string.Empty)
+        {
+            await DisplayErrorAsync("Az eseménynaplóhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
+            await LogoutAsync();
+            return;
+        }
+
+        IsMenuVisible = false;
+        await Shell.Current.GoToAsync("//EventLogPage");
     }
 
     private async Task LoadHouseholdsAsync()
