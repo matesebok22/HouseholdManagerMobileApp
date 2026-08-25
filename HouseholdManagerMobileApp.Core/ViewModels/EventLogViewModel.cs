@@ -12,6 +12,7 @@ namespace HouseholdManagerMobileApp.Core.ViewModels;
 public class EventLogViewModel : ViewModelBase
 {
     private readonly IAuthService _authService;
+    private readonly IUserSessionService _userSessionService;
 
     private string welcomeMessage = string.Empty;
     public string WelcomeMessage
@@ -55,9 +56,10 @@ public class EventLogViewModel : ViewModelBase
     public RelayCommand NavigateNewEventButtonCommand { get; }
     public RelayCommand LogoutButtonCommand { get; }
 
-    public EventLogViewModel(IAuthService authService)
+    public EventLogViewModel(IAuthService authService, IUserSessionService userSessionService)
     {
         _authService = authService;
+        _userSessionService = userSessionService;
 
         ToggleMenuButtonCommand = new RelayCommand(async _ => await Task.Run(() => IsMenuVisible = !IsMenuVisible));
         NavigateHomeButtonCommand = new RelayCommand(async _ => await NavigateToHomeAsync());
@@ -65,12 +67,12 @@ public class EventLogViewModel : ViewModelBase
         NavigateNewEventButtonCommand = new RelayCommand(async _ => await NavigateToNewEventAsync());
         LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
 
-        WelcomeMessage = $"Üdv, {_authService.Nickname}";
+        WelcomeMessage = $"Üdv, {_userSessionService.GetCurrentUser().Nickname}";
     }
 
     private async Task NavigateToHomeAsync()
     {
-        if (_authService.CurrentUsername == string.Empty)
+        if (!_userSessionService.IsUserLoggedIn())
         {
             await DisplayErrorAsync("A főoldalhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();
@@ -82,7 +84,7 @@ public class EventLogViewModel : ViewModelBase
 
     private async Task NavigateToSettingsAsync()
     {
-        if (_authService.CurrentUsername == string.Empty)
+        if (!_userSessionService.IsUserLoggedIn())
         {
             await DisplayErrorAsync("A beállításokhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();
@@ -94,7 +96,7 @@ public class EventLogViewModel : ViewModelBase
 
     private async Task NavigateToNewEventAsync()
     {
-        if (_authService.CurrentUsername == string.Empty)
+        if (!_userSessionService.IsUserLoggedIn())
         {
             await DisplayErrorAsync("Az új esemény létrehozásához való navigálás sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();

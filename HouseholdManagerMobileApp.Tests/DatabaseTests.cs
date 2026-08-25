@@ -1,8 +1,9 @@
-﻿using NUnit.Framework;
-using Moq;
-
+﻿using HouseholdManagerMobileApp.Core.Models;
 using HouseholdManagerMobileApp.Core.Services;
 using HouseholdManagerMobileApp.Core.ViewModels;
+using Moq;
+using NUnit.Framework;
+using NUnit.Framework.Internal;
 
 namespace HouseholdManagerMobileApp.Tests;
 
@@ -11,12 +12,14 @@ public class DatabaseTests
 {
     private Mock<IAuthService> _mockAuthService;
     private Mock<IDatabaseService> _mockDatabaseService;
+    private Mock<IUserSessionService> _mockUserSessionService;
 
     [SetUp]
     public void Setup()
     {
         _mockAuthService = new Mock<IAuthService>();
         _mockDatabaseService = new Mock<IDatabaseService>();
+        _mockUserSessionService = new Mock<IUserSessionService>();
     }
 
     // Háztartás készítésének tesztelése:
@@ -24,8 +27,11 @@ public class DatabaseTests
     public void CreateHouseholdAsync_NotLoggedIn()
     {
         // Arrange
-        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object);
-        _mockAuthService.Setup(x => x.CurrentUsername).Returns(string.Empty);
+        var mockUser = new User { Nickname = "TestUser" };
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+
+        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(false);
 
         // Act
         viewModel.CreateHouseholdButtonCommand.Execute(string.Empty);
@@ -38,7 +44,11 @@ public class DatabaseTests
     public void CreateHouseholdAsync_EmptyName()
     {
         // Arrange
-        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object);
+        var mockUser = new User { Nickname = "TestUser" };
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+
+        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
         viewModel.NewHouseholdName = string.Empty;
 
         // Act
@@ -52,8 +62,12 @@ public class DatabaseTests
     public void CreateHouseholdAsync_TooManyHouseholds()
     {
         // Arrange
-        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object);
-        _mockDatabaseService.Setup(x => x.CreateHouseholdAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(false);
+        var mockUser = new User { Nickname = "TestUser" };
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+
+        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
+        _mockDatabaseService.Setup(x => x.CreateHouseholdAsync(It.IsAny<string>())).ReturnsAsync(false);
         viewModel.NewHouseholdName = "testhh";
 
         // Act
@@ -67,13 +81,20 @@ public class DatabaseTests
     public void CreateHouseholdAsync_Successful()
     {
         // Arrange
-        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object);
-        _mockAuthService.Setup(x => x.CurrentUsername).Returns("testuser");
-        _mockDatabaseService.Setup(x => x.CreateHouseholdAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
-        _mockDatabaseService.Setup(x => x.LoadHouseholdsAsync(It.IsAny<string>())).ReturnsAsync([("testhh", "ASD123")]);
-        _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
-        _mockDatabaseService.Setup(x => x.CurrentHouseholdName).Returns("testhh");
-        _mockDatabaseService.Setup(x => x.CurrentHouseholdBudgets).Returns([]);
+        var mockUser = new User { Nickname = "TestUser", Username = "testuser" };
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+
+        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
+        _mockDatabaseService.Setup(x => x.CreateHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
+        _mockDatabaseService.Setup(x => x.LoadHouseholdsAsync()).ReturnsAsync(true);
+        _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
+        var mockHousehold = new Household { HouseholdName = "testhh", HouseholdAccess = "ASD123" };
+        _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(mockHousehold);
+        var householdList = new List<Household> { mockHousehold };
+        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdList()).Returns(householdList);
+
+        _mockUserSessionService.Setup(x => x.GetCurrentBudgets()).Returns([]);
         viewModel.NewHouseholdName = "testhh";
 
         // Act
@@ -89,8 +110,11 @@ public class DatabaseTests
     public void JoinHouseholdAsync_NotLoggedIn()
     {
         // Arrange
-        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object);
-        _mockAuthService.Setup(x => x.CurrentUsername).Returns(string.Empty);
+        var mockUser = new User { Nickname = "TestUser", Username = "testuser" };
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+
+        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(false);
 
         // Act
         viewModel.JoinHouseholdButtonCommand.Execute(string.Empty);
@@ -104,8 +128,13 @@ public class DatabaseTests
     public void JoinHouseholdAsync_EmptyHouseholdAccess(string householdAccess)
     {
         // Arrange
-        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object);
+        var mockUser = new User { Nickname = "TestUser", Username = "testuser" };
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+
+        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
         viewModel.HouseholdAccessCode = householdAccess;
+
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
 
         // Act
         viewModel.JoinHouseholdButtonCommand.Execute(string.Empty);
@@ -118,8 +147,12 @@ public class DatabaseTests
     public void JoinHouseholdAsync_TooManyHouseholds()
     {
         // Arrange
-        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object);
-        _mockDatabaseService.Setup(x => x.JoinHouseholdAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(false);
+        var mockUser = new User { Nickname = "TestUser", Username = "testuser" };
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+
+        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        _mockDatabaseService.Setup(x => x.JoinHouseholdAsync(It.IsAny<string>())).ReturnsAsync(false);
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
         viewModel.HouseholdAccessCode = "ASD123";
 
         // Act
@@ -133,13 +166,21 @@ public class DatabaseTests
     public void JoinHouseholdAsync_Successful()
     {
         // Arrange
-        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object);
-        _mockDatabaseService.Setup(x => x.JoinHouseholdAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
-        _mockAuthService.Setup(x => x.CurrentUsername).Returns("testuser");
-        _mockDatabaseService.Setup(x => x.LoadHouseholdsAsync(It.IsAny<string>())).ReturnsAsync([("testhh", "ASD123")]);
-        _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
-        _mockDatabaseService.Setup(x => x.CurrentHouseholdName).Returns("testhh");
-        _mockDatabaseService.Setup(x => x.CurrentHouseholdBudgets).Returns([]);
+        var mockUser = new User { Nickname = "TestUser", Username = "testuser" };
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+        var mockHousehold = new Household { HouseholdName = "testhh", HouseholdAccess = "ASD123" };
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+        var householdList = new List<Household> { mockHousehold };
+        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdList()).Returns(householdList);
+
+        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
+        _mockDatabaseService.Setup(x => x.JoinHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+        _mockDatabaseService.Setup(x => x.LoadHouseholdsAsync()).ReturnsAsync(true);
+        _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
+        _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(mockHousehold);
+        _mockUserSessionService.Setup(x => x.GetCurrentBudgets()).Returns([]);
         viewModel.NewHouseholdName = "testhh";
         viewModel.HouseholdAccessCode = "ASD123";
 
@@ -156,7 +197,10 @@ public class DatabaseTests
     public void EditHouseholdAsync_CurrentHouseholdNotExist()
     {
         // Arrange
-        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object);
+        var mockUser = new User { Nickname = "TestUser", Username = "testuser" };
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+
+        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
         _mockDatabaseService.Setup(x => x.EditHouseholdAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<int>())).ReturnsAsync(false);
 
         // Act
@@ -170,13 +214,20 @@ public class DatabaseTests
     public void EditHouseholdAsync_Successful()
     {
         // Arrange
-        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object);
+        var mockUser = new User { Nickname = "TestUser", Username = "testuser" };
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+        var mockHousehold = new Household { HouseholdName = "testhh", HouseholdAccess = "ASD123" };
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+        var householdList = new List<Household> { mockHousehold };
+        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdList()).Returns(householdList);
+
+        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
         _mockDatabaseService.Setup(x => x.EditHouseholdAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<int>())).ReturnsAsync(true);
-        _mockAuthService.Setup(x => x.CurrentUsername).Returns("testuser");
-        _mockDatabaseService.Setup(x => x.LoadHouseholdsAsync(It.IsAny<string>())).ReturnsAsync([("testhh", "ASD123")]);
-        _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
-        _mockDatabaseService.Setup(x => x.CurrentHouseholdName).Returns("testhh");
-        _mockDatabaseService.Setup(x => x.CurrentHouseholdBudgets).Returns([]);
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+        _mockDatabaseService.Setup(x => x.LoadHouseholdsAsync()).ReturnsAsync(true);
+        _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
+        _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(mockHousehold);
+        _mockUserSessionService.Setup(x => x.GetCurrentBudgets()).Returns([]);
         viewModel.NewHouseholdName = "testhh";
         viewModel.HouseholdAccessCode = "ASD123";
 
@@ -193,8 +244,11 @@ public class DatabaseTests
     public void LeaveHouseholdAsync_CurrentHouseholdNotExist()
     {
         // Arrange
-        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object);
-        _mockDatabaseService.Setup(x => x.LeaveHouseholdAsync(It.IsAny<string>())).ReturnsAsync(false);
+        var mockUser = new User { Nickname = "TestUser", Username = "testuser" };
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+
+        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        _mockDatabaseService.Setup(x => x.LeaveHouseholdAsync()).ReturnsAsync(false);
 
         // Act
         viewModel.LeaveHouseholdButtonCommand.Execute(string.Empty);
@@ -207,13 +261,20 @@ public class DatabaseTests
     public void LeaveHouseholdAsync_Successful()
     {
         // Arrange
-        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object);
-        _mockDatabaseService.Setup(x => x.LeaveHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
-        _mockAuthService.Setup(x => x.CurrentUsername).Returns("testuser");
-        _mockDatabaseService.Setup(x => x.LoadHouseholdsAsync(It.IsAny<string>())).ReturnsAsync([("testhh", "ASD123")]);
-        _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
-        _mockDatabaseService.Setup(x => x.CurrentHouseholdName).Returns("testhh");
-        _mockDatabaseService.Setup(x => x.CurrentHouseholdBudgets).Returns([]);
+        var mockUser = new User { Nickname = "TestUser", Username = "testuser" };
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+        var mockHousehold = new Household { HouseholdName = "testhh", HouseholdAccess = "ASD123" };
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+        var householdList = new List<Household> { mockHousehold };
+        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdList()).Returns(householdList);
+
+        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        _mockDatabaseService.Setup(x => x.LeaveHouseholdAsync()).ReturnsAsync(true);
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+        _mockDatabaseService.Setup(x => x.LoadHouseholdsAsync()).ReturnsAsync(true);
+        _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
+        _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(mockHousehold);
+        _mockUserSessionService.Setup(x => x.GetCurrentBudgets()).Returns([]);
         viewModel.NewHouseholdName = "testhh";
         viewModel.HouseholdAccessCode = "ASD123";
 
@@ -230,8 +291,11 @@ public class DatabaseTests
     public void DisbandHouseholdAsync_CurrentHouseholdNotExist()
     {
         // Arrange
-        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object);
-        _mockDatabaseService.Setup(x => x.LeaveHouseholdAsync(It.IsAny<string>())).ReturnsAsync(false);
+        var mockUser = new User { Nickname = "TestUser", Username = "testuser" };
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+
+        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        _mockDatabaseService.Setup(x => x.LeaveHouseholdAsync()).ReturnsAsync(false);
 
         // Act
         viewModel.DisbandHouseholdButtonCommand.Execute(string.Empty);
@@ -244,13 +308,20 @@ public class DatabaseTests
     public void DisbandHouseholdAsync_Successful()
     {
         // Arrange
-        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object);
-        _mockDatabaseService.Setup(x => x.LeaveHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
-        _mockAuthService.Setup(x => x.CurrentUsername).Returns("testuser");
-        _mockDatabaseService.Setup(x => x.LoadHouseholdsAsync(It.IsAny<string>())).ReturnsAsync([("testhh", "ASD123")]);
-        _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
-        _mockDatabaseService.Setup(x => x.CurrentHouseholdName).Returns("testhh");
-        _mockDatabaseService.Setup(x => x.CurrentHouseholdBudgets).Returns([]);
+        var mockUser = new User { Nickname = "TestUser", Username = "testuser" };
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+        var mockHousehold = new Household { HouseholdName = "testhh", HouseholdAccess = "ASD123" };
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+        var householdList = new List<Household> { mockHousehold };
+        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdList()).Returns(householdList);
+
+        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        _mockDatabaseService.Setup(x => x.LeaveHouseholdAsync()).ReturnsAsync(true);
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+        _mockDatabaseService.Setup(x => x.LoadHouseholdsAsync()).ReturnsAsync(true);
+        _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
+        _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(mockHousehold);
+        _mockUserSessionService.Setup(x => x.GetCurrentBudgets()).Returns([]);
         viewModel.NewHouseholdName = "testhh";
         viewModel.HouseholdAccessCode = "ASD123";
 

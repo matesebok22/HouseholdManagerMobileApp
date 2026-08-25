@@ -12,6 +12,7 @@ namespace HouseholdManagerMobileApp.Core.ViewModels;
 public class UserViewModel : ViewModelBase
 {
     private readonly IAuthService _authService;
+    private readonly IUserSessionService _userSessionService;
 
     private string welcomeMessage = string.Empty;
     public string WelcomeMessage
@@ -54,21 +55,22 @@ public class UserViewModel : ViewModelBase
     public RelayCommand NavigateEventLogButtonCommand { get; }
     public RelayCommand LogoutButtonCommand { get; }
 
-    public UserViewModel(IAuthService authService)
+    public UserViewModel(IAuthService authService, IUserSessionService userSessionService)
     {
         _authService = authService;
+        _userSessionService = userSessionService;
 
         ToggleMenuButtonCommand = new RelayCommand(async _ => await Task.Run(() => IsMenuVisible = !IsMenuVisible));
         NavigateSettingsButtonCommand = new RelayCommand(async _ => await NavigateToSettingsAsync());
         NavigateEventLogButtonCommand = new RelayCommand(async _ => await NavigateToEventLogAsync());
         LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
 
-        WelcomeMessage = $"Üdv, {_authService.Nickname}";
+        WelcomeMessage = $"Üdv, {_userSessionService.GetCurrentUser().Nickname}";
     }
 
     private async Task NavigateToSettingsAsync()
     {
-        if (_authService.CurrentUsername == string.Empty)
+        if (!_userSessionService.IsUserLoggedIn())
         {
             await DisplayErrorAsync("A beállításokhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();
@@ -80,7 +82,7 @@ public class UserViewModel : ViewModelBase
 
     private async Task NavigateToEventLogAsync()
     {
-        if (_authService.CurrentUsername == string.Empty)
+        if (!_userSessionService.IsUserLoggedIn())
         {
             await DisplayErrorAsync("Az eseménynaplóhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();

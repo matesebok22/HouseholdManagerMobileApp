@@ -12,6 +12,7 @@ namespace HouseholdManagerMobileApp.Core.ViewModels;
 public class NewEventViewModel : ViewModelBase
 {
     private readonly IAuthService _authService;
+    private readonly IUserSessionService _userSessionService;
 
     private string welcomeMessage = string.Empty;
     public string WelcomeMessage
@@ -40,19 +41,20 @@ public class NewEventViewModel : ViewModelBase
     public RelayCommand NavigateEventLogButtonCommand { get; }
     //public RelayCommand CreateEventButtonCommand { get; }
 
-    public NewEventViewModel(IAuthService authService)
+    public NewEventViewModel(IAuthService authService, IUserSessionService userSessionService)
     {
         _authService = authService;
+        _userSessionService = userSessionService;
 
         NavigateEventLogButtonCommand = new RelayCommand(async _ => await NavigateToEventLogAsync());
         //CreateEventButtonCommand = new RelayCommand(async _ => await CreateEventAsync());
 
-        WelcomeMessage = $"Üdv, {_authService.Nickname}";
+        WelcomeMessage = $"Üdv, {_userSessionService.GetCurrentUser().Nickname}";
     }
 
     private async Task NavigateToEventLogAsync()
     {
-        if (_authService.CurrentUsername == string.Empty)
+        if (!_userSessionService.IsUserLoggedIn())
         {
             await DisplayErrorAsync("Az eseménynaplóhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();

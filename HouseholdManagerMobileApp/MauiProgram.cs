@@ -25,6 +25,7 @@ namespace HouseholdManagerMobileApp
             builder.Services.AddSingleton(provider => new Client(Constants.SupabaseUrl, Constants.SupabaseKey, new SupabaseOptions() { AutoConnectRealtime = true }));
 
             // Szolgáltatások regisztrálása:
+            builder.Services.AddSingleton<IUserSessionService, UserSessionService>();
             builder.Services.AddSingleton<IDatabaseService, DatabaseService>();
             builder.Services.AddSingleton<IAuthService, AuthService>();
 

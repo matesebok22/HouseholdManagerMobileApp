@@ -3,6 +3,7 @@ using Moq;
 
 using HouseholdManagerMobileApp.Core.Services;
 using HouseholdManagerMobileApp.Core.ViewModels;
+using HouseholdManagerMobileApp.Core.Models;
 
 namespace HouseholdManagerMobileApp.Tests;
 
@@ -11,12 +12,14 @@ public class AuthTests
 {
     private Mock<IAuthService> _mockAuthService;
     private Mock<IDatabaseService> _mockDatabaseService;
+    private Mock<IUserSessionService> _mockUserSessionService;
 
     [SetUp]
     public void Setup()
     {
         _mockAuthService = new Mock<IAuthService>();
         _mockDatabaseService = new Mock<IDatabaseService>();
+        _mockUserSessionService = new Mock<IUserSessionService>();
     }
 
     // Regisztráció tesztelése:
@@ -154,8 +157,11 @@ public class AuthTests
     public void ChangePasswordAsync_NotLoggedIn()
     {
         // Arrange
-        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object);
-        _mockAuthService.Setup(x => x.CurrentUsername).Returns(string.Empty);
+        var mockUser = new User { Nickname = "TestUser" };
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(false);
+
+        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
 
         // Act
         viewModel.ChangePasswordButtonCommand.Execute(string.Empty);
@@ -170,7 +176,11 @@ public class AuthTests
     public void ChangePasswordAsync_EmptyInputs(string oldpass, string newpass1, string newpass2)
     {
         // Arrange
-        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object);
+        var mockUser = new User { Nickname = "TestUser" };
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
+
+        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
         viewModel.OldPassword = oldpass;
         viewModel.NewPassword = newpass1;
         viewModel.ConfirmNewPassword = newpass2;
@@ -187,7 +197,11 @@ public class AuthTests
     public void ChangePasswordAsync_OldNewPasswordSame(string oldpass, string newpass1, string newpass2)
     {
         // Arrange
-        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object);
+        var mockUser = new User { Nickname = "TestUser" };
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
+
+        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
         viewModel.OldPassword = oldpass;
         viewModel.NewPassword = newpass1;
         viewModel.ConfirmNewPassword = newpass2;
@@ -203,7 +217,11 @@ public class AuthTests
     public void ChangePasswordAsync_NewPasswordsNotSame()
     {
         // Arrange
-        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object);
+        var mockUser = new User { Nickname = "TestUser" };
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
+
+        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
         viewModel.OldPassword = "oldpassword";
         viewModel.NewPassword = "newpassword";
         viewModel.ConfirmNewPassword = "newpass";
@@ -219,7 +237,11 @@ public class AuthTests
     public void ChangePasswordAsync_OldCurrentPasswordNotSame()
     {
         // Arrange
-        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object);
+        var mockUser = new User { Nickname = "TestUser" };
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
+
+        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
         _mockAuthService.Setup(x => x.ChangePasswordAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(false);
         viewModel.OldPassword = "oldpassword";
         viewModel.NewPassword = "newpassword";
@@ -236,7 +258,11 @@ public class AuthTests
     public void ChangePasswordAsync_Successful()
     {
         // Arrange
-        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object);
+        var mockUser = new User { Nickname = "TestUser" };
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
+
+        var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
         _mockAuthService.Setup(x => x.ChangePasswordAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
         viewModel.OldPassword = "oldpassword";
         viewModel.NewPassword = "newpassword";
