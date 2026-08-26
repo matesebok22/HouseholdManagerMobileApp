@@ -11,4 +11,7 @@ public interface IDatabaseService
     Task<bool> ChangeSelectedHouseholdAsync(string currentHousehold);
     Task<bool> EditHouseholdAsync(string newHouseholdName, DateTime householdBudgetMonth, int newHouseholdBudget);
     Task<bool> LeaveHouseholdAsync();
+    Task<bool> CreateEventAsync(string eventName, DateTime eventUserDate, string eventType, int eventCost, string eventDesc);
+    Task<bool> EditEventAsync();
+    Task<bool> DeleteEventAsync();
 }

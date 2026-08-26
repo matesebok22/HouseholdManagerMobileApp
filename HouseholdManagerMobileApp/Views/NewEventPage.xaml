@@ -3,18 +3,33 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="HouseholdManagerMobileApp.Views.NewEventPage">
 
-    <Grid RowDefinitions="Auto,*" Padding="0">
-        <!-- Fejléc -->
-        <Grid ColumnDefinitions="Auto,*" Padding="10" BackgroundColor="Grey">
-            <Button Grid.Column="0" Text="☰" FontSize="24" IsEnabled="False" BackgroundColor="Grey" TextColor="White" Padding="0" WidthRequest="44"/>
-            <Label Grid.Column="1" Text="{Binding WelcomeMessage}" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" Margin="10,0,0,0"/>
-        </Grid>
+    <ScrollView>
+        <Grid RowDefinitions="Auto,*" Padding="0">
+            <!-- Fejléc -->
+            <Grid ColumnDefinitions="Auto,*" Padding="10" BackgroundColor="Grey">
+                <Button Grid.Column="0" Text="☰" FontSize="24" IsEnabled="False" BackgroundColor="Grey" TextColor="White" Padding="0" WidthRequest="44"/>
+                <Label Grid.Column="1" Text="{Binding WelcomeMessage}" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" Margin="10,0,0,0"/>
+            </Grid>
 
-        <!-- Fő tartalom -->
-        <VerticalStackLayout Grid.Row="1" Padding="10">
-            <Label Text="Most az esemény létrehozó ablakban vagy!" HorizontalOptions="Center"/>
-            <Button Text="Vissza az eseménynaplóba" Command="{Binding NavigateEventLogButtonCommand}"/>
-            <Button Text="Esemény létrehozása" Command="{Binding CreateEventButtonCommand}"/>
-        </VerticalStackLayout>
-    </Grid>
+            <!-- Fő tartalom -->
+            <VerticalStackLayout Grid.Row="1" Padding="10" Spacing="15" VerticalOptions="Center">
+                <Label Text="Esemény létrehozása" HorizontalOptions="Center" FontSize="Large"/>
+
+                <Entry Placeholder="Esemény neve (maximum 30 karakter)" Text="{Binding EventName}"/>
+                <HorizontalStackLayout>
+                    <Label Text="Esemény dátum: " VerticalOptions="Center"/>
+                    <DatePicker Date="{Binding EventDate}" Margin="10, 0, 0, 0"/>
+                    <TimePicker Time="{Binding EventTime}" Margin="10, 0, 0, 0"/>
+                </HorizontalStackLayout>
+                <Entry Placeholder="Esemény típusa (opcionális, maximum 20 karakter)" Text="{Binding EventType}"/>
+                <Entry Placeholder="Esemény költsége" Text="{Binding EventCost}"/>
+                <Editor Placeholder="Esemény leírása (opcionális, maximum 500 karakter)" Text="{Binding EventDesc}" AutoSize="TextChanges"/>
+
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="5" Padding="10">
+                    <Button Grid.Column="0" Text="Vissza az eseménynaplóba" Command="{Binding NavigateEventLogButtonCommand}" LineBreakMode="WordWrap" Margin="0, 0, 20, 0"/>
+                    <Button Grid.Column="1" Text="Esemény létrehozása" Command="{Binding CreateEventButtonCommand}" LineBreakMode="WordWrap" Margin="20, 0, 0, 0"/>
+                </Grid>
+            </VerticalStackLayout>
+        </Grid>
+    </ScrollView>
 </ContentPage>

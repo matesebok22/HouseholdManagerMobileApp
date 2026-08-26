@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 using HouseholdManagerMobileApp.Core.Commands;
+using HouseholdManagerMobileApp.Core.Models;
 using HouseholdManagerMobileApp.Core.Services;
 
 namespace HouseholdManagerMobileApp.Core.ViewModels;
@@ -12,6 +14,7 @@ namespace HouseholdManagerMobileApp.Core.ViewModels;
 public class EventLogViewModel : ViewModelBase
 {
     private readonly IAuthService _authService;
+    private readonly IDatabaseService _databaseService;
     private readonly IUserSessionService _userSessionService;
 
     private string welcomeMessage = string.Empty;
@@ -38,6 +41,30 @@ public class EventLogViewModel : ViewModelBase
         }
     }
 
+    private string currentHouseholdName = string.Empty;
+    public string CurrentHouseholdName
+    {
+        get => currentHouseholdName;
+        set
+        {
+            if (currentHouseholdName == value) return;
+            currentHouseholdName = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private ObservableCollection<Event> eventLog = [];
+    public ObservableCollection<Event> EventLog
+    {
+        get => eventLog;
+        set
+        {
+            if (eventLog == value) return;
+            eventLog = value;
+            OnPropertyChanged();
+        }
+    }
+
     private bool isMenuVisible = false;
     public bool IsMenuVisible
     {
@@ -56,9 +83,10 @@ public class EventLogViewModel : ViewModelBase
     public RelayCommand NavigateNewEventButtonCommand { get; }
     public RelayCommand LogoutButtonCommand { get; }
 
-    public EventLogViewModel(IAuthService authService, IUserSessionService userSessionService)
+    public EventLogViewModel(IAuthService authService, IDatabaseService databaseService, IUserSessionService userSessionService)
     {
         _authService = authService;
+        _databaseService = databaseService;
         _userSessionService = userSessionService;
 
         ToggleMenuButtonCommand = new RelayCommand(async _ => await Task.Run(() => IsMenuVisible = !IsMenuVisible));
@@ -68,6 +96,8 @@ public class EventLogViewModel : ViewModelBase
         LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
 
         WelcomeMessage = $"Üdv, {_userSessionService.GetCurrentUser().Nickname}";
+        CurrentHouseholdName = _userSessionService.GetCurrentHousehold().HouseholdName;
+        _ = LoadEventlogAsync();
     }
 
     private async Task NavigateToHomeAsync()
@@ -104,6 +134,18 @@ public class EventLogViewModel : ViewModelBase
         }
 
         await Shell.Current.GoToAsync("//NewEventPage");
+    }
+
+    private async Task LoadEventlogAsync()
+    {
+        EventLog.Clear();
+
+        bool success = await _databaseService.LoadHouseholdsAsync();
+        if (success)
+        {
+            foreach (Event _event in _userSessionService.GetCurrentEventLog())
+                EventLog.Add(_event);
+        }
     }
 
     private async Task LogoutAsync()

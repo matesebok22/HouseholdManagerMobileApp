@@ -259,7 +259,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         JoinHouseholdButtonCommand = new RelayCommand(async _ => await JoinHouseholdAsync());
         EditHouseholdButtonCommand = new RelayCommand(async _ => await EditHouseholdAsync());
         ChangePasswordButtonCommand = new RelayCommand(async _ => await ChangePasswordAsync());
-        LeaveHouseholdButtonCommand = new RelayCommand(async _ => await LeaveHouseholdAsync());
+        LeaveHouseholdButtonCommand = new RelayCommand(async _ => await LeaveHouseholdAsync(), _ => !_userSessionService.IsCurrentHouseholdOwner());
         DisbandHouseholdButtonCommand = new RelayCommand(async _ => await DisbandHouseholdAsync(), _ => _userSessionService.IsCurrentHouseholdOwner());
         LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
 
@@ -326,6 +326,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
                 if (success)
                 {
                     ShowEditHouseholdButtonCommand.RefreshCanExecute();
+                    LeaveHouseholdButtonCommand.RefreshCanExecute();
                     DisbandHouseholdButtonCommand.RefreshCanExecute();
 
                     EditHouseholdName = _userSessionService.GetCurrentHousehold().HouseholdName;
