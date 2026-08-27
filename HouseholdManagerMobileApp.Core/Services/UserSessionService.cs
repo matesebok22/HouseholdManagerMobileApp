@@ -23,6 +23,7 @@ public class UserSessionService : IUserSessionService
     public List<Budget> GetCurrentBudgets() => currentBudgets;
     public List<Event> GetCurrentEventLog() => currentEventLog;
     public Event? GetSelectedEvent() => selectedEvent;
+    public void SetSelectedEvent(Event? _event) => selectedEvent = _event;
 
     public async Task SetUserSessionAsync(User user, Household household, List<Household> hhList, List<Budget> budgets, List<Event> eventlog)
     {
