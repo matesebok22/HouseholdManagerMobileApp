@@ -94,8 +94,8 @@ public class EventLogViewModel : ViewModelBase
     public RelayCommand NavigateSettingsButtonCommand { get; }
     public RelayCommand NavigateNewEventButtonCommand { get; }
     public RelayCommand ToggleEventExpandCommand { get; }
-    /*public RelayCommand EditEventButtonCommand { get; }
-    public RelayCommand DeleteEventButtonCommand { get; }*/
+    public RelayCommand EditEventButtonCommand { get; }
+    public RelayCommand DeleteEventButtonCommand { get; }
     public RelayCommand LogoutButtonCommand { get; }
 
     public EventLogViewModel(IAuthService authService, IDatabaseService databaseService, IUserSessionService userSessionService)
@@ -109,6 +109,8 @@ public class EventLogViewModel : ViewModelBase
         NavigateSettingsButtonCommand = new RelayCommand(async _ => await NavigateToSettingsAsync());
         NavigateNewEventButtonCommand = new RelayCommand(async _ => await NavigateToNewEventAsync());
         ToggleEventExpandCommand = new RelayCommand(async parameter => await ToggleEventExpandAsync(parameter));
+        EditEventButtonCommand = new RelayCommand(async _ => await EditEventAsync());
+        DeleteEventButtonCommand = new RelayCommand(async _ => await DeleteEventAsync());
         LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
 
         WelcomeMessage = $"Üdv, {_userSessionService.GetCurrentUser().Nickname}";
@@ -125,6 +127,8 @@ public class EventLogViewModel : ViewModelBase
             return;
         }
 
+        _userSessionService.SetSelectedEvent(null); // Még lehet mozgatni fogom.
+
         await Shell.Current.GoToAsync("//UserPage");
     }
 
@@ -136,6 +140,8 @@ public class EventLogViewModel : ViewModelBase
             await LogoutAsync();
             return;
         }
+
+        _userSessionService.SetSelectedEvent(null); // Még lehet mozgatni fogom.
 
         await Shell.Current.GoToAsync("//SettingsPage?test=asd123");
     }
@@ -164,6 +170,59 @@ public class EventLogViewModel : ViewModelBase
         }
     }
 
+    private async Task EditEventAsync()
+    {
+        //await DisplayErrorAsync($"Módosításra nyomtál: {_userSessionService.GetSelectedEvent().EventName}");
+
+        if (!_userSessionService.IsUserLoggedIn())
+        {
+            await DisplayErrorAsync("Az esemény módosításához való navigálás sikertelen. Kérlek, jelentkezz be újra.");
+            await LogoutAsync();
+            return;
+        }
+
+        await Shell.Current.GoToAsync("//NewEventPage");
+    }
+
+    private async Task DeleteEventAsync()
+    {
+        //await DisplayErrorAsync($"Törlésre nyomtál: {_userSessionService.GetSelectedEvent().EventName}");
+
+        if (!_userSessionService.IsUserLoggedIn())
+        {
+            await DisplayErrorAsync("Az esemény törlése sikertelen. Kérlek, jelentkezz be újra.");
+            await LogoutAsync();
+            return;
+        }
+
+        if (Shell.Current != null)
+        {
+            if (await Shell.Current.DisplayAlert("Alert", $"Biztosan törli a(z) {_userSessionService.GetSelectedEvent().EventName} eseményt?", "Igen", "Nem"))
+            {
+                await _databaseService.DeleteEventAsync();
+                await LoadEventlogAsync();
+            }
+        }
+    }
+
+    private async Task ToggleEventExpandAsync(object parameter)
+    {
+        if (parameter is Event selectedEvent)
+        {
+            if (ExpandedEventId == selectedEvent.EID)
+            {
+                ExpandedEventId = string.Empty;
+                _userSessionService.SetSelectedEvent(null);
+            }
+            else
+            {
+                ExpandedEventId = selectedEvent.EID;
+                _userSessionService.SetSelectedEvent(selectedEvent);
+            }
+        }
+        await Task.CompletedTask;
+    }
+
     private async Task LogoutAsync()
     {
         WelcomeMessage = ErrorMessage = string.Empty;
@@ -175,54 +234,5 @@ public class EventLogViewModel : ViewModelBase
         ErrorMessage = message;
         if (Shell.Current != null)
             await Shell.Current.DisplayAlert("Hiba", ErrorMessage, "OK");
-    }
-
-    // Esemény lenyitása / összecsukása
-    private async Task ToggleEventExpandAsync(object parameter)
-    {
-        if (parameter is Event selectedEvent)
-        {
-            if (ExpandedEventId == selectedEvent.EID)
-            {
-                // Ha újra rákattintunk a nyitott kártyára: becsukjuk
-                ExpandedEventId = string.Empty;
-                _userSessionService.SetSelectedEvent(null);
-            }
-            else
-            {
-                // Új kártyát nyitunk ki
-                ExpandedEventId = selectedEvent.EID;
-                _userSessionService.SetSelectedEvent(selectedEvent);
-            }
-        }
-        await Task.CompletedTask;
-    }
-
-    private async Task EditEventAsync(object parameter)
-    {
-        if (parameter is string eventId)
-        {
-            Event? eventToEdit = EventLog.FirstOrDefault(e => e.EID == eventId);
-            if (eventToEdit != null)
-            {
-                _userSessionService.SetSelectedEvent(eventToEdit);
-            }
-
-            await Task.CompletedTask;
-        }
-    }
-
-    private async Task DeleteEventAsync(object parameter)
-    {
-        if (parameter is string eventId)
-        {
-            Event? eventToDelete = EventLog.FirstOrDefault(e => e.EID == eventId);
-            if (eventToDelete != null)
-            {
-                _userSessionService.SetSelectedEvent(eventToDelete);
-            }
-
-            await Task.CompletedTask;
-        }
     }
 }

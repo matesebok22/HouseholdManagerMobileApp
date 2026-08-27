@@ -86,8 +86,8 @@
 
                                     <!-- Gombok -->
                                     <Grid ColumnDefinitions="*,*" Margin="0,15,0,0">
-                                        <Button Grid.Column="0" Text="Módosítás" Command="{Binding EditEventButtonCommand}" BackgroundColor="#2196F3" TextColor="White" Margin="0, 0, 10, 0"/>
-                                        <Button Grid.Column="1" Text="Törlés" Command="{Binding DeleteEventButtonCommand}" BackgroundColor="#e65247" TextColor="White" Margin="10, 0, 0, 0"/>
+                                        <Button Grid.Column="0" Text="Módosítás" Command="{Binding EditEventButtonCommand, Source={RelativeSource AncestorType={x:Type vm:EventLogViewModel}}}" BackgroundColor="#2196F3" TextColor="White" Margin="0, 0, 10, 0"/>
+                                        <Button Grid.Column="1" Text="Törlés" Command="{Binding DeleteEventButtonCommand, Source={RelativeSource AncestorType={x:Type vm:EventLogViewModel}}}" BackgroundColor="#e65247" TextColor="White" Margin="10, 0, 0, 0"/>
                                     </Grid>
                                 </VerticalStackLayout>
                             </VerticalStackLayout>

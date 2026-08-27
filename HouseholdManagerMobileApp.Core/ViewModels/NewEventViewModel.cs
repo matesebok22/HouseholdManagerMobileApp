@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 using HouseholdManagerMobileApp.Core.Commands;
 using HouseholdManagerMobileApp.Core.Services;
+using HouseholdManagerMobileApp.Core.Models;
 
 namespace HouseholdManagerMobileApp.Core.ViewModels;
 
@@ -139,6 +140,17 @@ public class NewEventViewModel : ViewModelBase
         CreateEventButtonCommand = new RelayCommand(async _ => await CreateEventAsync(), _ => !IsLoading);
 
         WelcomeMessage = $"Üdv, {_userSessionService.GetCurrentUser().Nickname}";
+
+        if (_userSessionService.GetSelectedEvent() != null)
+        {
+            Event eventToEdit = _userSessionService.GetSelectedEvent() ?? new();
+            EventName = eventToEdit.EventName;
+            EventDate = eventToEdit.EventUserDate.Date;
+            EventTime = eventToEdit.EventUserDate.TimeOfDay;
+            EventType = eventToEdit.EventType;
+            EventCost = eventToEdit.EventCost;
+            EventDesc = eventToEdit.EventDescription;
+        }
     }
 
     private async Task NavigateToEventLogAsync()
@@ -149,6 +161,13 @@ public class NewEventViewModel : ViewModelBase
             await LogoutAsync();
             return;
         }
+
+        WelcomeMessage = ErrorMessage = EventName = EventType = EventDesc = string.Empty;
+        EventDate = DateTime.Today;
+        EventTime = DateTime.Now.TimeOfDay;
+        EventCost = 0;
+        
+        _userSessionService.SetSelectedEvent(null); // Még lehet mozgatni fogom.
 
         await Shell.Current.GoToAsync("//EventLogPage");
     }
@@ -188,7 +207,12 @@ public class NewEventViewModel : ViewModelBase
             return;
         }
 
-        bool success = await _databaseService.CreateEventAsync(EventName, FullEventDate, EventType, EventCost, EventDesc);
+        bool success;
+        if (_userSessionService.GetSelectedEvent() == null)
+            success = await _databaseService.CreateEventAsync(EventName, FullEventDate, EventType, EventCost, EventDesc);
+        else
+            success = await _databaseService.EditEventAsync(EventName, FullEventDate, EventType, EventCost, EventDesc);
+
         if (success)
         {
             WelcomeMessage = ErrorMessage = EventName = EventType = EventDesc = string.Empty;

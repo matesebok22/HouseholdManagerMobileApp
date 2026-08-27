@@ -272,14 +272,24 @@ public class DatabaseService : IDatabaseService
             return false;
     }
 
-    public async Task<bool> EditEventAsync()
+    public async Task<bool> EditEventAsync(string eventName, DateTime eventUserDate, string eventType, int eventCost, string eventDesc)
     {
-        throw new NotImplementedException();
+        var response = await _supabaseClient.From<Event>().Where(x => x.EID == _userSessionService.GetSelectedEvent().EID)
+                                                              .Set(x => x.EventName, eventName)
+                                                              .Set(x => x.EventUserDate, eventUserDate)
+                                                              .Set(x => x.EventType, eventType)
+                                                              .Set(x => x.EventCost, eventCost)
+                                                              .Set(x => x.EventDescription, eventDesc)
+                                                              .Update();
+        if (response.Models != null && response.Models.Count > 0)
+            return true;
+        else
+            return false;
     }
 
-    public async Task<bool> DeleteEventAsync()
+    public async Task DeleteEventAsync()
     {
-        throw new NotImplementedException();
+        await _supabaseClient.From<Event>().Where(x => x.EID == _userSessionService.GetSelectedEvent().EID).Delete();
     }
 
     private async Task<List<Household>> LoadUserHouseholdsAsync(User user)
