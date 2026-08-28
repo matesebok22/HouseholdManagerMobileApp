@@ -77,6 +77,54 @@ public class EventLogViewModel : ViewModelBase
         }
     }
 
+    private DateTime selectedMonth = DateTime.Today;
+    public DateTime SelectedMonth
+    {
+        get => selectedMonth;
+        set
+        {
+            if (selectedMonth == value) return;
+            selectedMonth = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private string selectedMonthDate = string.Empty;
+    public string SelectedMonthDate
+    {
+        get => selectedMonthDate;
+        set
+        {
+            if (selectedMonthDate == value) return;
+            selectedMonthDate = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private string selectedMonthBudget;
+    public string SelectedMonthBudget
+    {
+        get => selectedMonthBudget;
+        set
+        {
+            if (selectedMonthBudget == value) return;
+            selectedMonthBudget = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private string selectedMonthUseableBudget;
+    public string SelectedMonthUseableBudget
+    {
+        get => selectedMonthUseableBudget;
+        set
+        {
+            if (selectedMonthUseableBudget == value) return;
+            selectedMonthUseableBudget = value;
+            OnPropertyChanged();
+        }
+    }
+
     private string expandedEventId = string.Empty;
     public string ExpandedEventId
     {
@@ -96,6 +144,8 @@ public class EventLogViewModel : ViewModelBase
     public RelayCommand ToggleEventExpandCommand { get; }
     public RelayCommand EditEventButtonCommand { get; }
     public RelayCommand DeleteEventButtonCommand { get; }
+    public RelayCommand PreviousMonthButtonCommand { get; }
+    public RelayCommand NextMonthButtonCommand { get; }
     public RelayCommand LogoutButtonCommand { get; }
 
     public EventLogViewModel(IAuthService authService, IDatabaseService databaseService, IUserSessionService userSessionService)
@@ -111,10 +161,13 @@ public class EventLogViewModel : ViewModelBase
         ToggleEventExpandCommand = new RelayCommand(async parameter => await ToggleEventExpandAsync(parameter));
         EditEventButtonCommand = new RelayCommand(async _ => await EditEventAsync());
         DeleteEventButtonCommand = new RelayCommand(async _ => await DeleteEventAsync());
+        PreviousMonthButtonCommand = new RelayCommand(async _ => await SelectMonthAsync(-1));
+        NextMonthButtonCommand = new RelayCommand(async _ => await SelectMonthAsync(1));
         LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
 
         WelcomeMessage = $"Üdv, {_userSessionService.GetCurrentUser().Nickname}";
         CurrentHouseholdName = _userSessionService.GetCurrentHousehold().HouseholdName;
+
         _ = LoadEventlogAsync();
     }
 
@@ -160,14 +213,41 @@ public class EventLogViewModel : ViewModelBase
 
     private async Task LoadEventlogAsync()
     {
-        EventLog.Clear();
-
         bool success = await _databaseService.LoadHouseholdsAsync();
         if (success)
+            await LoadMonthAsync();
+
+        Event? currentlySelected = _userSessionService.GetSelectedEvent();
+        if (currentlySelected != null)
+            ExpandedEventId = currentlySelected.EID;
+    }
+
+    private async Task LoadMonthAsync()
+    {
+        string selectedMonth = SelectedMonth.ToString("yyyy. MMMM");
+        SelectedMonthDate = selectedMonth;
+
+        EventLog.Clear();
+        List<Event> sortedEventLog = _userSessionService.GetCurrentEventLog().OrderByDescending(x => x.EventUserDate).ToList();
+        foreach (Event _event in sortedEventLog)
         {
-            foreach (Event _event in _userSessionService.GetCurrentEventLog())
+            if (_event.EventUserDate.ToString("yyyy. MMMM") == selectedMonth)
                 EventLog.Add(_event);
         }
+        
+        Budget? currentMonthBudget = _userSessionService.GetCurrentBudgets().Find(x => x.BudgetDate.ToString("yyyy. MMMM") == selectedMonth);
+        if (currentMonthBudget != null)
+        {
+            SelectedMonthBudget = $"{currentMonthBudget.BudgetAmount} Ft";
+
+            int currentMonthEventCosts = _userSessionService.GetCurrentEventLog().Where(x => x.EventUserDate.ToString("yyyy. MMMM") == selectedMonth).Sum(x => x.EventCost);
+
+            SelectedMonthUseableBudget = $"{currentMonthBudget.BudgetAmount - currentMonthEventCosts} Ft";
+        }
+        else
+            SelectedMonthBudget = SelectedMonthUseableBudget = "- Ft";
+
+        await Task.CompletedTask;
     }
 
     private async Task EditEventAsync()
@@ -203,6 +283,12 @@ public class EventLogViewModel : ViewModelBase
                 await LoadEventlogAsync();
             }
         }
+    }
+
+    private async Task SelectMonthAsync(int num)
+    {
+        SelectedMonth = SelectedMonth.AddMonths(num);
+        await LoadMonthAsync();
     }
 
     private async Task ToggleEventExpandAsync(object parameter)

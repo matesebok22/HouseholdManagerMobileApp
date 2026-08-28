@@ -166,8 +166,6 @@ public class NewEventViewModel : ViewModelBase
         EventDate = DateTime.Today;
         EventTime = DateTime.Now.TimeOfDay;
         EventCost = 0;
-        
-        _userSessionService.SetSelectedEvent(null); // Még lehet mozgatni fogom.
 
         await Shell.Current.GoToAsync("//EventLogPage");
     }
