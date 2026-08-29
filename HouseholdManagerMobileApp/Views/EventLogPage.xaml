@@ -37,8 +37,11 @@
             <Label Grid.Row="0" Text="{Binding CurrentHouseholdName}" HorizontalOptions="Center" FontSize="30"/>
 
             <VerticalStackLayout Grid.Row="1">
-                <Button Text="Új esemény létrehozása" Command="{Binding NavigateNewEventButtonCommand}" Margin="20, 10, 20, 10"/>
-
+                <Grid ColumnDefinitions="*, *">
+                    <Button Grid.Column="0" Text="Új esemény létrehozása" Command="{Binding NavigateNewEventButtonCommand}" LineBreakMode="WordWrap" Margin="10"/>
+                    <Button Grid.Column="1" Text="{Binding ChangeSortTypeName}" Command="{Binding ChangeSortTypeButtonCommand}" LineBreakMode="WordWrap" Margin="10"/>
+                </Grid>
+                
                 <Grid ColumnDefinitions="*, 200, *" Padding="10">
                     <Path Grid.Column="0" Data="M 16,2 L 4,12 L 16,22 Z" Fill="#AC99EA" Stroke="#AC99EA" StrokeThickness="5" StrokeLineJoin="Round" HorizontalOptions="End">
                         <Path.GestureRecognizers>
@@ -46,7 +49,7 @@
                         </Path.GestureRecognizers>
                     </Path>
 
-                    <Label Grid.Column="1" Text="{Binding SelectedMonthDate}" FontSize="Medium" FontAttributes="Bold" HorizontalTextAlignment="Center"/>
+                    <Label Grid.Column="1" Text="{Binding SelectedTypeName}" FontSize="Medium" FontAttributes="Bold" HorizontalTextAlignment="Center"/>
 
                     <Path Grid.Column="2" Data="M 4,2 L 16,12 L 4,22 Z" Fill="#AC99EA" Stroke="#AC99EA" StrokeThickness="5" StrokeLineJoin="Round" HorizontalOptions="Start">
                         <Path.GestureRecognizers>

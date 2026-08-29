@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using HouseholdManagerMobileApp.Core.Commands;
 using HouseholdManagerMobileApp.Core.Models;
 using HouseholdManagerMobileApp.Core.Services;
+using Microsoft.IdentityModel.Tokens;
+using static Microsoft.IO.RecyclableMemoryStreamManager;
 
 namespace HouseholdManagerMobileApp.Core.ViewModels;
 
@@ -41,6 +43,18 @@ public class EventLogViewModel : ViewModelBase
         }
     }
 
+    private bool isLoading = false;
+    public bool IsLoading
+    {
+        get => isLoading;
+        set
+        {
+            if (isLoading == value) return;
+            isLoading = value;
+            OnPropertyChanged();
+        }
+    }
+
     private string currentHouseholdName = string.Empty;
     public string CurrentHouseholdName
     {
@@ -65,6 +79,18 @@ public class EventLogViewModel : ViewModelBase
         }
     }
 
+    private ObservableCollection<string> eventTypes = [];
+    public ObservableCollection<string> EventTypes
+    {
+        get => eventTypes;
+        set
+        {
+            if (eventTypes == value) return;
+            eventTypes = value;
+            OnPropertyChanged();
+        }
+    }
+
     private bool isMenuVisible = false;
     public bool IsMenuVisible
     {
@@ -73,6 +99,30 @@ public class EventLogViewModel : ViewModelBase
         {
             if (isMenuVisible == value) return;
             isMenuVisible = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private string changeSortTypeName = "Dátum nézet";
+    public string ChangeSortTypeName
+    {
+        get => changeSortTypeName;
+        set
+        {
+            if (changeSortTypeName == value) return;
+            changeSortTypeName = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private string selectedCategory = string.Empty;
+    public string SelectedCategory
+    {
+        get => selectedCategory;
+        set
+        {
+            if (selectedCategory == value) return;
+            selectedCategory = value;
             OnPropertyChanged();
         }
     }
@@ -89,14 +139,14 @@ public class EventLogViewModel : ViewModelBase
         }
     }
 
-    private string selectedMonthDate = string.Empty;
-    public string SelectedMonthDate
+    private string selectedTypeName = string.Empty;
+    public string SelectedTypeName
     {
-        get => selectedMonthDate;
+        get => selectedTypeName;
         set
         {
-            if (selectedMonthDate == value) return;
-            selectedMonthDate = value;
+            if (selectedTypeName == value) return;
+            selectedTypeName = value;
             OnPropertyChanged();
         }
     }
@@ -144,6 +194,7 @@ public class EventLogViewModel : ViewModelBase
     public RelayCommand ToggleEventExpandCommand { get; }
     public RelayCommand EditEventButtonCommand { get; }
     public RelayCommand DeleteEventButtonCommand { get; }
+    public RelayCommand ChangeSortTypeButtonCommand { get; }
     public RelayCommand PreviousMonthButtonCommand { get; }
     public RelayCommand NextMonthButtonCommand { get; }
     public RelayCommand LogoutButtonCommand { get; }
@@ -161,8 +212,9 @@ public class EventLogViewModel : ViewModelBase
         ToggleEventExpandCommand = new RelayCommand(async parameter => await ToggleEventExpandAsync(parameter));
         EditEventButtonCommand = new RelayCommand(async _ => await EditEventAsync());
         DeleteEventButtonCommand = new RelayCommand(async _ => await DeleteEventAsync());
-        PreviousMonthButtonCommand = new RelayCommand(async _ => await SelectMonthAsync(-1));
-        NextMonthButtonCommand = new RelayCommand(async _ => await SelectMonthAsync(1));
+        ChangeSortTypeButtonCommand = new RelayCommand(async _ => await ChangeSortTypeAsync());
+        PreviousMonthButtonCommand = new RelayCommand(async _ => await SelectTypeAsync(-1));
+        NextMonthButtonCommand = new RelayCommand(async _ => await SelectTypeAsync(1));
         LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
 
         WelcomeMessage = $"Üdv, {_userSessionService.GetCurrentUser().Nickname}";
@@ -213,6 +265,8 @@ public class EventLogViewModel : ViewModelBase
 
     private async Task LoadEventlogAsync()
     {
+        EventTypes.Clear();
+
         bool success = await _databaseService.LoadHouseholdsAsync();
         if (success)
             await LoadMonthAsync();
@@ -224,36 +278,64 @@ public class EventLogViewModel : ViewModelBase
 
     private async Task LoadMonthAsync()
     {
-        string selectedMonth = SelectedMonth.ToString("yyyy. MMMM");
-        SelectedMonthDate = selectedMonth;
-
         EventLog.Clear();
         List<Event> sortedEventLog = _userSessionService.GetCurrentEventLog().OrderByDescending(x => x.EventUserDate).ToList();
-        foreach (Event _event in sortedEventLog)
-        {
-            if (_event.EventUserDate.ToString("yyyy. MMMM") == selectedMonth)
-                EventLog.Add(_event);
-        }
-        
-        Budget? currentMonthBudget = _userSessionService.GetCurrentBudgets().Find(x => x.BudgetDate.ToString("yyyy. MMMM") == selectedMonth);
-        if (currentMonthBudget != null)
-        {
-            SelectedMonthBudget = $"{currentMonthBudget.BudgetAmount} Ft";
 
-            int currentMonthEventCosts = _userSessionService.GetCurrentEventLog().Where(x => x.EventUserDate.ToString("yyyy. MMMM") == selectedMonth).Sum(x => x.EventCost);
+        if (ChangeSortTypeName == "Kategória nézet")
+        {
+            if (EventTypes.Count == 0)
+            {
+                EventTypes.Add("Kategória nélküli");
 
-            SelectedMonthUseableBudget = $"{currentMonthBudget.BudgetAmount - currentMonthEventCosts} Ft";
+                foreach (Event _event in sortedEventLog)
+                {
+                    if (!EventTypes.Contains(_event.EventType))
+                        EventTypes.Add(_event.EventType);
+                }
+
+                SelectedCategory = EventTypes[0];
+            }
+
+            // Kategória szerinti rendszerezés
+            foreach (Event _event in sortedEventLog)
+            {
+                if (_event.EventType == SelectedCategory)
+                    EventLog.Add(_event);
+            }
+
+            SelectedTypeName = SelectedCategory;
+            SelectedMonthBudget = SelectedMonthUseableBudget = "- Ft";
         }
         else
-            SelectedMonthBudget = SelectedMonthUseableBudget = "- Ft";
+        {
+            // Hónap szerinti rendszerezés:
+            string selectedMonth = SelectedMonth.ToString("yyyy. MMMM");
+            SelectedTypeName = selectedMonth;
+
+            foreach (Event _event in sortedEventLog)
+            {
+                if (_event.EventUserDate.ToString("yyyy. MMMM") == selectedMonth)
+                    EventLog.Add(_event);
+            }
+
+            Budget? currentMonthBudget = _userSessionService.GetCurrentBudgets().Find(x => x.BudgetDate.ToString("yyyy. MMMM") == selectedMonth);
+            if (currentMonthBudget != null)
+            {
+                SelectedMonthBudget = $"{currentMonthBudget.BudgetAmount} Ft";
+
+                int currentMonthEventCosts = _userSessionService.GetCurrentEventLog().Where(x => x.EventUserDate.ToString("yyyy. MMMM") == selectedMonth).Sum(x => x.EventCost);
+
+                SelectedMonthUseableBudget = $"{currentMonthBudget.BudgetAmount - currentMonthEventCosts} Ft";
+            }
+            else
+                SelectedMonthBudget = SelectedMonthUseableBudget = "- Ft";
+        }
 
         await Task.CompletedTask;
     }
 
     private async Task EditEventAsync()
     {
-        //await DisplayErrorAsync($"Módosításra nyomtál: {_userSessionService.GetSelectedEvent().EventName}");
-
         if (!_userSessionService.IsUserLoggedIn())
         {
             await DisplayErrorAsync("Az esemény módosításához való navigálás sikertelen. Kérlek, jelentkezz be újra.");
@@ -266,8 +348,6 @@ public class EventLogViewModel : ViewModelBase
 
     private async Task DeleteEventAsync()
     {
-        //await DisplayErrorAsync($"Törlésre nyomtál: {_userSessionService.GetSelectedEvent().EventName}");
-
         if (!_userSessionService.IsUserLoggedIn())
         {
             await DisplayErrorAsync("Az esemény törlése sikertelen. Kérlek, jelentkezz be újra.");
@@ -285,9 +365,28 @@ public class EventLogViewModel : ViewModelBase
         }
     }
 
-    private async Task SelectMonthAsync(int num)
+    private async Task ChangeSortTypeAsync()
     {
-        SelectedMonth = SelectedMonth.AddMonths(num);
+        ChangeSortTypeName = ChangeSortTypeName == "Kategória nézet" ? "Dátum nézet" : "Kategória nézet";
+
+        await LoadMonthAsync();
+    }
+
+    private async Task SelectTypeAsync(int num)
+    {
+        if (ChangeSortTypeName == "Kategória nézet")
+        {
+            int index = EventTypes.IndexOf(SelectedTypeName);
+            if (index == 0 && num == -1)
+                SelectedCategory = EventTypes[^1]; // Ugyanaz, mint a EventTypes[EventTypes.Count - 1]
+            else if (index == EventTypes.Count - 1 && num == 1)
+                SelectedCategory = EventTypes[0];
+            else
+                SelectedCategory = EventTypes[index + num];
+        }
+        else
+            SelectedMonth = SelectedMonth.AddMonths(num);
+
         await LoadMonthAsync();
     }
 
@@ -312,6 +411,7 @@ public class EventLogViewModel : ViewModelBase
     private async Task LogoutAsync()
     {
         WelcomeMessage = ErrorMessage = string.Empty;
+        IsLoading = false;
         await _authService.LogoutAsync();
     }
 

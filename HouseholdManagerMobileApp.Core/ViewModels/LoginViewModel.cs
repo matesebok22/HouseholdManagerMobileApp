@@ -90,6 +90,7 @@ public class LoginViewModel : ViewModelBase
 
         if (success)
         {
+            IsLoading = false;
             if (Shell.Current != null) // Tesztelés ne akadjon meg.
                 await Shell.Current.GoToAsync("//UserPage");
         }
