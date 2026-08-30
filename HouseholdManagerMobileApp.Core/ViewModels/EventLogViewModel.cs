@@ -151,7 +151,7 @@ public class EventLogViewModel : ViewModelBase
         }
     }
 
-    private string selectedMonthBudget;
+    private string selectedMonthBudget = string.Empty;
     public string SelectedMonthBudget
     {
         get => selectedMonthBudget;
@@ -163,7 +163,7 @@ public class EventLogViewModel : ViewModelBase
         }
     }
 
-    private string selectedMonthUseableBudget;
+    private string selectedMonthUseableBudget = string.Empty;
     public string SelectedMonthUseableBudget
     {
         get => selectedMonthUseableBudget;
@@ -217,10 +217,13 @@ public class EventLogViewModel : ViewModelBase
         NextMonthButtonCommand = new RelayCommand(async _ => await SelectTypeAsync(1));
         LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
 
-        WelcomeMessage = $"Üdv, {_userSessionService.GetCurrentUser().Nickname}";
-        CurrentHouseholdName = _userSessionService.GetCurrentHousehold().HouseholdName;
+        if (Shell.Current != null)
+        {
+            WelcomeMessage = $"Üdv, {_userSessionService.GetCurrentUser().Nickname}";
+            CurrentHouseholdName = _userSessionService.GetCurrentHousehold().HouseholdName;
 
-        _ = LoadEventlogAsync();
+            _ = LoadEventlogAsync();
+        }
     }
 
     private async Task NavigateToHomeAsync()
@@ -343,7 +346,8 @@ public class EventLogViewModel : ViewModelBase
             return;
         }
 
-        await Shell.Current.GoToAsync("//NewEventPage");
+        if (Shell.Current != null)
+            await Shell.Current.GoToAsync("//NewEventPage");
     }
 
     private async Task DeleteEventAsync()
@@ -369,7 +373,8 @@ public class EventLogViewModel : ViewModelBase
     {
         ChangeSortTypeName = ChangeSortTypeName == "Kategória nézet" ? "Dátum nézet" : "Kategória nézet";
 
-        await LoadMonthAsync();
+        if (Shell.Current != null)
+            await LoadMonthAsync();
     }
 
     private async Task SelectTypeAsync(int num)
@@ -387,7 +392,8 @@ public class EventLogViewModel : ViewModelBase
         else
             SelectedMonth = SelectedMonth.AddMonths(num);
 
-        await LoadMonthAsync();
+        if (Shell.Current != null)
+            await LoadMonthAsync();
     }
 
     private async Task ToggleEventExpandAsync(object parameter)

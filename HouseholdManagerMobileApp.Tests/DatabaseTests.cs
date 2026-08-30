@@ -1,4 +1,6 @@
-﻿using HouseholdManagerMobileApp.Core.Models;
+﻿using System.ComponentModel;
+using System.Security.Cryptography;
+using HouseholdManagerMobileApp.Core.Models;
 using HouseholdManagerMobileApp.Core.Services;
 using HouseholdManagerMobileApp.Core.ViewModels;
 using Moq;
@@ -331,5 +333,244 @@ public class DatabaseTests
         // Assert
         Assert.That(viewModel.ErrorMessage, Is.EqualTo(string.Empty));
         Assert.That(viewModel.HouseholdsList[0], Is.EqualTo($"testhh - ASD123"));
+    }
+
+    // Új esemény létrehozásának tesztelése:
+    [Test]
+    public void CreateEventAsync_NotLoggedIn()
+    {
+        // Arrange
+        var viewModel = new NewEventViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(false);
+
+        // Act
+        viewModel.CreateEventButtonCommand.Execute(string.Empty);
+
+        // Assert
+        Assert.That(viewModel.ErrorMessage, Is.EqualTo(string.Empty));
+    }
+
+    [TestCase("", 0)]
+    [TestCase("", 1000)]
+    [TestCase("test", 0)]
+    public void CreateEventAsync_EmptyNameOrCost(string eventName, int eventCost)
+    {
+        // Arrange
+        var viewModel = new NewEventViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
+        viewModel.EventName = eventName;
+        viewModel.EventCost = eventCost;
+
+        // Act
+        viewModel.CreateEventButtonCommand.Execute(string.Empty);
+
+        // Assert
+        Assert.That(viewModel.ErrorMessage, Is.EqualTo("Kötelező megadni az esemény nevét és költségét!"));
+    }
+
+    [TestCase("testtesttesttesttesttesttesttestname", "testtype", "testdesc", "Az esemény neve maximum 30 karakter hosszú lehet!")]
+    [TestCase("testname", "testtesttesttesttesttesttesttesttype", "testdesc", "Az esemény típusa maximum 20 karakter hosszú lehet!")]
+    [TestCase("testname", "testtype", "testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttestdesc", "Az esemény leírása maximum 500 karakter hosszú lehet!")]
+    public void CreateEventAsync_InputTooLong(string eventName, string eventType, string eventDesc, string errorMessage)
+    {
+        // Arrange
+        var viewModel = new NewEventViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
+        viewModel.EventName = eventName;
+        viewModel.EventCost = 1000;
+        viewModel.EventType = eventType;
+        viewModel.EventDesc = eventDesc;
+
+        // Act
+        viewModel.CreateEventButtonCommand.Execute(string.Empty);
+
+        // Assert
+        Assert.That(viewModel.ErrorMessage, Is.EqualTo(errorMessage));
+    }
+
+    [Test]
+    public void CreateEventAsync_CreateEventFailed()
+    {
+        // Arrange
+        var viewModel = new NewEventViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
+        Event? _event = null;
+        _mockUserSessionService.Setup(x => x.GetSelectedEvent()).Returns(_event);
+        _mockDatabaseService.Setup(x => x.CreateEventAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(false);
+        viewModel.EventName = "testname";
+        viewModel.EventCost = 1000;
+
+        // Act
+        viewModel.CreateEventButtonCommand.Execute(string.Empty);
+
+        // Assert
+        Assert.That(viewModel.ErrorMessage, Is.EqualTo("Új esemény létrehozása sikertelen!"));
+    }
+
+    [Test]
+    public void CreateEventAsync_CreateEventSuccessful()
+    {
+        // Arrange
+        var viewModel = new NewEventViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
+        Event? _event = null;
+        _mockUserSessionService.Setup(x => x.GetSelectedEvent()).Returns(_event);
+        _mockDatabaseService.Setup(x => x.CreateEventAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(true);
+        viewModel.EventName = "testname";
+        viewModel.EventCost = 1000;
+
+        // Act
+        viewModel.CreateEventButtonCommand.Execute(string.Empty);
+
+        // Assert
+        Assert.That(viewModel.ErrorMessage, Is.EqualTo(string.Empty));
+    }
+
+    [Test]
+    public void CreateEventAsync_EditEventFailed()
+    {
+        // Arrange
+        var viewModel = new NewEventViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
+        Event? _event = new();
+        _mockUserSessionService.Setup(x => x.GetSelectedEvent()).Returns(_event);
+        _mockDatabaseService.Setup(x => x.EditEventAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(false);
+        viewModel.EventName = "testname";
+        viewModel.EventCost = 1000;
+
+        // Act
+        viewModel.CreateEventButtonCommand.Execute(string.Empty);
+
+        // Assert
+        Assert.That(viewModel.ErrorMessage, Is.EqualTo("Új esemény létrehozása sikertelen!"));
+    }
+
+    [Test]
+    public void CreateEventAsync_EditEventSuccessful()
+    {
+        // Arrange
+        var viewModel = new NewEventViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
+        Event? _event = new();
+        _mockUserSessionService.Setup(x => x.GetSelectedEvent()).Returns(_event);
+        _mockDatabaseService.Setup(x => x.EditEventAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(true);
+        viewModel.EventName = "testname";
+        viewModel.EventCost = 1000;
+
+        // Act
+        viewModel.CreateEventButtonCommand.Execute(string.Empty);
+
+        // Assert
+        Assert.That(viewModel.ErrorMessage, Is.EqualTo(string.Empty));
+    }
+
+    // Eseménynapló tesztelése:
+    [TestCase("testId", "")]
+    [TestCase("", "testId")]
+    public void ToggleEventExpandAsync_Successful(string eID, string expandedEventId)
+    {
+        // Arrange
+        var viewModel = new EventLogViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        Event parameter = new() { EID = eID };
+        viewModel.ExpandedEventId = expandedEventId;
+
+        // Act
+        viewModel.ToggleEventExpandCommand.Execute(parameter);
+
+        // Assert
+        Assert.That(viewModel.ExpandedEventId, Is.EqualTo(eID));
+    }
+
+    [Test]
+    public void EditEventAsync_NotLoggedIn()
+    {
+        // Arrange
+        var viewModel = new EventLogViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(false);
+
+        // Act
+        viewModel.EditEventButtonCommand.Execute(string.Empty);
+
+        // Assert
+        Assert.That(viewModel.ExpandedEventId, Is.EqualTo(string.Empty));
+    }
+
+    [Test]
+    public void EditEventAsync_Successful()
+    {
+        // Arrange
+        var viewModel = new EventLogViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
+
+        // Act
+        viewModel.EditEventButtonCommand.Execute(string.Empty);
+
+        // Assert
+        Assert.That(viewModel.ExpandedEventId, Is.EqualTo(string.Empty));
+    }
+
+    [Test]
+    public void DeleteEventAsync_NotLoggedIn()
+    {
+        // Arrange
+        var viewModel = new EventLogViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(false);
+
+        // Act
+        viewModel.DeleteEventButtonCommand.Execute(string.Empty);
+
+        // Assert
+        Assert.That(viewModel.ExpandedEventId, Is.EqualTo(string.Empty));
+    }
+
+    [Test]
+    public void DeleteEventAsync_Successful()
+    {
+        // Arrange
+        var viewModel = new EventLogViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
+
+        // Act
+        viewModel.DeleteEventButtonCommand.Execute(string.Empty);
+
+        // Assert
+        Assert.That(viewModel.ExpandedEventId, Is.EqualTo(string.Empty));
+    }
+
+    [TestCase("Kategória nézet", "Dátum nézet")]
+    [TestCase("Dátum nézet", "Kategória nézet")]
+    public void ChangeSortTypeAsync_Successful(string categoryOne, string categoryTwo)
+    {
+        // Arrange
+        var viewModel = new EventLogViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        viewModel.ChangeSortTypeName = categoryOne;
+
+        // Act
+        viewModel.ChangeSortTypeButtonCommand.Execute(string.Empty);
+
+        // Assert
+        Assert.That(viewModel.ChangeSortTypeName, Is.EqualTo(categoryTwo));
+    }
+
+    [TestCase(-1, "test1", "test3")]
+    [TestCase(1, "test3", "test1")]
+    [TestCase(-1, "test2", "test1")]
+    [TestCase(1, "test2", "test3")]
+    public void SelectTypeAsync_Successful(int direction, string selectedName, string answer)
+    {
+        // Arrange
+        var viewModel = new EventLogViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
+        viewModel.ChangeSortTypeName = "Kategória nézet";
+        viewModel.EventTypes = new(["test1", "test2", "test3"]);
+        viewModel.SelectedTypeName = selectedName;
+
+        // Act
+        if (direction == -1)
+            viewModel.PreviousMonthButtonCommand.Execute(string.Empty);
+        else
+            viewModel.NextMonthButtonCommand.Execute(string.Empty);
+
+        // Assert
+        Assert.That(viewModel.SelectedCategory, Is.EqualTo(answer));
     }
 }

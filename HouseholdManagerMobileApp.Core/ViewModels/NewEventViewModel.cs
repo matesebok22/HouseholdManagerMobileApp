@@ -138,18 +138,21 @@ public class NewEventViewModel : ViewModelBase
 
         NavigateEventLogButtonCommand = new RelayCommand(async _ => await NavigateToEventLogAsync());
         CreateEventButtonCommand = new RelayCommand(async _ => await CreateEventAsync(), _ => !IsLoading);
-
-        WelcomeMessage = $"Üdv, {_userSessionService.GetCurrentUser().Nickname}";
-
-        if (_userSessionService.GetSelectedEvent() != null)
+        
+        if (Shell.Current != null) // Tesztelés ne akadjon meg.
         {
-            Event eventToEdit = _userSessionService.GetSelectedEvent() ?? new();
-            EventName = eventToEdit.EventName;
-            EventDate = eventToEdit.EventUserDate.Date;
-            EventTime = eventToEdit.EventUserDate.TimeOfDay;
-            EventType = eventToEdit.EventType;
-            EventCost = eventToEdit.EventCost;
-            EventDesc = eventToEdit.EventDescription;
+            WelcomeMessage = $"Üdv, {_userSessionService.GetCurrentUser().Nickname}";
+
+            if (_userSessionService.GetSelectedEvent() != null)
+            {
+                Event eventToEdit = _userSessionService.GetSelectedEvent() ?? new();
+                EventName = eventToEdit.EventName;
+                EventDate = eventToEdit.EventUserDate.Date;
+                EventTime = eventToEdit.EventUserDate.TimeOfDay;
+                EventType = eventToEdit.EventType;
+                EventCost = eventToEdit.EventCost;
+                EventDesc = eventToEdit.EventDescription;
+            }
         }
     }
 
