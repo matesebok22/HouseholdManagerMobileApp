@@ -49,6 +49,7 @@ public class DatabaseService : IDatabaseService
 
         return true;
     }
+
     public async Task<bool> CreateHouseholdAsync(string householdName)
     {
         try
