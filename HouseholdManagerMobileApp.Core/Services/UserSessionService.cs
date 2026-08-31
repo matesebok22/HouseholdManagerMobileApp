@@ -49,7 +49,7 @@ public class UserSessionService : IUserSessionService
         await Task.CompletedTask;
     }
 
-    public async Task ChangeHousehold(Household currenthousehold, List<Household> households, List<Budget> budgets, List<Event> eventlog)
+    public async Task ChangeHousehold(Household currenthousehold, List<Household> households, List<Budget> budgets)
     {
         currentHouseholdOwner = currentUser.UID == currenthousehold.HouseholdOwner;
         currentHousehold = currenthousehold;
@@ -57,13 +57,24 @@ public class UserSessionService : IUserSessionService
         householdList = households;
         currentBudgets.Clear();
         currentBudgets = budgets;
-        await ReloadEventLog(eventlog);
+
+        await Task.CompletedTask;
     }
 
     public async Task ReloadEventLog(List<Event> eventlog)
     {
         currentEventLog.Clear();
         currentEventLog = eventlog;
+
+        await Task.CompletedTask;
+    }
+
+    public async Task ReloadDataForSettings(List<Household> households, List<Budget> budgets)
+    {
+        householdList.Clear();
+        householdList = households;
+        currentBudgets.Clear();
+        currentBudgets = budgets;
 
         await Task.CompletedTask;
     }

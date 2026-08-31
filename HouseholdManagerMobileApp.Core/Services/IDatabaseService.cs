@@ -5,7 +5,7 @@ namespace HouseholdManagerMobileApp.Core.Services;
 public interface IDatabaseService
 {
     Task InitializeAsync();
-    Task<bool> LoadHouseholdsAsync();
+    Task<bool> LoadDataAsync(int mode);
     Task<bool> CreateHouseholdAsync(string householdName);
     Task<bool> JoinHouseholdAsync(string householdAccess);
     Task<bool> ChangeSelectedHouseholdAsync(string currentHousehold);

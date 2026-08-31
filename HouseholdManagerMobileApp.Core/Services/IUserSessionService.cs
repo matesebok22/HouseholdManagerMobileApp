@@ -15,6 +15,7 @@ public interface IUserSessionService
     public void SetSelectedEvent(Event? _event);
     Task SetUserSessionAsync(User user, Household household, List<Household> hhList, List<Budget> budgets, List<Event> eventlog);
     Task ClearUserSessionAsync();
-    Task ChangeHousehold(Household household, List<Household> households, List<Budget> budgets, List<Event> eventlog);
+    Task ChangeHousehold(Household household, List<Household> households, List<Budget> budgets);
     Task ReloadEventLog(List<Event> eventlog);
+    Task ReloadDataForSettings(List<Household> households, List<Budget> budgets);
 }

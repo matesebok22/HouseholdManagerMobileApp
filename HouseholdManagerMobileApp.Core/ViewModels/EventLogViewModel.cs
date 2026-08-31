@@ -270,7 +270,7 @@ public class EventLogViewModel : ViewModelBase
     {
         EventTypes.Clear();
 
-        bool success = await _databaseService.LoadHouseholdsAsync();
+        bool success = await _databaseService.LoadDataAsync(2);
         if (success)
             await LoadMonthAsync();
 
@@ -314,20 +314,21 @@ public class EventLogViewModel : ViewModelBase
             // Hónap szerinti rendszerezés:
             string selectedMonth = SelectedMonth.ToString("yyyy. MMMM");
             SelectedTypeName = selectedMonth;
+            int currentMonthEventCosts = 0;
 
             foreach (Event _event in sortedEventLog)
             {
                 if (_event.EventUserDate.ToString("yyyy. MMMM") == selectedMonth)
+                {
                     EventLog.Add(_event);
+                    currentMonthEventCosts += _event.EventCost;
+                }
             }
 
             Budget? currentMonthBudget = _userSessionService.GetCurrentBudgets().Find(x => x.BudgetDate.ToString("yyyy. MMMM") == selectedMonth);
             if (currentMonthBudget != null)
             {
                 SelectedMonthBudget = $"{currentMonthBudget.BudgetAmount} Ft";
-
-                int currentMonthEventCosts = _userSessionService.GetCurrentEventLog().Where(x => x.EventUserDate.ToString("yyyy. MMMM") == selectedMonth).Sum(x => x.EventCost);
-
                 SelectedMonthUseableBudget = $"{currentMonthBudget.BudgetAmount - currentMonthEventCosts} Ft";
             }
             else

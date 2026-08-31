@@ -302,7 +302,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
     {
         HouseholdsList.Clear();
 
-        bool success = await _databaseService.LoadHouseholdsAsync();
+        bool success = await _databaseService.LoadDataAsync(1);
         if (success)
         {
             foreach (Household household in _userSessionService.GetCurrentHouseholdList())

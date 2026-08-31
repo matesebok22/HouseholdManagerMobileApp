@@ -26,30 +26,6 @@ public class DatabaseService : IDatabaseService
         }
     }
 
-    public async Task<bool> LoadHouseholdsAsync()
-    {
-        User? user = await _supabaseClient.From<User>().Where(x => x.Username == _userSessionService.GetCurrentUser().Username).Single();
-        if (user == null)
-            return false;
-
-        if (user.HouseHold1 == null && user.HouseHold2 == null && user.HouseHold3 == null)
-        {
-            user.CurrentHousehold = string.Empty;
-            await user.Update<User>();
-        }
-
-        Household? currentHousehold = await _supabaseClient.From<Household>().Where(x => x.HHID == user.CurrentHousehold).Single();
-        if (currentHousehold == null)
-            return false;
-
-        List<Budget> budgets = await LoadUserCurrentBudgetsAsync(currentHousehold);
-        List<Event> eventlog = await LoadUserCurrentEventLogAsync(currentHousehold);
-        List<Household> households = await LoadUserHouseholdsAsync(user);
-        await _userSessionService.ChangeHousehold(currentHousehold, households, budgets, eventlog);
-
-        return true;
-    }
-
     public async Task<bool> CreateHouseholdAsync(string householdName)
     {
         try
@@ -142,22 +118,22 @@ public class DatabaseService : IDatabaseService
 
     public async Task<bool> ChangeSelectedHouseholdAsync(string currentHousehold)
     {
-        Household? household = await _supabaseClient.From<Household>().Where(x => x.HouseholdAccess == currentHousehold).Single();
-        if (household == null)
+        Household? newHousehold = await _supabaseClient.From<Household>().Where(x => x.HouseholdAccess == currentHousehold).Single();
+        if (newHousehold == null)
             return false;
 
         User? user = await _supabaseClient.From<User>().Where(x => x.Username == _userSessionService.GetCurrentUser().Username).Single();
         if (user == null)
             return false;
 
-        user.CurrentHousehold = household.HHID;
+        user.CurrentHousehold = newHousehold.HHID;
         await user.Update<User>();
 
-        List<Budget> budgets = await LoadUserCurrentBudgetsAsync(household);
-        List<Event> eventlog = await LoadUserCurrentEventLogAsync(household);
-        List<Household> households = await LoadUserHouseholdsAsync(user);
+        List<Budget> budgets = await LoadBudgetsAsync(newHousehold);
+        List<Event> eventlog = await LoadEventLogAsync(newHousehold);
+        List<Household> households = await LoadHouseholdsAsync(user);
 
-        await _userSessionService.ChangeHousehold(household, households, budgets, eventlog);
+        await _userSessionService.ChangeHousehold(newHousehold, households, budgets);
 
         return true;
     }
@@ -166,9 +142,8 @@ public class DatabaseService : IDatabaseService
     {
         string currentDate = $"{householdBudgetMonth.Year}. {householdBudgetMonth.Month}.";
 
-        Household? household = await _supabaseClient.From<Household>().Where(x => x.HHID == _userSessionService.GetCurrentHousehold().HHID).Single();
-        if (household == null)
-            return false;
+        if (_userSessionService.GetCurrentHousehold().HouseholdName != newHouseholdName)
+            await _supabaseClient.From<Household>().Where(x => x.HHID == _userSessionService.GetCurrentHousehold().HHID).Set(x => x.HouseholdName, newHouseholdName).Update();
 
         // Háztartáshoz tartozó összes költségkeret lekérése:
         Budget? budget = _userSessionService.GetCurrentBudgets().Find(x => $"{x.BudgetDate.Year}. {x.BudgetDate.Month}." == currentDate);
@@ -176,7 +151,7 @@ public class DatabaseService : IDatabaseService
         {
             // Ha nem talált meglévő hónapot, akkor készít egy új rekordot a "budgets" táblázatba
             DateTime newDate = new(householdBudgetMonth.Year, householdBudgetMonth.Month, 1);
-            await _supabaseClient.From<Budget>().Insert(new Budget() { BudgetHousehold = household.HHID, BudgetDate = newDate, BudgetAmount = newHouseholdBudget });
+            await _supabaseClient.From<Budget>().Insert(new Budget() { BudgetHousehold = _userSessionService.GetCurrentHousehold().HHID, BudgetDate = newDate, BudgetAmount = newHouseholdBudget });
         }
         else
         {
@@ -185,12 +160,6 @@ public class DatabaseService : IDatabaseService
                 budget.BudgetAmount = newHouseholdBudget;
                 await budget.Update<Budget>();
             }
-        }
-
-        if (household.HouseholdName != newHouseholdName)
-        {
-            household.HouseholdName = newHouseholdName;
-            await household.Update<Household>();
         }
         
         return true;
@@ -293,7 +262,31 @@ public class DatabaseService : IDatabaseService
         await _supabaseClient.From<Event>().Where(x => x.EID == _userSessionService.GetSelectedEvent().EID).Delete();
     }
 
-    private async Task<List<Household>> LoadUserHouseholdsAsync(User user)
+    public async Task<bool> LoadDataAsync(int mode)
+    {
+        switch (mode)
+        {
+            // Beállítások adatainak betöltése:
+            case 1:
+                {
+                    List<Budget> budgets = await LoadBudgetsAsync(_userSessionService.GetCurrentHousehold());
+                    List<Household> households = await LoadHouseholdsAsync(_userSessionService.GetCurrentUser());
+                    await _userSessionService.ChangeHousehold(_userSessionService.GetCurrentHousehold(), households, budgets);
+                    break;
+                }
+            // Eseménynapló adatainak betöltése:
+            case 2:
+                {
+                    List<Event> eventlog = await LoadEventLogAsync(_userSessionService.GetCurrentHousehold());
+                    await _userSessionService.ReloadEventLog(eventlog);
+                    break;
+                }
+        }
+
+        return true;
+    }
+
+    private async Task<List<Household>> LoadHouseholdsAsync(User user)
     {
         List<Household> householdList = [];
         if (user.HouseHold1 != null)
@@ -318,7 +311,7 @@ public class DatabaseService : IDatabaseService
         return householdList;
     }
 
-    private async Task<List<Budget>> LoadUserCurrentBudgetsAsync(Household household)
+    private async Task<List<Budget>> LoadBudgetsAsync(Household household)
     {
         // Jelenlegi háztartásban elérhető költségkeretek:
         List<Budget> budgets = [];
@@ -329,9 +322,9 @@ public class DatabaseService : IDatabaseService
         return budgets;
     }
 
-    private async Task<List<Event>> LoadUserCurrentEventLogAsync(Household household)
+    private async Task<List<Event>> LoadEventLogAsync(Household household)
     {
-        // Jelenlegi háztartásban elérhető költségkeretek:
+        // Jelenlegi háztartásban elérhető eseménynapló:
         List<Event> eventlog = [];
         var eventquery = await _supabaseClient.From<Event>().Where(x => x.EventHousehold == household.HHID).Get();
         foreach (Event _event in eventquery.Models)
