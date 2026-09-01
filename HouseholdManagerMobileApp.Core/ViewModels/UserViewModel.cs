@@ -1,19 +1,9 @@
-﻿using System;
-using System.Collections.ObjectModel;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿using System.Collections.ObjectModel;
 using HouseholdManagerMobileApp.Core.Commands;
 using HouseholdManagerMobileApp.Core.Models;
 using HouseholdManagerMobileApp.Core.Services;
 
 namespace HouseholdManagerMobileApp.Core.ViewModels;
-
-// TODO:
-// - Nap gombjainak működését implementálni.
-// - Amikor az adott hét 2 hónapban van (pl. 08.31 - 09.06), akkor a gombok a megfelelő hónap költségvetését mutassák.
 
 public class UserViewModel : ViewModelBase
 {
@@ -68,6 +58,18 @@ public class UserViewModel : ViewModelBase
         }
     }
 
+    private string currentMonth = DateTime.Today.ToString("MMMM");
+    public string CurrentMonth
+    {
+        get => currentMonth;
+        set
+        {
+            if (currentMonth == value) return;
+            currentMonth = value;
+            OnPropertyChanged();
+        }
+    }
+
     private string currentMonthBudget = string.Empty;
     public string CurrentMonthBudget
     {
@@ -104,6 +106,18 @@ public class UserViewModel : ViewModelBase
         }
     }
 
+    private DateTime startOfWeek;
+    public DateTime StartOfWeek
+    {
+        get => startOfWeek;
+        set
+        {
+            if (startOfWeek == value) return;
+            startOfWeek = value;
+            OnPropertyChanged();
+        }
+    }
+
     private string expandedEventId = string.Empty;
     public string ExpandedEventId
     {
@@ -120,6 +134,13 @@ public class UserViewModel : ViewModelBase
     public RelayCommand NavigateSettingsButtonCommand { get; }
     public RelayCommand NavigateEventLogButtonCommand { get; }
     public RelayCommand ToggleEventExpandCommand { get; }
+    public RelayCommand MondayEventsButtonCommand { get; }
+    public RelayCommand TuesdayEventsButtonCommand { get; }
+    public RelayCommand WednesdayEventsButtonCommand { get; }
+    public RelayCommand ThursdayEventsButtonCommand { get; }
+    public RelayCommand FridayEventsButtonCommand { get; }
+    public RelayCommand SaturdayEventsButtonCommand { get; }
+    public RelayCommand SundayEventsButtonCommand { get; }
     public RelayCommand LogoutButtonCommand { get; }
 
     public UserViewModel(IAuthService authService, IUserSessionService userSessionService)
@@ -131,6 +152,13 @@ public class UserViewModel : ViewModelBase
         NavigateSettingsButtonCommand = new RelayCommand(async _ => await NavigateToSettingsAsync());
         NavigateEventLogButtonCommand = new RelayCommand(async _ => await NavigateToEventLogAsync());
         ToggleEventExpandCommand = new RelayCommand(async parameter => await ToggleEventExpandAsync(parameter));
+        MondayEventsButtonCommand = new RelayCommand(async _ => await LoadSelectedDayEventsAsync(0));
+        TuesdayEventsButtonCommand = new RelayCommand(async _ => await LoadSelectedDayEventsAsync(1));
+        WednesdayEventsButtonCommand = new RelayCommand(async _ => await LoadSelectedDayEventsAsync(2));
+        ThursdayEventsButtonCommand = new RelayCommand(async _ => await LoadSelectedDayEventsAsync(3));
+        FridayEventsButtonCommand = new RelayCommand(async _ => await LoadSelectedDayEventsAsync(4));
+        SaturdayEventsButtonCommand = new RelayCommand(async _ => await LoadSelectedDayEventsAsync(5));
+        SundayEventsButtonCommand = new RelayCommand(async _ => await LoadSelectedDayEventsAsync(6));
         LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
 
         if (Shell.Current != null)
@@ -173,38 +201,31 @@ public class UserViewModel : ViewModelBase
         int currentDayIndex = (int)today.DayOfWeek;
         int daysToMonday = currentDayIndex == 0 ? 6 : currentDayIndex - 1;
 
-        DateTime startOfWeek = today.AddDays(-daysToMonday); // Hétfő
-        DateTime endOfWeek = startOfWeek.AddDays(6); // Vasárnap
+        StartOfWeek = today.AddDays(-daysToMonday); // Hétfő
+        DateTime endOfWeek = StartOfWeek.AddDays(6); // Vasárnap
 
-        CurrentWeekLabel = $"{startOfWeek:MM.dd.} - {endOfWeek:MM.dd.}";
+        CurrentWeekLabel = $"{StartOfWeek:MM.dd.} - {endOfWeek:MM.dd.}";
 
-        // Események betöltése:
-        EventLog.Clear();
-        List<Event> sortedEventLog = _userSessionService.GetCurrentEventLog().OrderByDescending(x => x.EventUserDate).ToList();
+        // A hét eseményeinek betöltése:
+        await LoadSelectedDayEventsAsync(currentDayIndex - 1);
 
-        // Egyelőre a jelenlegi hónap megjelenítése (WIP):
+        // Események betöltése a havi költségkeret kiszámolásához:
         string currentMonth = DateTime.Today.ToString("yyyy. MMMM");
-        int currentMonthEventCosts = 0;
-
-        foreach (Event _event in sortedEventLog)
-        {
-            if (_event.EventUserDate.ToString("yyyy. MMMM") == currentMonth)
-            {
-                EventLog.Add(_event);
-                currentMonthEventCosts += _event.EventCost;
-            }
-        }
-
         Budget? currentMonthBudget = _userSessionService.GetCurrentBudgets().Find(x => x.BudgetDate.ToString("yyyy. MMMM") == currentMonth);
         if (currentMonthBudget != null)
         {
+            int currentMonthEventCosts = 0;
+            foreach (Event _event in _userSessionService.GetCurrentEventLog())
+            {
+                if (_event.EventUserDate.ToString("yyyy. MMMM") == currentMonth)
+                    currentMonthEventCosts += _event.EventCost;
+            }
+
             CurrentMonthBudget = $"{currentMonthBudget.BudgetAmount} Ft";
             CurrentMonthUseableBudget = $"{currentMonthBudget.BudgetAmount - currentMonthEventCosts} Ft";
         }
         else
             CurrentMonthBudget = CurrentMonthUseableBudget = "- Ft";
-
-        await Task.CompletedTask;
     }
 
     private async Task ToggleEventExpandAsync(object parameter)
@@ -222,6 +243,16 @@ public class UserViewModel : ViewModelBase
                 _userSessionService.SetSelectedEvent(selectedEvent);
             }
         }
+        await Task.CompletedTask;
+    }
+
+    private async Task LoadSelectedDayEventsAsync(int dayNum)
+    {
+        EventLog.Clear();
+        List<Event> sortedEventLog = _userSessionService.GetCurrentEventLog().Where(x => x.EventUserDate.ToString("MM. dd.") == StartOfWeek.AddDays(dayNum).ToString("MM. dd.")).OrderByDescending(x => x.EventUserDate).ToList();
+        foreach (Event _event in sortedEventLog)
+            EventLog.Add(_event);
+
         await Task.CompletedTask;
     }
 

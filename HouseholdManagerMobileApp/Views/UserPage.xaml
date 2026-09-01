@@ -51,12 +51,14 @@
             <!-- Költségkeret szekció -->
             <Grid Grid.Row="1" Margin="10">
                 <Border Stroke="Gray" StrokeThickness="1" StrokeShape="RoundRectangle 6" Margin="0, 10, 0, 0" Padding="10">
-                    <Grid RowDefinitions="*, *" ColumnDefinitions="*, *">
-                        <Label Grid.Row="0" Grid.Column="0" Text="Összes" HorizontalTextAlignment="Center"/>
-                        <Label Grid.Row="1" Grid.Column="0" Text="{Binding CurrentMonthBudget}" HorizontalTextAlignment="Center" FontSize="Medium" FontAttributes="Bold" Margin="0, 5, 0, 20"/>
+                    <Grid RowDefinitions="Auto, *, *" ColumnDefinitions="*, *">
+                        <Label Grid.Row="0" Grid.ColumnSpan="2" Text="{Binding CurrentMonth}" HorizontalOptions="Center" FontSize="Medium" TextTransform="Uppercase" Margin="0, 0, 0, 10"/>
 
-                        <Label Grid.Row="0" Grid.Column="1" Text="Felhasználható" HorizontalTextAlignment="Center"/>
-                        <Label Grid.Row="1" Grid.Column="1" Text="{Binding CurrentMonthUseableBudget}" HorizontalTextAlignment="Center" FontSize="Medium" FontAttributes="Bold" TextColor="Green" Margin="0, 5, 0, 20"/>
+                        <Label Grid.Row="1" Grid.Column="0" Text="Összes" HorizontalTextAlignment="Center"/>
+                        <Label Grid.Row="2" Grid.Column="0" Text="{Binding CurrentMonthBudget}" HorizontalTextAlignment="Center" FontSize="Medium" FontAttributes="Bold" Margin="0, 5, 0, 20"/>
+
+                        <Label Grid.Row="1" Grid.Column="1" Text="Felhasználható" HorizontalTextAlignment="Center"/>
+                        <Label Grid.Row="2" Grid.Column="1" Text="{Binding CurrentMonthUseableBudget}" HorizontalTextAlignment="Center" FontSize="Medium" FontAttributes="Bold" TextColor="Green" Margin="0, 5, 0, 20"/>
                     </Grid>
                 </Border>
 
@@ -71,13 +73,13 @@
 
                         <Grid Grid.Row="1" ColumnDefinitions="*, *, *, *, *, *, *" Margin="0, 5, 0, 10" ColumnSpacing="5">
 
-                            <Button Grid.Column="0" Text="H"/>
-                            <Button Grid.Column="1" Text="K"/>
-                            <Button Grid.Column="2" Text="Sze" Padding="0"/>
-                            <Button Grid.Column="3" Text="Cs"/>
-                            <Button Grid.Column="4" Text="P"/>
-                            <Button Grid.Column="5" Text="Szo" Padding="0"/>
-                            <Button Grid.Column="6" Text="V"/>
+                            <Button Grid.Column="0" Text="H" Command="{Binding MondayEventsButtonCommand}"/>
+                            <Button Grid.Column="1" Text="K" Command="{Binding TuesdayEventsButtonCommand}"/>
+                            <Button Grid.Column="2" Text="Sze" Padding="0" Command="{Binding WednesdayEventsButtonCommand}"/>
+                            <Button Grid.Column="3" Text="Cs" Command="{Binding ThursdayEventsButtonCommand}"/>
+                            <Button Grid.Column="4" Text="P" Command="{Binding FridayEventsButtonCommand}"/>
+                            <Button Grid.Column="5" Text="Szo" Padding="0" Command="{Binding SaturdayEventsButtonCommand}"/>
+                            <Button Grid.Column="6" Text="V" Command="{Binding SundayEventsButtonCommand}"/>
                         </Grid>
 
                         <CollectionView Grid.Row="2" ItemsSource="{Binding EventLog}">
