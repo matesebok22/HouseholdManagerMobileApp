@@ -28,6 +28,7 @@ namespace HouseholdManagerMobileApp
             builder.Services.AddSingleton<IUserSessionService, UserSessionService>();
             builder.Services.AddSingleton<IDatabaseService, DatabaseService>();
             builder.Services.AddSingleton<IAuthService, AuthService>();
+            builder.Services.AddSingleton<INotificationService, NotificationService>();
 
             // ViewModel-ek regisztrálása:
             builder.Services.AddTransient<LoginViewModel>();
@@ -49,12 +50,23 @@ namespace HouseholdManagerMobileApp
             builder.Logging.AddDebug();
 #endif
 
-            // Supabase kliens inicializálása:
             MauiApp app = builder.Build();
             Task.Run(async () =>
             {
+                // Supabase kliens inicializálása:
                 IDatabaseService dbService = app.Services.GetRequiredService<IDatabaseService>();
                 await dbService.InitializeAsync();
+
+                /*// Értesítésekre feliratkozás a Supabase Realtime segítségével:
+                INotificationService notificationService = app.Services.GetRequiredService<INotificationService>();
+                await notificationService.SubscribeToNotificationsAsync(notification =>
+                {
+                    // Értesítés fogadásakor
+                    MainThread.BeginInvokeOnMainThread(async () =>
+                    {
+                        await Application.Current?.MainPage?.DisplayAlert(notification.Title, notification.Message, "OK");
+                    });
+                });*/
             });
 
             //return builder.Build();

@@ -9,6 +9,7 @@ public class UserViewModel : ViewModelBase
 {
     private readonly IAuthService _authService;
     private readonly IUserSessionService _userSessionService;
+    private readonly INotificationService _notificationService;
 
     private string welcomeMessage = string.Empty;
     public string WelcomeMessage
@@ -42,6 +43,18 @@ public class UserViewModel : ViewModelBase
         {
             if (isMenuVisible == value) return;
             isMenuVisible = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private ObservableCollection<Notification> unreadNotifications = [];
+    public ObservableCollection<Notification> UnreadNotifications
+    {
+        get => unreadNotifications;
+        set
+        {
+            if (unreadNotifications == value) return;
+            unreadNotifications = value;
             OnPropertyChanged();
         }
     }
@@ -143,10 +156,11 @@ public class UserViewModel : ViewModelBase
     public RelayCommand SundayEventsButtonCommand { get; }
     public RelayCommand LogoutButtonCommand { get; }
 
-    public UserViewModel(IAuthService authService, IUserSessionService userSessionService)
+    public UserViewModel(IAuthService authService, IUserSessionService userSessionService, INotificationService notificationService)
     {
         _authService = authService;
         _userSessionService = userSessionService;
+        _notificationService = notificationService;
 
         ToggleMenuButtonCommand = new RelayCommand(async _ => await Task.Run(() => IsMenuVisible = !IsMenuVisible));
         NavigateSettingsButtonCommand = new RelayCommand(async _ => await NavigateToSettingsAsync());
@@ -178,6 +192,7 @@ public class UserViewModel : ViewModelBase
         }
 
         IsMenuVisible = false;
+        await _notificationService.MarkAllNotificationsAsReadAsync();
         await Shell.Current.GoToAsync("//SettingsPage?test=asd123");
     }
 
@@ -191,11 +206,18 @@ public class UserViewModel : ViewModelBase
         }
 
         IsMenuVisible = false;
+        await _notificationService.MarkAllNotificationsAsReadAsync();
         await Shell.Current.GoToAsync("//EventLogPage");
     }
 
     private async Task LoadUserPageAsync()
     {
+        // Olvasatlan értesítések betöltése:
+        UnreadNotifications.Clear();
+        List<Notification> unreadNotifications = await _notificationService.GetUnreadNotificationsAsync();
+        foreach (Notification notification in unreadNotifications)
+            UnreadNotifications.Add(notification);
+
         // Jelenlegi hét dátumának betöltése:
         DateTime today = DateTime.Today;
         int currentDayIndex = (int)today.DayOfWeek;
@@ -260,6 +282,7 @@ public class UserViewModel : ViewModelBase
     {
         IsMenuVisible = false;
         WelcomeMessage = string.Empty;
+        await _notificationService.MarkAllNotificationsAsReadAsync();
         await _authService.LogoutAsync();
     }
 

@@ -1,4 +1,5 @@
 ﻿using HouseholdManagerMobileApp.Core.Models;
+using Supabase.Interfaces;
 
 namespace HouseholdManagerMobileApp.Core.Services;
 

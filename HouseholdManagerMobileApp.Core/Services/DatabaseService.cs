@@ -232,7 +232,8 @@ public class DatabaseService : IDatabaseService
             EventUserDate = eventUserDate,
             EventType = eventType,
             EventCost = eventCost,
-            EventDescription  = eventDesc
+            EventDescription = eventDesc,
+            LastModifiedBy = _userSessionService.GetCurrentUser().UID
         };
 
         var response = await _supabaseClient.From<Event>().Insert(newEvent);
@@ -250,6 +251,7 @@ public class DatabaseService : IDatabaseService
                                                               .Set(x => x.EventType, eventType)
                                                               .Set(x => x.EventCost, eventCost)
                                                               .Set(x => x.EventDescription, eventDesc)
+                                                              .Set(x => x.LastModifiedBy, _userSessionService.GetCurrentUser().UID)
                                                               .Update();
         if (response.Models != null && response.Models.Count > 0)
             return true;

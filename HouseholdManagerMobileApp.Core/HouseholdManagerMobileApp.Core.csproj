@@ -22,6 +22,7 @@
 	  <Compile Remove="Class1.cs" />
 	  <Compile Remove="Helpers\StringEqualsConverter.cs" />
 	  <Compile Remove="Models\RegisterViewModel.cs" />
+	  <Compile Remove="Models\UserPushToken.cs" />
 	  <Compile Remove="ViewModels\RegisterViewModel.cs" />
 	</ItemGroup>
 

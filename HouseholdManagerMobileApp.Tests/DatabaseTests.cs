@@ -89,7 +89,7 @@ public class DatabaseTests
         var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
         _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
         _mockDatabaseService.Setup(x => x.CreateHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
-        _mockDatabaseService.Setup(x => x.LoadHouseholdsAsync(It.IsAny<int>())).ReturnsAsync(true);
+        _mockDatabaseService.Setup(x => x.LoadDataAsync(It.IsAny<int>())).ReturnsAsync(true);
         _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
         var mockHousehold = new Household { HouseholdName = "testhh", HouseholdAccess = "ASD123" };
         _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(mockHousehold);
@@ -179,7 +179,7 @@ public class DatabaseTests
         _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
         _mockDatabaseService.Setup(x => x.JoinHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
         _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
-        _mockDatabaseService.Setup(x => x.LoadHouseholdsAsync(It.IsAny<int>())).ReturnsAsync(true);
+        _mockDatabaseService.Setup(x => x.LoadDataAsync(It.IsAny<int>())).ReturnsAsync(true);
         _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
         _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(mockHousehold);
         _mockUserSessionService.Setup(x => x.GetCurrentBudgets()).Returns([]);
@@ -226,7 +226,7 @@ public class DatabaseTests
         var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
         _mockDatabaseService.Setup(x => x.EditHouseholdAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<int>())).ReturnsAsync(true);
         _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
-        _mockDatabaseService.Setup(x => x.LoadHouseholdsAsync(It.IsAny<int>())).ReturnsAsync(true);
+        _mockDatabaseService.Setup(x => x.LoadDataAsync(It.IsAny<int>())).ReturnsAsync(true);
         _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
         _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(mockHousehold);
         _mockUserSessionService.Setup(x => x.GetCurrentBudgets()).Returns([]);
@@ -273,7 +273,7 @@ public class DatabaseTests
         var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
         _mockDatabaseService.Setup(x => x.LeaveHouseholdAsync()).ReturnsAsync(true);
         _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
-        _mockDatabaseService.Setup(x => x.LoadHouseholdsAsync(It.IsAny<int>())).ReturnsAsync(true);
+        _mockDatabaseService.Setup(x => x.LoadDataAsync(It.IsAny<int>())).ReturnsAsync(true);
         _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
         _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(mockHousehold);
         _mockUserSessionService.Setup(x => x.GetCurrentBudgets()).Returns([]);
@@ -320,7 +320,7 @@ public class DatabaseTests
         var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
         _mockDatabaseService.Setup(x => x.LeaveHouseholdAsync()).ReturnsAsync(true);
         _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
-        _mockDatabaseService.Setup(x => x.LoadHouseholdsAsync(It.IsAny<int>())).ReturnsAsync(true);
+        _mockDatabaseService.Setup(x => x.LoadDataAsync(It.IsAny<int>())).ReturnsAsync(true);
         _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
         _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(mockHousehold);
         _mockUserSessionService.Setup(x => x.GetCurrentBudgets()).Returns([]);
