@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using HouseholdManagerMobileApp.Core.Commands;
+﻿using HouseholdManagerMobileApp.Core.Commands;
 using HouseholdManagerMobileApp.Core.Services;
-using Supabase;
+using HouseholdManagerMobileApp.Core.Helpers;
 
 namespace HouseholdManagerMobileApp.Core.ViewModels;
 
@@ -80,7 +74,7 @@ public class LoginViewModel : ViewModelBase
 
         if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))
         {
-            ErrorMessage = "Kérlek tölts ki minden mezőt!";
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Kérlek tölts ki minden mezőt!");
             return;
         }
 
@@ -95,7 +89,7 @@ public class LoginViewModel : ViewModelBase
                 await Shell.Current.GoToAsync("//UserPage");
         }
         else
-            ErrorMessage = "Hibás felhasználónév vagy jelszó!";
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Hibás felhasználónév vagy jelszó!");
         
         IsLoading = false;
     }

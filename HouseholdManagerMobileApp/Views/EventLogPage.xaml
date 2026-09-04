@@ -25,6 +25,7 @@
             <VerticalStackLayout Padding="20" Spacing="10">
                 <Button Text="Kezdőlap" Command="{Binding NavigateHomeButtonCommand}" BackgroundColor="DarkGrey" TextColor="White"/>
                 <Button Text="Eseménynapló" IsEnabled="False" BackgroundColor="DarkGrey" TextColor="White"/>
+                <Button Text="Értesítések" Command="{Binding NavigateNotificationsButtonCommand}" BackgroundColor="DarkGrey" TextColor="White"/>
                 <Button Text="Beállítások" Command="{Binding NavigateSettingsButtonCommand}" BackgroundColor="DarkGrey" TextColor="White"/>
                 <Button Text="Kijelentkezés" Command="{Binding LogoutButtonCommand}" BackgroundColor="#e65247" TextColor="White"/>
             </VerticalStackLayout>

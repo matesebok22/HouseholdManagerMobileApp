@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using HouseholdManagerMobileApp.Core.Commands;
+using HouseholdManagerMobileApp.Core.Helpers;
 using HouseholdManagerMobileApp.Core.Models;
 using HouseholdManagerMobileApp.Core.Services;
 
@@ -146,6 +147,7 @@ public class UserViewModel : ViewModelBase
     public RelayCommand ToggleMenuButtonCommand { get; }
     public RelayCommand NavigateSettingsButtonCommand { get; }
     public RelayCommand NavigateEventLogButtonCommand { get; }
+    public RelayCommand NavigateNotificationsButtonCommand { get; }
     public RelayCommand ToggleEventExpandCommand { get; }
     public RelayCommand MondayEventsButtonCommand { get; }
     public RelayCommand TuesdayEventsButtonCommand { get; }
@@ -165,6 +167,7 @@ public class UserViewModel : ViewModelBase
         ToggleMenuButtonCommand = new RelayCommand(async _ => await Task.Run(() => IsMenuVisible = !IsMenuVisible));
         NavigateSettingsButtonCommand = new RelayCommand(async _ => await NavigateToSettingsAsync());
         NavigateEventLogButtonCommand = new RelayCommand(async _ => await NavigateToEventLogAsync());
+        NavigateNotificationsButtonCommand = new RelayCommand(async _ => await NavigateToNotificationsAsync());
         ToggleEventExpandCommand = new RelayCommand(async parameter => await ToggleEventExpandAsync(parameter));
         MondayEventsButtonCommand = new RelayCommand(async _ => await LoadSelectedDayEventsAsync(0));
         TuesdayEventsButtonCommand = new RelayCommand(async _ => await LoadSelectedDayEventsAsync(1));
@@ -187,7 +190,7 @@ public class UserViewModel : ViewModelBase
     {
         if (!_userSessionService.IsUserLoggedIn())
         {
-            await DisplayErrorAsync("A beállításokhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A beállításokhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();
         }
 
@@ -200,7 +203,7 @@ public class UserViewModel : ViewModelBase
     {
         if (!_userSessionService.IsUserLoggedIn())
         {
-            await DisplayErrorAsync("Az eseménynaplóhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az eseménynaplóhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();
             return;
         }
@@ -208,6 +211,20 @@ public class UserViewModel : ViewModelBase
         IsMenuVisible = false;
         await _notificationService.MarkAllNotificationsAsReadAsync();
         await Shell.Current.GoToAsync("//EventLogPage");
+    }
+
+    private async Task NavigateToNotificationsAsync()
+    {
+        if (!_userSessionService.IsUserLoggedIn())
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az értesítésekhez való navigálás sikertelen. Kérlek, jelentkezz be újra.");
+            await LogoutAsync();
+            return;
+        }
+
+        IsMenuVisible = false;
+        await _notificationService.MarkAllNotificationsAsReadAsync();
+        await Shell.Current.GoToAsync("//NotificationsPage");
     }
 
     private async Task LoadUserPageAsync()
@@ -284,12 +301,5 @@ public class UserViewModel : ViewModelBase
         WelcomeMessage = string.Empty;
         await _notificationService.MarkAllNotificationsAsReadAsync();
         await _authService.LogoutAsync();
-    }
-
-    private async Task DisplayErrorAsync(string message)
-    {
-        ErrorMessage = message;
-        if (Shell.Current != null)
-            await Shell.Current.DisplayAlert("Hiba", ErrorMessage, "OK");
     }
 }

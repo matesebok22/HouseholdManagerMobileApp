@@ -1,4 +1,5 @@
 ﻿using HouseholdManagerMobileApp.Core.Commands;
+using HouseholdManagerMobileApp.Core.Helpers;
 using HouseholdManagerMobileApp.Core.Services;
 
 namespace HouseholdManagerMobileApp.Core.ViewModels;
@@ -98,12 +99,12 @@ public class RegistrationViewModel : ViewModelBase
 
         if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Nickname) || string.IsNullOrWhiteSpace(Password) || string.IsNullOrWhiteSpace(ConfirmPassword))
         {
-            ErrorMessage = "Kérlek tölts ki minden mezőt!";
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Kérlek tölts ki minden mezőt!");
             return;
         }
         else if (Password != ConfirmPassword)
         {
-            ErrorMessage = "A jelszavak nem egyeznek!";
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A jelszavak nem egyeznek!");
             return;
         }
 
@@ -117,7 +118,7 @@ public class RegistrationViewModel : ViewModelBase
                 await Shell.Current.GoToAsync("//LoginPage");
         }
         else
-            ErrorMessage = "A regisztráció sikertelen. Próbáld meg később!";
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A regisztráció sikertelen. Próbáld meg később!");
 
         IsLoading = false;
     }

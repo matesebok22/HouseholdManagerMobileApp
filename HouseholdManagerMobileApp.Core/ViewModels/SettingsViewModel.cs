@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.ObjectModel;
 
 using HouseholdManagerMobileApp.Core.Commands;
+using HouseholdManagerMobileApp.Core.Helpers;
 using HouseholdManagerMobileApp.Core.Models;
 using HouseholdManagerMobileApp.Core.Services;
 
@@ -232,6 +228,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
     public RelayCommand ToggleMenuButtonCommand { get; }
     public RelayCommand NavigateHomeButtonCommand { get; }
     public RelayCommand NavigateEventLogButtonCommand { get; }
+    public RelayCommand NavigateNotificationsButtonCommand { get; }
     public RelayCommand ShowJoinHouseholdButtonCommand { get; }
     public RelayCommand ShowCreateHouseholdButtonCommand { get; }
     public RelayCommand ShowEditHouseholdButtonCommand { get; }
@@ -252,6 +249,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         ToggleMenuButtonCommand = new RelayCommand(async _ => await Task.Run(() => IsMenuVisible = !IsMenuVisible));
         NavigateHomeButtonCommand = new RelayCommand(async _ => await NavigateToHomeAsync());
         NavigateEventLogButtonCommand = new RelayCommand(async _ => await NavigateToEventLogAsync());
+        NavigateNotificationsButtonCommand = new RelayCommand(async _ => await NavigateToNotificationsAsync());
         ShowJoinHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(1, IsJoinHouseholdVisible)));
         ShowCreateHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(2, IsCreateHouseholdVisible)));
         ShowEditHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(3, IsEditHouseholdVisible)), _ => _userSessionService.IsCurrentHouseholdOwner());
@@ -276,7 +274,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
     {
         if (!_userSessionService.IsUserLoggedIn())
         {
-            await DisplayErrorAsync("A kezdőlaphoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A kezdőlaphoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();
             return;
         }
@@ -289,13 +287,26 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
     {
         if (!_userSessionService.IsUserLoggedIn())
         {
-            await DisplayErrorAsync("Az eseménynaplóhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az eseménynaplóhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();
             return;
         }
 
         IsMenuVisible = false;
         await Shell.Current.GoToAsync("//EventLogPage");
+    }
+
+    private async Task NavigateToNotificationsAsync()
+    {
+        if (!_userSessionService.IsUserLoggedIn())
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az értesítésekhez való navigálás sikertelen. Kérlek, jelentkezz be újra.");
+            await LogoutAsync();
+            return;
+        }
+
+        IsMenuVisible = false;
+        await Shell.Current.GoToAsync("//NotificationsPage");
     }
 
     private async Task LoadHouseholdsAsync()
@@ -334,12 +345,12 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
                     LoadSelectedMonthBudget();
                 }
                 else
-                    await DisplayErrorAsync("Háztartás váltás sikertelen!");
+                    ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Háztartás váltás sikertelen!");
             }
         }
         catch (Exception ex)
         {
-            await DisplayErrorAsync($"Hiba a háztartás váltásakor: {ex.Message}");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync($"Hiba a háztartás váltásakor: {ex.Message}");
         }
     }
 
@@ -347,14 +358,14 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
     {
         if (!_userSessionService.IsUserLoggedIn())
         {
-            await DisplayErrorAsync("Háztartáshoz csatlakozás sikertelen. Kérlek, jelentkezz be újra.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Háztartáshoz csatlakozás sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();
             return;
         }
 
         if (HouseholdAccessCode.Trim() == string.Empty)
         {
-            await DisplayErrorAsync("Háztartás azonosító megadása kötelező!");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Háztartás azonosító megadása kötelező!");
             return;
         }
 
@@ -368,21 +379,21 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
             await LoadHouseholdsAsync();
         }
         else
-            await DisplayErrorAsync("Hiba a háztartáshoz csatlakozás közben.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Hiba a háztartáshoz csatlakozás közben.");
     }
 
     private async Task CreateHouseholdAsync()
     {
         if (!_userSessionService.IsUserLoggedIn())
         {
-            await DisplayErrorAsync("Új háztartás készítése sikertelen. Kérlek, jelentkezz be újra.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Új háztartás készítése sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();
             return;
         }
 
         if (NewHouseholdName.Trim() == string.Empty)
         {
-            await DisplayErrorAsync("Háztartásnév megadása kötelező!");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Háztartásnév megadása kötelező!");
             return;
         }
 
@@ -396,7 +407,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
             await LoadHouseholdsAsync();
         }
         else
-            await DisplayErrorAsync("Hiba a háztartás elkészítése közben.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Hiba a háztartás elkészítése közben.");
     }
 
     private async Task EditHouseholdAsync()
@@ -411,7 +422,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
             await LoadHouseholdsAsync();
         }
         else
-            await DisplayErrorAsync("Hiba a háztartás módosítása közben.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Hiba a háztartás módosítása közben.");
     }
 
     private async Task LeaveHouseholdAsync()
@@ -430,7 +441,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
             await LoadHouseholdsAsync();
         }
         else
-            await DisplayErrorAsync("Hiba a háztartásból kilépés közben.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Hiba a háztartásból kilépés közben.");
     }
 
     private async Task DisbandHouseholdAsync()
@@ -449,33 +460,33 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
             await LoadHouseholdsAsync();
         }
         else
-            await DisplayErrorAsync("Hiba a háztartás felbontása közben.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Hiba a háztartás felbontása közben.");
     }
 
     private async Task ChangePasswordAsync()
     {
         if (!_userSessionService.IsUserLoggedIn())
         {
-            await DisplayErrorAsync("A jelszó megváltoztatása sikertelen. Kérlek, jelentkezz be újra.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A jelszó megváltoztatása sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();
             return;
         }
 
         if (string.IsNullOrEmpty(OldPassword) || string.IsNullOrEmpty(NewPassword) || string.IsNullOrEmpty(ConfirmNewPassword))
         {
-            await DisplayErrorAsync("Minden jelszó mezőt ki kell tölteni.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Minden jelszó mezőt ki kell tölteni.");
             return;
         }
 
         if (OldPassword == NewPassword || OldPassword == ConfirmNewPassword)
         {
-            await DisplayErrorAsync("A régi jelszó nem egyezhet az új jelszóval.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A régi jelszó nem egyezhet az új jelszóval.");
             return;
         }
 
         if (NewPassword != ConfirmNewPassword)
         {
-            await DisplayErrorAsync("Az új jelszavak nem egyeznek.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az új jelszavak nem egyeznek.");
             return;
         }
 
@@ -487,7 +498,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
             OldPassword = NewPassword = ConfirmNewPassword = string.Empty;
         }
         else
-            await DisplayErrorAsync("A régi és a jelenlegi jelszó nem egyezik!");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A régi és a jelenlegi jelszó nem egyezik!");
     }
 
     private async Task LogoutAsync()
@@ -495,13 +506,6 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         IsMenuVisible = false;
         WelcomeMessage = ErrorMessage = string.Empty;
         await _authService.LogoutAsync();
-    }
-
-    private async Task DisplayErrorAsync(string message)
-    {
-        ErrorMessage = message;
-        if (Shell.Current != null)
-            await Shell.Current.DisplayAlert("Hiba", ErrorMessage, "OK");
     }
 
     private void ChangeVisibility(int optionNum, bool param)

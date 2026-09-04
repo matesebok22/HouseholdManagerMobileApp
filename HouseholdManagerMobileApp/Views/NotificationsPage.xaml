@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:HouseholdManagerMobileApp.Core.Models;assembly=HouseholdManagerMobileApp.Core"
+             x:Class="HouseholdManagerMobileApp.Views.NotificationsPage">
+
+    <Grid RowDefinitions="Auto,*" Padding="0">
+        <!-- Fejléc -->
+        <Grid ColumnDefinitions="Auto,*" Padding="10" BackgroundColor="Grey">
+            <Button Grid.Column="0" Text="☰" FontSize="24" Command="{Binding ToggleMenuButtonCommand}" BackgroundColor="Grey" TextColor="White" Padding="0" WidthRequest="44"/>
+            <Label Grid.Column="1" Text="{Binding WelcomeMessage}" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" Margin="10,0,0,0"/>
+        </Grid>
+
+        <!-- Menü -->
+        <Grid Grid.Row="1" IsVisible="{Binding IsMenuVisible}" BackgroundColor="DarkGrey" WidthRequest="250" ZIndex="30" Padding="0" HorizontalOptions="Start">
+            <VerticalStackLayout Padding="20" Spacing="10">
+                <Button Text="Kezdőlap" Command="{Binding NavigateHomeButtonCommand}" BackgroundColor="DarkGrey" TextColor="White"/>
+                <Button Text="Eseménynapló" Command="{Binding NavigateEventLogButtonCommand}" BackgroundColor="DarkGrey" TextColor="White"/>
+                <Button Text="Értesítések" IsEnabled="False" BackgroundColor="DarkGrey" TextColor="White"/>
+                <Button Text="Beállítások" Command="{Binding NavigateSettingsButtonCommand}" BackgroundColor="DarkGrey" TextColor="White"/>
+                <Button Text="Kijelentkezés" Command="{Binding LogoutButtonCommand}" BackgroundColor="#e65247" TextColor="White"/>
+            </VerticalStackLayout>
+        </Grid>
+
+        <BoxView Grid.Row="1" BackgroundColor="Black" Opacity="0.7" IsVisible="{Binding IsMenuVisible}" ZIndex="20"/>
+
+        <!-- Fő tartalom -->
+        <Grid Grid.Row="1" RowDefinitions="Auto, *" ColumnDefinitions="*, Auto" Margin="5">
+            <Label Text="Értesítések" FontSize="Large" VerticalOptions="End"/>
+            <Button Grid.Row="0" Grid.Column="1" Text="Összes értesítés törlése" Command="{Binding DeleteAllNotificationsButtonCommand}" BackgroundColor="#e65247"/>
+
+            <CollectionView Grid.Row="1" Grid.ColumnSpan="2" ItemsSource="{Binding Notifications}" Margin="0, 10, 0, 0">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:Notification">
+                        <Border BackgroundColor="NavajoWhite" Padding="5" StrokeShape="RoundRectangle 10">
+                            <Grid RowDefinitions="Auto, Auto" ColumnDefinitions="*, Auto">
+                                <Label Grid.Row="0" Grid.Column="0" Text="{Binding Title}" TextColor="Black" FontAttributes="Bold"/>
+                                <Label Grid.Row="0" Grid.Column="1" Text="{Binding CreatedAt, StringFormat='{0:yyyy. MM. dd. HH:mm}'}" TextColor="Red"/>
+                                <Label Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding Message}" TextColor="Black"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+                <CollectionView.EmptyView>
+                    <Label HorizontalOptions="Center" Text="Nincsenek értesítések."/>
+                </CollectionView.EmptyView>
+            </CollectionView>
+        </Grid>
+    </Grid>
+</ContentPage>

@@ -37,6 +37,7 @@ namespace HouseholdManagerMobileApp
             builder.Services.AddTransient<SettingsViewModel>();
             builder.Services.AddTransient<EventLogViewModel>();
             builder.Services.AddTransient<NewEventViewModel>();
+            builder.Services.AddTransient<NotificationsViewModel>();
 
             // View-k regisztrálása:
             builder.Services.AddTransient<LoginPage>();
@@ -45,6 +46,7 @@ namespace HouseholdManagerMobileApp
             builder.Services.AddTransient<SettingsPage>();
             builder.Services.AddTransient<EventLogPage>();
             builder.Services.AddTransient<NewEventPage>();
+            builder.Services.AddTransient<NotificationsPage>();
 
 #if DEBUG
             builder.Logging.AddDebug();

@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.ObjectModel;
 
 using HouseholdManagerMobileApp.Core.Commands;
+using HouseholdManagerMobileApp.Core.Helpers;
 using HouseholdManagerMobileApp.Core.Models;
 using HouseholdManagerMobileApp.Core.Services;
-using Microsoft.IdentityModel.Tokens;
-using static Microsoft.IO.RecyclableMemoryStreamManager;
 
 namespace HouseholdManagerMobileApp.Core.ViewModels;
 
@@ -189,6 +183,7 @@ public class EventLogViewModel : ViewModelBase
 
     public RelayCommand ToggleMenuButtonCommand { get; }
     public RelayCommand NavigateHomeButtonCommand { get; }
+    public RelayCommand NavigateNotificationsButtonCommand { get; }
     public RelayCommand NavigateSettingsButtonCommand { get; }
     public RelayCommand NavigateNewEventButtonCommand { get; }
     public RelayCommand ToggleEventExpandCommand { get; }
@@ -207,6 +202,7 @@ public class EventLogViewModel : ViewModelBase
 
         ToggleMenuButtonCommand = new RelayCommand(async _ => await Task.Run(() => IsMenuVisible = !IsMenuVisible));
         NavigateHomeButtonCommand = new RelayCommand(async _ => await NavigateToHomeAsync());
+        NavigateNotificationsButtonCommand = new RelayCommand(async _ => await NavigateToNotificationsAsync());
         NavigateSettingsButtonCommand = new RelayCommand(async _ => await NavigateToSettingsAsync());
         NavigateNewEventButtonCommand = new RelayCommand(async _ => await NavigateToNewEventAsync());
         ToggleEventExpandCommand = new RelayCommand(async parameter => await ToggleEventExpandAsync(parameter));
@@ -230,21 +226,34 @@ public class EventLogViewModel : ViewModelBase
     {
         if (!_userSessionService.IsUserLoggedIn())
         {
-            await DisplayErrorAsync("A főoldalhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A főoldalhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();
             return;
         }
 
-        _userSessionService.SetSelectedEvent(null); // Még lehet mozgatni fogom.
+        _userSessionService.SetSelectedEvent(null);
 
         await Shell.Current.GoToAsync("//UserPage");
+    }
+
+    private async Task NavigateToNotificationsAsync()
+    {
+        if (!_userSessionService.IsUserLoggedIn())
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az értesítésekhez való navigálás sikertelen. Kérlek, jelentkezz be újra.");
+            await LogoutAsync();
+            return;
+        }
+
+        IsMenuVisible = false;
+        await Shell.Current.GoToAsync("//NotificationsPage");
     }
 
     private async Task NavigateToSettingsAsync()
     {
         if (!_userSessionService.IsUserLoggedIn())
         {
-            await DisplayErrorAsync("A beállításokhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A beállításokhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();
             return;
         }
@@ -258,7 +267,7 @@ public class EventLogViewModel : ViewModelBase
     {
         if (!_userSessionService.IsUserLoggedIn())
         {
-            await DisplayErrorAsync("Az új esemény létrehozásához való navigálás sikertelen. Kérlek, jelentkezz be újra.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az új esemény létrehozásához való navigálás sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();
             return;
         }
@@ -342,7 +351,7 @@ public class EventLogViewModel : ViewModelBase
     {
         if (!_userSessionService.IsUserLoggedIn())
         {
-            await DisplayErrorAsync("Az esemény módosításához való navigálás sikertelen. Kérlek, jelentkezz be újra.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az esemény módosításához való navigálás sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();
             return;
         }
@@ -355,7 +364,7 @@ public class EventLogViewModel : ViewModelBase
     {
         if (!_userSessionService.IsUserLoggedIn())
         {
-            await DisplayErrorAsync("Az esemény törlése sikertelen. Kérlek, jelentkezz be újra.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az esemény törlése sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();
             return;
         }
@@ -420,12 +429,5 @@ public class EventLogViewModel : ViewModelBase
         WelcomeMessage = ErrorMessage = string.Empty;
         IsLoading = false;
         await _authService.LogoutAsync();
-    }
-
-    private async Task DisplayErrorAsync(string message)
-    {
-        ErrorMessage = message;
-        if (Shell.Current != null)
-            await Shell.Current.DisplayAlert("Hiba", ErrorMessage, "OK");
     }
 }

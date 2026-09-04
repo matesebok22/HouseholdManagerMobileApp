@@ -25,6 +25,7 @@
             <VerticalStackLayout Padding="20" Spacing="10">
                 <Button Text="Kezdőlap"  IsEnabled="False" BackgroundColor="DarkGrey" TextColor="White"/>
                 <Button Text="Eseménynapló" Command="{Binding NavigateEventLogButtonCommand}" BackgroundColor="DarkGrey" TextColor="White"/>
+                <Button Text="Értesítések" Command="{Binding NavigateNotificationsButtonCommand}" BackgroundColor="DarkGrey" TextColor="White"/>
                 <Button Text="Beállítások" Command="{Binding NavigateSettingsButtonCommand}" BackgroundColor="DarkGrey" TextColor="White"/>
                 <Button Text="Kijelentkezés" Command="{Binding LogoutButtonCommand}" BackgroundColor="#F44336" TextColor="White"/>
             </VerticalStackLayout>
@@ -36,20 +37,15 @@
         <Grid Grid.Row="1" RowDefinitions="150, Auto, *">
             <!-- Értesítések szekció -->
             <Grid Grid.Row="0" Margin="5">
-                <!-- A keret, amely a tartalom mögött helyezkedik el -->
                 <Border Stroke="Gray" StrokeThickness="1" StrokeShape="RoundRectangle 6" Margin="0, 10, 0, 0" Padding="10">
-                    <!-- A csoport belső tartalma -->
                     <CollectionView ItemsSource="{Binding UnreadNotifications}">
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="models:Notification">
-                                <!-- Kártyaszerű megjelenés egy keretben -->
                                 <Border BackgroundColor="NavajoWhite" Padding="5" StrokeShape="RoundRectangle 10">
-                                    <Grid RowDefinitions="Auto, Auto, Auto">
-                                        <Label Grid.Row="0" Text="{Binding CreatedAt, StringFormat='{0:yyyy. MM. dd. HH:mm}'}" TextColor="Red"/>
-                                        <!-- Itt meg kell oldani, hogy a CreatedAt és UpdatedAt dátumok közül a legújabbat írja ki. -->
-                                        <!-- <Label Grid.Row="0" Text="{Binding CreatedAt, StringFormat='{0:yyyy. MM. dd. HH:mm}'}" TextColor="Red"/> -->
-                                        <Label Grid.Row="1" Grid.Column="0" Text="{Binding Title}" TextColor="Black"/>
-                                        <!-- <Label Grid.Row="2" Text="{Binding Message}" TextColor="Black"/> -->
+                                    <Grid RowDefinitions="Auto, Auto" ColumnDefinitions="*, Auto">
+                                        <Label Grid.Row="0" Grid.Column="0" Text="{Binding Title}" TextColor="Black" FontAttributes="Bold"/>
+                                        <Label Grid.Row="0" Grid.Column="1" Text="{Binding CreatedAt, StringFormat='{0:yyyy. MM. dd. HH:mm}'}" TextColor="Red"/>
+                                        <Label Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding Message}" TextColor="Black"/>
                                     </Grid>
                                 </Border>
                             </DataTemplate>

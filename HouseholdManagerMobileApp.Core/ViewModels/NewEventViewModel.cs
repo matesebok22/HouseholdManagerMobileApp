@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using HouseholdManagerMobileApp.Core.Commands;
+﻿using HouseholdManagerMobileApp.Core.Commands;
 using HouseholdManagerMobileApp.Core.Services;
 using HouseholdManagerMobileApp.Core.Models;
+using HouseholdManagerMobileApp.Core.Helpers;
 
 namespace HouseholdManagerMobileApp.Core.ViewModels;
 
@@ -160,7 +155,7 @@ public class NewEventViewModel : ViewModelBase
     {
         if (!_userSessionService.IsUserLoggedIn())
         {
-            await DisplayErrorAsync("Az eseménynaplóhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az eseménynaplóhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();
             return;
         }
@@ -175,38 +170,38 @@ public class NewEventViewModel : ViewModelBase
 
     private async Task CreateEventAsync()
     {
-        IsLoading = true;
-
         if (!_userSessionService.IsUserLoggedIn())
         {
-            await DisplayErrorAsync("Az új esemény létrehozása sikertelen. Kérlek, jelentkezz be újra.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az új esemény létrehozása sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();
             return;
         }
 
         if (EventName == string.Empty || EventCost == 0)
         {
-            await DisplayErrorAsync("Kötelező megadni az esemény nevét és költségét!");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Kötelező megadni az esemény nevét és költségét!");
             return;
         }
 
         if (EventName.Length >= 30)
         {
-            await DisplayErrorAsync("Az esemény neve maximum 30 karakter hosszú lehet!");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az esemény neve maximum 30 karakter hosszú lehet!");
             return;
         }
 
         if (EventType.Length >= 20)
         {
-            await DisplayErrorAsync("Az esemény típusa maximum 20 karakter hosszú lehet!");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az esemény típusa maximum 20 karakter hosszú lehet!");
             return;
         }
 
         if (EventDesc.Length >= 500)
         {
-            await DisplayErrorAsync("Az esemény leírása maximum 500 karakter hosszú lehet!");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az esemény leírása maximum 500 karakter hosszú lehet!");
             return;
         }
+
+        IsLoading = true;
 
         bool success;
         if (_userSessionService.GetSelectedEvent() == null)
@@ -226,7 +221,7 @@ public class NewEventViewModel : ViewModelBase
                 await Shell.Current.GoToAsync("//EventLogPage");
         }
         else
-            await DisplayErrorAsync("Új esemény létrehozása sikertelen!");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Új esemény létrehozása sikertelen!");
 
         IsLoading = false;
     }
@@ -238,13 +233,5 @@ public class NewEventViewModel : ViewModelBase
         EventTime = DateTime.Now.TimeOfDay;
         EventCost = 0;
         await _authService.LogoutAsync();
-    }
-
-    private async Task DisplayErrorAsync(string message)
-    {
-        ErrorMessage = message;
-        IsLoading = false;
-        if (Shell.Current != null)
-            await Shell.Current.DisplayAlert("Hiba", ErrorMessage, "OK");
     }
 }
