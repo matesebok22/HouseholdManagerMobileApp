@@ -89,6 +89,20 @@
 
 
                 <BoxView Color="LightGray" HeightRequest="1" Margin="0,10,0,10"/>
+                
+                <!-- Értesítések kezelése -->
+                <Label Text="Értesítések kezelése" FontSize="Medium"/>
+                
+                <HorizontalStackLayout>
+                    <CheckBox IsChecked="{Binding NotificationsIsChecked}"/>
+                    <Label Text="Értesítések fogadása a jelenlegi háztartásnál" VerticalOptions="Center">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ToggleNotificationsCommand}"/>
+                        </Label.GestureRecognizers>
+                    </Label>
+                </HorizontalStackLayout>
+
+                <BoxView Color="LightGray" HeightRequest="1" Margin="0,10,0,10"/>
 
                 <!-- Jelszó kezelés -->
                 <Label Text="Jelszó változtatása" FontSize="Medium"/>

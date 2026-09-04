@@ -4,6 +4,7 @@ using HouseholdManagerMobileApp.Core.Commands;
 using HouseholdManagerMobileApp.Core.Helpers;
 using HouseholdManagerMobileApp.Core.Models;
 using HouseholdManagerMobileApp.Core.Services;
+using Supabase.Gotrue;
 
 namespace HouseholdManagerMobileApp.Core.ViewModels;
 
@@ -189,6 +190,20 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         }
     }
 
+    private bool notificationsIsChecked;
+    public bool NotificationsIsChecked
+    {
+        get => notificationsIsChecked;
+        set
+        {
+            if (notificationsIsChecked == value) return;
+            notificationsIsChecked = value;
+            OnPropertyChanged();
+
+            _ = ToggleNotificationsAsync();
+        }
+    }
+
     private string oldPassword = string.Empty;
     public string OldPassword
     {
@@ -238,6 +253,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
     public RelayCommand ChangePasswordButtonCommand { get; }
     public RelayCommand LeaveHouseholdButtonCommand { get; }
     public RelayCommand DisbandHouseholdButtonCommand { get; }
+    public RelayCommand ToggleNotificationsCommand { get; }
     public RelayCommand LogoutButtonCommand { get; }
 
     public SettingsViewModel(IAuthService authService, IDatabaseService databaseService, IUserSessionService userSessionService)
@@ -259,9 +275,13 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         ChangePasswordButtonCommand = new RelayCommand(async _ => await ChangePasswordAsync());
         LeaveHouseholdButtonCommand = new RelayCommand(async _ => await LeaveHouseholdAsync(), _ => !_userSessionService.IsCurrentHouseholdOwner());
         DisbandHouseholdButtonCommand = new RelayCommand(async _ => await DisbandHouseholdAsync(), _ => _userSessionService.IsCurrentHouseholdOwner());
+        ToggleNotificationsCommand = new RelayCommand(async _ => await Task.Run(() => NotificationsIsChecked = !NotificationsIsChecked));
         LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
 
-        WelcomeMessage = $"Üdv, {_userSessionService.GetCurrentUser().Nickname}";
+        if (Shell.Current != null)
+        {
+            WelcomeMessage = $"Üdv, {_userSessionService.GetCurrentUser().Nickname}";
+        }
     }
 
     // Csak akkor fut le, ha van paraméter az útvonal végén (? után)
@@ -319,7 +339,10 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
             foreach (Household household in _userSessionService.GetCurrentHouseholdList())
                 HouseholdsList.Add($"{household.HouseholdName} - {household.HouseholdAccess}");
 
-            SelectedHousehold = $"{_userSessionService.GetCurrentHousehold().HouseholdName} - {_userSessionService.GetCurrentHousehold().HouseholdAccess}";
+            string userID = _userSessionService.GetCurrentUser().UID;
+            Household userHH = _userSessionService.GetCurrentHousehold();
+            SelectedHousehold = $"{userHH.HouseholdName} - {userHH.HouseholdAccess}";
+            NotificationsIsChecked = bool.Parse(await SecureStorage.GetAsync($"notifications-{userID}-{userHH.HHID}") ?? "true");
         }
     }
 
@@ -343,6 +366,10 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
                     EditHouseholdName = _userSessionService.GetCurrentHousehold().HouseholdName;
                     EditHouseholdDate = DateTime.Today;
                     LoadSelectedMonthBudget();
+
+                    string userID = _userSessionService.GetCurrentUser().UID;
+                    string userHH = _userSessionService.GetCurrentHousehold().HHID;
+                    NotificationsIsChecked = bool.Parse(await SecureStorage.GetAsync($"notifications-{userID}-{userHH}") ?? "true");
                 }
                 else
                     ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Háztartás váltás sikertelen!");
@@ -499,6 +526,14 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         }
         else
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A régi és a jelenlegi jelszó nem egyezik!");
+    }
+
+    private async Task ToggleNotificationsAsync()
+    {
+        // A telefon értesítések engedélyezése vagy letiltása a felhasználói beállítások alapján:
+        string userID = _userSessionService.GetCurrentUser().UID;
+        string userHH = _userSessionService.GetCurrentHousehold().HHID;
+        await SecureStorage.SetAsync($"notifications-{userID}-{userHH}", NotificationsIsChecked.ToString());
     }
 
     private async Task LogoutAsync()

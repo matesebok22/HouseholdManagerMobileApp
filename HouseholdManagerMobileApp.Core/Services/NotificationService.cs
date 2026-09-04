@@ -18,15 +18,46 @@ public class NotificationService : INotificationService
     {
         try
         {
-            string currentUserId = _userSessionService.GetCurrentUser().UID;
-            var response = await _supabaseClient
+            /*string currentUserId = _userSessionService.GetCurrentUser().UID;
+            string currentHouseholdId = _userSessionService.GetCurrentHousehold().HHID;
+            bool notificationSettings = bool.Parse(await SecureStorage.GetAsync($"notifications-{currentUserId}-{currentHouseholdId}"));
+
+            if (notificationSettings)
+            {
+                var response = await _supabaseClient
                 .From<Notification>()
                 .Where(x => x.RecipientUserId == currentUserId)
                 .Where(x => !x.IsRead)
-                .Order(x => x.UpdatedAt, Supabase.Postgrest.Constants.Ordering.Descending)
+                .Order(x => x.CreatedAt, Supabase.Postgrest.Constants.Ordering.Descending)
                 .Get();
-            
-            return response.Models ?? [];
+
+                return response.Models ?? [];
+            }
+            else
+            {
+                var response = await _supabaseClient
+                .From<Notification>()
+                .Where(x => x.RecipientUserId == currentUserId)
+                .Where(x => !x.IsRead)
+                .Where(x => x.RelatedHouseholdId != currentHouseholdId)
+                .Order(x => x.CreatedAt, Supabase.Postgrest.Constants.Ordering.Descending)
+                .Get();
+
+                return response.Models ?? [];
+            }*/
+
+            string currentUserId = _userSessionService.GetCurrentUser().UID;
+            List<string> disabledHouseholds = await GetDisabledNotificationHouseholdsAsync();
+
+            var response = await _supabaseClient.From<Notification>().Where(x => x.RecipientUserId == currentUserId).Where(x => !x.IsRead).Order(x => x.CreatedAt, Supabase.Postgrest.Constants.Ordering.Descending).Get();
+
+            var notifications = response.Models ?? [];
+
+            // Letiltott háztartások szűrése:
+            if (disabledHouseholds.Count > 0)
+                notifications = notifications.Where(n => !disabledHouseholds.Contains(n.RelatedHouseholdId)).ToList();
+
+            return notifications;
         }
         catch (Exception ex)
         {
@@ -72,14 +103,44 @@ public class NotificationService : INotificationService
     {
         try
         {
-            string currentUserId = _userSessionService.GetCurrentUser().UID;
-            var response = await _supabaseClient
+            /*string currentUserId = _userSessionService.GetCurrentUser().UID;
+            string currentHouseholdId = _userSessionService.GetCurrentHousehold().HHID;
+            bool notificationSettings = bool.Parse(await SecureStorage.GetAsync($"notifications-{currentUserId}-{currentHouseholdId}") ?? "true");
+
+            if (notificationSettings)
+            {
+                var response = await _supabaseClient
                 .From<Notification>()
                 .Where(x => x.RecipientUserId == currentUserId)
                 .Order(x => x.CreatedAt, Supabase.Postgrest.Constants.Ordering.Descending)
                 .Get();
 
-            return response.Models ?? new List<Notification>();
+                return response.Models ?? new List<Notification>();
+            }
+            else
+            {
+                var response = await _supabaseClient
+                    .From<Notification>()
+                    .Where(x => x.RecipientUserId == currentUserId)
+                    .Where(x => x.RelatedHouseholdId != currentHouseholdId)
+                    .Order(x => x.CreatedAt, Supabase.Postgrest.Constants.Ordering.Descending)
+                    .Get();
+
+                return response.Models ?? new List<Notification>();
+            }*/
+
+            string currentUserId = _userSessionService.GetCurrentUser().UID;
+            List<string> disabledHouseholds = await GetDisabledNotificationHouseholdsAsync();
+
+            var response = await _supabaseClient.From<Notification>().Where(x => x.RecipientUserId == currentUserId).Order(x => x.CreatedAt, Supabase.Postgrest.Constants.Ordering.Descending).Get();
+
+            var notifications = response.Models ?? [];
+
+            // Letiltott háztartások szűrése:
+            if (disabledHouseholds.Count > 0)
+                notifications = notifications.Where(n => !disabledHouseholds.Contains(n.RelatedHouseholdId)).ToList();
+
+            return notifications;
         }
         catch (Exception ex)
         {
@@ -114,14 +175,31 @@ public class NotificationService : INotificationService
         try
         {
             string currentUserId = _userSessionService.GetCurrentUser().UID;
-            await _supabaseClient
-                .From<Notification>()
-                .Where(x => x.RecipientUserId == currentUserId)
-                .Delete();
+            await _supabaseClient.From<Notification>().Where(x => x.RecipientUserId == currentUserId).Delete();
         }
         catch (Exception ex)
         {
             throw new Exception($"Hiba történt az értesítések törlése során!", ex);
         }
+    }
+
+    private async Task<List<string>> GetDisabledNotificationHouseholdsAsync()
+    {
+        List<string> disabledHouseholds = [];
+        User currentUser = _userSessionService.GetCurrentUser();
+
+        List<string> householdIds = [];
+        householdIds.Add(currentUser.HouseHold1);
+        householdIds.Add(currentUser.HouseHold2);
+        householdIds.Add(currentUser.HouseHold3);
+        foreach (string householdId in householdIds)
+        {
+            string value = await SecureStorage.GetAsync($"notifications-{currentUser.UID}-{householdId}");
+
+            if (!string.IsNullOrEmpty(value) && !bool.Parse(value))
+                disabledHouseholds.Add(householdId);
+        }
+
+        return disabledHouseholds;
     }
 }
