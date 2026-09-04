@@ -134,7 +134,7 @@ public class NewEventViewModel : ViewModelBase
         NavigateEventLogButtonCommand = new RelayCommand(async _ => await NavigateToEventLogAsync());
         CreateEventButtonCommand = new RelayCommand(async _ => await CreateEventAsync(), _ => !IsLoading);
         
-        if (Shell.Current != null) // Tesztelés ne akadjon meg.
+        if (Shell.Current != null)
         {
             WelcomeMessage = $"Üdv, {_userSessionService.GetCurrentUser().Nickname}";
 

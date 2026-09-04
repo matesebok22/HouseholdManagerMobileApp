@@ -58,20 +58,8 @@ namespace HouseholdManagerMobileApp
                 // Supabase kliens inicializálása:
                 IDatabaseService dbService = app.Services.GetRequiredService<IDatabaseService>();
                 await dbService.InitializeAsync();
-
-                /*// Értesítésekre feliratkozás a Supabase Realtime segítségével:
-                INotificationService notificationService = app.Services.GetRequiredService<INotificationService>();
-                await notificationService.SubscribeToNotificationsAsync(notification =>
-                {
-                    // Értesítés fogadásakor
-                    MainThread.BeginInvokeOnMainThread(async () =>
-                    {
-                        await Application.Current?.MainPage?.DisplayAlert(notification.Title, notification.Message, "OK");
-                    });
-                });*/
             });
 
-            //return builder.Build();
             return app;
         }
     }

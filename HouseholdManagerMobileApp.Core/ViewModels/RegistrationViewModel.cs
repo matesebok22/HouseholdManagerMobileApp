@@ -114,7 +114,7 @@ public class RegistrationViewModel : ViewModelBase
 
         if (success)
         {
-            if (Shell.Current != null) // Tesztelés ne akadjon meg.
+            if (Shell.Current != null)
                 await Shell.Current.GoToAsync("//LoginPage");
         }
         else

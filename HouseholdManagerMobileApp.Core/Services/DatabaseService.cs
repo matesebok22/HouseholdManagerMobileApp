@@ -82,10 +82,6 @@ public class DatabaseService : IDatabaseService
             user.CurrentHousehold = household.HHID;
             await user.Update<User>();
 
-            /*List<Household> households = await LoadUserHouseholdsAsync(user);
-            List<Budget> budgets = await LoadUserCurrentBudgetsAsync(household);
-            await _userSessionService.ChangeHousehold(household, households, budgets);*/
-
             return true;
         }
         else if (user.HouseHold2 == null)
@@ -94,10 +90,6 @@ public class DatabaseService : IDatabaseService
             user.CurrentHousehold = household.HHID;
             await user.Update<User>();
 
-            /*List<Household> households = await LoadUserHouseholdsAsync(user);
-            List<Budget> budgets = await LoadUserCurrentBudgetsAsync(household);
-            await _userSessionService.ChangeHousehold(household, households, budgets);*/
-
             return true;
         }
         else if (user.HouseHold3 == null)
@@ -105,10 +97,6 @@ public class DatabaseService : IDatabaseService
             user.HouseHold3 = household.HHID;
             user.CurrentHousehold = household.HHID;
             await user.Update<User>();
-
-            /*List<Household> households = await LoadUserHouseholdsAsync(user);
-            List<Budget> budgets = await LoadUserCurrentBudgetsAsync(household);
-            await _userSessionService.ChangeHousehold(household, households, budgets);*/
 
             return true;
         }
@@ -149,7 +137,6 @@ public class DatabaseService : IDatabaseService
         Budget? budget = _userSessionService.GetCurrentBudgets().Find(x => $"{x.BudgetDate.Year}. {x.BudgetDate.Month}." == currentDate);
         if (budget == null)
         {
-            // Ha nem talált meglévő hónapot, akkor készít egy új rekordot a "budgets" táblázatba
             DateTime newDate = new(householdBudgetMonth.Year, householdBudgetMonth.Month, 1);
             await _supabaseClient.From<Budget>().Insert(new Budget() { BudgetHousehold = _userSessionService.GetCurrentHousehold().HHID, BudgetDate = newDate, BudgetAmount = newHouseholdBudget });
         }
@@ -215,8 +202,7 @@ public class DatabaseService : IDatabaseService
             await household.Delete<Household>();
         }
 
-        /*List<Household> households = await LoadUserHouseholdsAsync(user);
-        await _userSessionService.ChangeHousehold(household, households, budgets);*/
+        SecureStorage.Remove($"notifications-{user.UID}-{household.HHID}");
 
         return true;
     }
@@ -245,14 +231,15 @@ public class DatabaseService : IDatabaseService
 
     public async Task<bool> EditEventAsync(string eventName, DateTime eventUserDate, string eventType, int eventCost, string eventDesc)
     {
-        var response = await _supabaseClient.From<Event>().Where(x => x.EID == _userSessionService.GetSelectedEvent().EID)
-                                                              .Set(x => x.EventName, eventName)
-                                                              .Set(x => x.EventUserDate, eventUserDate)
-                                                              .Set(x => x.EventType, eventType)
-                                                              .Set(x => x.EventCost, eventCost)
-                                                              .Set(x => x.EventDescription, eventDesc)
-                                                              .Set(x => x.LastModifiedBy, _userSessionService.GetCurrentUser().UID)
-                                                              .Update();
+        var response = await _supabaseClient.From<Event>()
+                                            .Where(x => x.EID == _userSessionService.GetSelectedEvent().EID)
+                                            .Set(x => x.EventName, eventName)
+                                            .Set(x => x.EventUserDate, eventUserDate)
+                                            .Set(x => x.EventType, eventType)
+                                            .Set(x => x.EventCost, eventCost)
+                                            .Set(x => x.EventDescription, eventDesc)
+                                            .Set(x => x.LastModifiedBy, _userSessionService.GetCurrentUser().UID)
+                                            .Update();
         if (response.Models != null && response.Models.Count > 0)
             return true;
         else

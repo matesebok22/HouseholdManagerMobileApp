@@ -18,34 +18,6 @@ public class NotificationService : INotificationService
     {
         try
         {
-            /*string currentUserId = _userSessionService.GetCurrentUser().UID;
-            string currentHouseholdId = _userSessionService.GetCurrentHousehold().HHID;
-            bool notificationSettings = bool.Parse(await SecureStorage.GetAsync($"notifications-{currentUserId}-{currentHouseholdId}"));
-
-            if (notificationSettings)
-            {
-                var response = await _supabaseClient
-                .From<Notification>()
-                .Where(x => x.RecipientUserId == currentUserId)
-                .Where(x => !x.IsRead)
-                .Order(x => x.CreatedAt, Supabase.Postgrest.Constants.Ordering.Descending)
-                .Get();
-
-                return response.Models ?? [];
-            }
-            else
-            {
-                var response = await _supabaseClient
-                .From<Notification>()
-                .Where(x => x.RecipientUserId == currentUserId)
-                .Where(x => !x.IsRead)
-                .Where(x => x.RelatedHouseholdId != currentHouseholdId)
-                .Order(x => x.CreatedAt, Supabase.Postgrest.Constants.Ordering.Descending)
-                .Get();
-
-                return response.Models ?? [];
-            }*/
-
             string currentUserId = _userSessionService.GetCurrentUser().UID;
             List<string> disabledHouseholds = await GetDisabledNotificationHouseholdsAsync();
 
@@ -103,32 +75,6 @@ public class NotificationService : INotificationService
     {
         try
         {
-            /*string currentUserId = _userSessionService.GetCurrentUser().UID;
-            string currentHouseholdId = _userSessionService.GetCurrentHousehold().HHID;
-            bool notificationSettings = bool.Parse(await SecureStorage.GetAsync($"notifications-{currentUserId}-{currentHouseholdId}") ?? "true");
-
-            if (notificationSettings)
-            {
-                var response = await _supabaseClient
-                .From<Notification>()
-                .Where(x => x.RecipientUserId == currentUserId)
-                .Order(x => x.CreatedAt, Supabase.Postgrest.Constants.Ordering.Descending)
-                .Get();
-
-                return response.Models ?? new List<Notification>();
-            }
-            else
-            {
-                var response = await _supabaseClient
-                    .From<Notification>()
-                    .Where(x => x.RecipientUserId == currentUserId)
-                    .Where(x => x.RelatedHouseholdId != currentHouseholdId)
-                    .Order(x => x.CreatedAt, Supabase.Postgrest.Constants.Ordering.Descending)
-                    .Get();
-
-                return response.Models ?? new List<Notification>();
-            }*/
-
             string currentUserId = _userSessionService.GetCurrentUser().UID;
             List<string> disabledHouseholds = await GetDisabledNotificationHouseholdsAsync();
 

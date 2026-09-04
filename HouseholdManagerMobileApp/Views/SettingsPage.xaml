@@ -28,7 +28,7 @@
             <VerticalStackLayout Grid.Row="1" Padding="10">
                 <Label Text="Beállítások" FontSize="Large"/>
 
-                <!-- Háztartás kezelés (WIP) -->
+                <!-- Háztartás kezelés -->
                 <Label Text="Háztartások kezelése" FontSize="Medium"/>
 
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
@@ -86,7 +86,6 @@
 
                     <Button Text="Módosítás" Command="{Binding EditHouseholdButtonCommand}" WidthRequest="200"/>
                 </VerticalStackLayout>
-
 
                 <BoxView Color="LightGray" HeightRequest="1" Margin="0,10,0,10"/>
                 

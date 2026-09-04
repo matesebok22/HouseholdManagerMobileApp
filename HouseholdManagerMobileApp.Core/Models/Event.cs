@@ -32,6 +32,7 @@ public class Event : BaseModel
 
     [Column("e_desc")]
     public string EventDescription { get; set; } = string.Empty;
+
     [Column("last_modified_by")]
     public string LastModifiedBy { get; set; } = string.Empty;
 }

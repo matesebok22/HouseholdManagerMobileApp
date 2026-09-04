@@ -308,7 +308,7 @@ public class EventLogViewModel : ViewModelBase
                 SelectedCategory = EventTypes[0];
             }
 
-            // Kategória szerinti rendszerezés
+            // Kategória szerinti rendszerezés:
             foreach (Event _event in sortedEventLog)
             {
                 if (_event.EventType == SelectedCategory)

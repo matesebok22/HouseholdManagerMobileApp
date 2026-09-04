@@ -117,7 +117,7 @@ public class AuthService : IAuthService
     public async Task LogoutAsync()
     {
         await _userSessionService.ClearUserSessionAsync();
-        if (Shell.Current != null) // Tesztelés ne akadjon meg.
+        if (Shell.Current != null)
             await Shell.Current.GoToAsync("//LoginPage");
     }
 }

@@ -8,7 +8,6 @@
 
     <ContentPage.Resources>
         <ResourceDictionary>
-            <!-- Converter regisztrálása -->
             <helpers:StringEqualsToBooleanConverter x:Key="StringEqualsToBooleanConverter"/>
         </ResourceDictionary>
     </ContentPage.Resources>
@@ -71,11 +70,8 @@
             <CollectionView Grid.Row="2" ItemsSource="{Binding EventLog}">
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="models:Event">
-
-                        <!-- Kártyaszerű megjelenés egy keretben -->
                         <Border BackgroundColor="LightBlue" Margin="0,0,0,10" Padding="15" StrokeShape="RoundRectangle 10">
                             <VerticalStackLayout Spacing="0">
-                                <!-- Alapnézet: Rákattintható fejléc -->
                                 <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto, Auto">
                                     <Grid.GestureRecognizers>
                                         <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:EventLogViewModel}}, Path=ToggleEventExpandCommand}" CommandParameter="{Binding .}"/>
@@ -92,14 +88,13 @@
                                 <VerticalStackLayout Padding="15" Spacing="8">
                                     <VerticalStackLayout.IsVisible>
                                         <MultiBinding Converter="{StaticResource StringEqualsToBooleanConverter}">
-                                            <!-- 1. érték: az aktuális Event.EID -->
+                                            <!-- 1. érték: -->
                                             <Binding Path="EID" />
-                                            <!-- 2. érték: a ViewModel.ExpandedEventId értéke -->
+                                            <!-- 2. érték: -->
                                             <Binding Path="ExpandedEventId" Source="{RelativeSource AncestorType={x:Type vm:EventLogViewModel}}" />
                                         </MultiBinding>
                                     </VerticalStackLayout.IsVisible>
                                     
-                                    <!-- Elválasztó -->
                                     <BoxView HeightRequest="1" BackgroundColor="Gray" Margin="15,0"/>
 
                                     <!-- Plusz információk -->
@@ -114,7 +109,6 @@
                                     <Label FontAttributes="Bold" Text="Leírás:" TextColor="Black"/>
                                     <Label Text="{Binding EventDescription}" TextColor="Black" LineBreakMode="WordWrap"/>
 
-                                    <!-- Gombok -->
                                     <Grid ColumnDefinitions="*,*" Margin="0,15,0,0">
                                         <Button Grid.Column="0" Text="Módosítás" Command="{Binding EditEventButtonCommand, Source={RelativeSource AncestorType={x:Type vm:EventLogViewModel}}}" BackgroundColor="#2196F3" TextColor="White" Margin="0, 0, 10, 0"/>
                                         <Button Grid.Column="1" Text="Törlés" Command="{Binding DeleteEventButtonCommand, Source={RelativeSource AncestorType={x:Type vm:EventLogViewModel}}}" BackgroundColor="#e65247" TextColor="White" Margin="10, 0, 0, 0"/>
