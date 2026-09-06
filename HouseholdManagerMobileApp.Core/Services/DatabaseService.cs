@@ -1,16 +1,22 @@
-﻿using HouseholdManagerMobileApp.Core.Models;
-using Supabase;
+﻿using Supabase;
+using SQLite;
+
+using HouseholdManagerMobileApp.Core.Models;
 
 namespace HouseholdManagerMobileApp.Core.Services;
 
 public class DatabaseService : IDatabaseService
 {
     private readonly Client _supabaseClient;
+    private readonly SQLiteAsyncConnection _sqliteDb;
     private readonly IUserSessionService _userSessionService;
-    public DatabaseService(Client supabaseClient, IUserSessionService userSessionService)
+    private readonly INotificationService _notificationService;
+    public DatabaseService(Client supabaseClient, SQLiteAsyncConnection sqliteDb, IUserSessionService userSessionService, INotificationService notificationService)
     {
         _supabaseClient = supabaseClient;
+        _sqliteDb = sqliteDb;
         _userSessionService = userSessionService;
+        _notificationService = notificationService;
     }
 
     public async Task InitializeAsync()
@@ -18,11 +24,26 @@ public class DatabaseService : IDatabaseService
         // Supabase adatbázis elindítása:
         try
         {
-            await _supabaseClient.InitializeAsync();
+            if (Connectivity.Current.NetworkAccess == NetworkAccess.Internet) // Ha van internetkapcsolat
+                await _supabaseClient.InitializeAsync();
         }
         catch (Exception ex)
         {
             throw new Exception("Hiba történt a Supabase adatbázis inicializálása során.\n", ex);
+        }
+
+        // SQLite adatbázis elindítása:
+        try
+        {
+            await _sqliteDb.CreateTableAsync<OfflineUser>();
+            await _sqliteDb.CreateTableAsync<OfflineHousehold>();
+            await _sqliteDb.CreateTableAsync<OfflineBudget>();
+            await _sqliteDb.CreateTableAsync<OfflineEvent>();
+            await _sqliteDb.CreateTableAsync<OfflineNotification>();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("Hiba történt az SQLite adatbázis inicializálása során.\n", ex);
         }
     }
 
@@ -320,5 +341,93 @@ public class DatabaseService : IDatabaseService
             eventlog.Add(_event);
 
         return eventlog;
+    }
+
+    public async Task<bool> CopyDataToOfflineDB()
+    {
+        try
+        {
+            User user = _userSessionService.GetCurrentUser();
+            OfflineUser offUser = new()
+            {
+                UID = user.UID,
+                Username = user.Username,
+                Password = user.Password,
+                CurrentHousehold = user.CurrentHousehold,
+                HouseHold1 = user.HouseHold1,
+                HouseHold2 = user.HouseHold2,
+                HouseHold3 = user.HouseHold3,
+                Nickname = user.Nickname
+            };
+            await _sqliteDb.InsertOrReplaceAsync(offUser);
+
+            Household household = _userSessionService.GetCurrentHousehold();
+            OfflineHousehold offHousehold = new()
+            {
+                HHID = household.HHID,
+                HouseholdName = household.HouseholdName,
+                HouseholdAccess = household.HouseholdAccess,
+                HouseholdOwner = household.HouseholdOwner
+            };
+            await _sqliteDb.InsertOrReplaceAsync(offHousehold);
+
+            List<Budget> budgets = _userSessionService.GetCurrentBudgets();
+            foreach (Budget budget in budgets)
+            {
+                OfflineBudget offBudget = new()
+                {
+                    BID = budget.BID,
+                    BudgetHousehold = budget.BudgetHousehold,
+                    BudgetDate = budget.BudgetDate,
+                    BudgetAmount = budget.BudgetAmount
+                };
+                await _sqliteDb.InsertOrReplaceAsync(offBudget);
+            }
+
+            List<Event> eventlog = _userSessionService.GetCurrentEventLog();
+            foreach (Event _event in eventlog)
+            {
+                OfflineEvent offEvent = new()
+                {
+                    EID = _event.EID,
+                    EventUser = _event.EventUser,
+                    EventHousehold = _event.EventHousehold,
+                    EventDate = _event.EventDate,
+                    EventName = _event.EventName,
+                    EventUserDate = _event.EventUserDate,
+                    EventType = _event.EventType,
+                    EventCost = _event.EventCost,
+                    EventDescription = _event.EventDescription,
+                    LastModifiedBy = _event.LastModifiedBy
+                };
+                await _sqliteDb.InsertOrReplaceAsync(offEvent);
+            }
+
+            var response = await _supabaseClient.From<Notification>().Where(x => x.RecipientUserId == user.UID).Get();
+            List<Notification> notifications = response.Models ?? [];
+            foreach (Notification notification in notifications)
+            {
+                OfflineNotification offNotification = new()
+                {
+                    NID = notification.NID,
+                    RecipientUserId = notification.RecipientUserId,
+                    EventId = notification.EventId,
+                    NotificationType = notification.NotificationType,
+                    Title = notification.Title,
+                    Message = notification.Message,
+                    RelatedHouseholdId = notification.RelatedHouseholdId,
+                    IsRead = notification.IsRead,
+                    CreatedAt = notification.CreatedAt,
+                    UpdatedAt = notification.UpdatedAt
+                };
+                await _sqliteDb.InsertOrReplaceAsync(offNotification);
+            }
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

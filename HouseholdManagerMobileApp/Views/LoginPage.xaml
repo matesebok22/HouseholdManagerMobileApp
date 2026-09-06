@@ -20,7 +20,5 @@
                 </Label.GestureRecognizers>
             </Label>
         </StackLayout>
-
-        <Label Text="{Binding ErrorMessage}" HorizontalOptions="Center"/>
     </VerticalStackLayout>
 </ContentPage>

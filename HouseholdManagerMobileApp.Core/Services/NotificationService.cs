@@ -1,16 +1,18 @@
 ﻿using HouseholdManagerMobileApp.Core.Models;
-using Supabase.Realtime;
+using SQLite;
 
 namespace HouseholdManagerMobileApp.Core.Services;
 
 public class NotificationService : INotificationService
 {
     private readonly Supabase.Client _supabaseClient;
+    private readonly SQLiteAsyncConnection _sqliteDb;
     private readonly IUserSessionService _userSessionService;
 
-    public NotificationService(Supabase.Client supabaseClient, IUserSessionService userSessionService)
+    public NotificationService(Supabase.Client supabaseClient, SQLiteAsyncConnection sqliteDb, IUserSessionService userSessionService)
     {
         _supabaseClient = supabaseClient;
+        _sqliteDb = sqliteDb;
         _userSessionService = userSessionService;
     }
 
@@ -20,10 +22,18 @@ public class NotificationService : INotificationService
         {
             string currentUserId = _userSessionService.GetCurrentUser().UID;
             List<string> disabledHouseholds = await GetDisabledNotificationHouseholdsAsync();
+            List<Notification> notifications = [];
 
-            var response = await _supabaseClient.From<Notification>().Where(x => x.RecipientUserId == currentUserId).Where(x => !x.IsRead).Order(x => x.CreatedAt, Supabase.Postgrest.Constants.Ordering.Descending).Get();
-
-            var notifications = response.Models ?? [];
+            if (!_userSessionService.IsOfflineMode())
+            {
+                var response = await _supabaseClient.From<Notification>().Where(x => x.RecipientUserId == currentUserId).Where(x => !x.IsRead).Order(x => x.CreatedAt, Supabase.Postgrest.Constants.Ordering.Descending).Get();
+                notifications = response.Models ?? [];
+            }
+            else
+            {
+                var response = await _sqliteDb.Table<OfflineNotification>().Where(x => x.RecipientUserId == currentUserId && x.IsRead == false).OrderByDescending(x => x.CreatedAt).ToListAsync();
+                notifications = await TransformToNotificationAsync(response) ?? [];
+            }
 
             // Letiltott háztartások szűrése:
             if (disabledHouseholds.Count > 0)
@@ -77,14 +87,22 @@ public class NotificationService : INotificationService
         {
             string currentUserId = _userSessionService.GetCurrentUser().UID;
             List<string> disabledHouseholds = await GetDisabledNotificationHouseholdsAsync();
+            List<Notification> notifications = [];
 
-            var response = await _supabaseClient.From<Notification>().Where(x => x.RecipientUserId == currentUserId).Order(x => x.CreatedAt, Supabase.Postgrest.Constants.Ordering.Descending).Get();
-
-            var notifications = response.Models ?? [];
+            if (!_userSessionService.IsOfflineMode())
+            {
+                var response = await _supabaseClient.From<Notification>().Where(x => x.RecipientUserId == currentUserId).Order(x => x.CreatedAt, Supabase.Postgrest.Constants.Ordering.Descending).Get();
+                notifications = response.Models ?? [];
+            }
+            else
+            {
+                var response = await _sqliteDb.Table<OfflineNotification>().Where(x => x.RecipientUserId == currentUserId).OrderByDescending(x => x.CreatedAt).ToListAsync();
+                notifications = await TransformToNotificationAsync(response) ?? [];
+            }
 
             // Letiltott háztartások szűrése:
             if (disabledHouseholds.Count > 0)
-                notifications = notifications.Where(n => !disabledHouseholds.Contains(n.RelatedHouseholdId)).ToList();
+                notifications = notifications.Where(x => !disabledHouseholds.Contains(x.RelatedHouseholdId)).ToList();
 
             return notifications;
         }
@@ -100,15 +118,22 @@ public class NotificationService : INotificationService
         {
             var currentUserId = _userSessionService.GetCurrentUser().UID;
 
-            var response = await _supabaseClient
-                .From<Notification>()
-                .Where(x => x.RecipientUserId == currentUserId)
-                .Where(x => x.IsRead == false)
-                .Set(x => x.IsRead, true)
-                .Update();
+            if (!_userSessionService.IsOfflineMode())
+            {
+                var response = await _supabaseClient.From<Notification>().Where(x => x.RecipientUserId == currentUserId).Where(x => x.IsRead == false).Set(x => x.IsRead, true).Update();
 
-            // Ha a válasz sikeres, a Models nem null
-            return response.Models != null;
+                string sqliteQuery = @"UPDATE offline_notifications SET is_read = 1 WHERE recipient_user_id = ? AND is_read = 0";
+                await _sqliteDb.ExecuteAsync(sqliteQuery, currentUserId);
+                // Ha a válasz sikeres, a Models nem null
+                return response.Models != null;
+            }
+            else
+            {
+                string sqliteQuery = @"UPDATE offline_notifications SET is_read = 1 WHERE recipient_user_id = ? AND is_read = 0";
+                int response = await _sqliteDb.ExecuteAsync(sqliteQuery, currentUserId);
+                return response > 0;
+            }
+            
         }
         catch (Exception ex)
         {
@@ -147,5 +172,28 @@ public class NotificationService : INotificationService
         }
 
         return disabledHouseholds;
+    }
+
+    private async Task<List<Notification>> TransformToNotificationAsync(List<OfflineNotification> offlineNotifications)
+    {
+        List<Notification> notifications = [];
+        foreach (var offlineNotification in offlineNotifications)
+        {
+            notifications.Add(new Notification
+            {
+                NID = offlineNotification.NID,
+                RecipientUserId = offlineNotification.RecipientUserId,
+                EventId = offlineNotification.EventId,
+                NotificationType = offlineNotification.NotificationType,
+                Title = offlineNotification.Title,
+                Message = offlineNotification.Message,
+                RelatedHouseholdId = offlineNotification.RelatedHouseholdId,
+                IsRead = offlineNotification.IsRead,
+                CreatedAt = offlineNotification.CreatedAt,
+                UpdatedAt = offlineNotification.UpdatedAt
+            });
+        }
+
+        return await Task.FromResult(notifications);
     }
 }

@@ -46,9 +46,6 @@ public class DatabaseTests
     public void CreateHouseholdAsync_EmptyName()
     {
         // Arrange
-        var mockUser = new User { Nickname = "TestUser" };
-        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
-
         var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
         _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
         viewModel.NewHouseholdName = string.Empty;
@@ -64,9 +61,6 @@ public class DatabaseTests
     public void CreateHouseholdAsync_TooManyHouseholds()
     {
         // Arrange
-        var mockUser = new User { Nickname = "TestUser" };
-        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
-
         var viewModel = new SettingsViewModel(_mockAuthService.Object, _mockDatabaseService.Object, _mockUserSessionService.Object);
         _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
         _mockDatabaseService.Setup(x => x.CreateHouseholdAsync(It.IsAny<string>())).ReturnsAsync(false);

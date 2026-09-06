@@ -53,6 +53,7 @@ public class LoginViewModel : ViewModelBase
             if (isLoading == value) return;
             isLoading = value;
             OnPropertyChanged();
+
             LoginButtonCommand.RefreshCanExecute();
         }
     }
@@ -79,7 +80,7 @@ public class LoginViewModel : ViewModelBase
         }
 
         IsLoading = true;
-        
+
         bool success = await _authService.LoginAsync(Username, Password);
 
         if (success)
@@ -89,7 +90,16 @@ public class LoginViewModel : ViewModelBase
                 await Shell.Current.GoToAsync("//UserPage");
         }
         else
+        {
+            if (Shell.Current != null && Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+            {
+                ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Offline bejelentkezéshez kérlek jelentkezz legalább egy fiókba internetkapcsolattal!");
+                IsLoading = false;
+                return;
+            } 
+            
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Hibás felhasználónév vagy jelszó!");
+        }
         
         IsLoading = false;
     }

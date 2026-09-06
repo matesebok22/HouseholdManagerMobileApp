@@ -94,8 +94,13 @@ public class RegistrationViewModel : ViewModelBase
 
     private async Task RegisterAsync()
     {
-
         ErrorMessage = string.Empty;
+
+        if (Shell.Current != null && Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Nincs internetkapcsolat, próbáld meg később!");
+            return;
+        }
 
         if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Nickname) || string.IsNullOrWhiteSpace(Password) || string.IsNullOrWhiteSpace(ConfirmPassword))
         {

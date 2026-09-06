@@ -6,6 +6,7 @@ namespace HouseholdManagerMobileApp.Core.Services;
 public class UserSessionService : IUserSessionService
 {
     private bool userLoggedIn = false;
+    private bool isOfflineMode = false;
     private User? currentUser = null;
     private Household? currentHousehold = null;
     private List<Household> householdList = [];
@@ -15,7 +16,7 @@ public class UserSessionService : IUserSessionService
     private Event? selectedEvent = null;
 
     public bool IsUserLoggedIn() => userLoggedIn;
-
+    public bool IsOfflineMode() => isOfflineMode;
     public bool IsCurrentHouseholdOwner() => currentHouseholdOwner;
 
     public User? GetCurrentUser() => currentUser;
@@ -29,6 +30,7 @@ public class UserSessionService : IUserSessionService
     public async Task SetUserSessionAsync(User user, Household household, List<Household> hhList, List<Budget> budgets, List<Event> eventlog)
     {
         userLoggedIn = true;
+        isOfflineMode = Connectivity.Current.NetworkAccess != NetworkAccess.Internet;
         currentUser = user;
         currentHousehold = household;
         householdList = hhList;

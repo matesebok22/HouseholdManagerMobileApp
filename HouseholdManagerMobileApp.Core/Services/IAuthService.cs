@@ -4,6 +4,7 @@ public interface IAuthService
 {
     Task<bool> RegisterAsync(string username, string nickname, string password);
     Task<bool> LoginAsync(string username, string password);
+    Task<bool> OfflineLoginAsync(string username);
     Task<bool> ChangePasswordAsync(string oldPassword, string newPassword);
     Task LogoutAsync();
 }

@@ -342,7 +342,8 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
             string userID = _userSessionService.GetCurrentUser().UID;
             Household userHH = _userSessionService.GetCurrentHousehold();
             SelectedHousehold = $"{userHH.HouseholdName} - {userHH.HouseholdAccess}";
-            NotificationsIsChecked = bool.Parse(await SecureStorage.GetAsync($"notifications-{userID}-{userHH.HHID}") ?? "true");
+            if (Shell.Current != null)
+                NotificationsIsChecked = bool.Parse(await SecureStorage.GetAsync($"notifications-{userID}-{userHH.HHID}") ?? "true");
         }
     }
 
@@ -369,7 +370,8 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
 
                     string userID = _userSessionService.GetCurrentUser().UID;
                     string userHH = _userSessionService.GetCurrentHousehold().HHID;
-                    NotificationsIsChecked = bool.Parse(await SecureStorage.GetAsync($"notifications-{userID}-{userHH}") ?? "true");
+                    if (Shell.Current != null)
+                        NotificationsIsChecked = bool.Parse(await SecureStorage.GetAsync($"notifications-{userID}-{userHH}") ?? "true");
                 }
                 else
                     ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Háztartás váltás sikertelen!");

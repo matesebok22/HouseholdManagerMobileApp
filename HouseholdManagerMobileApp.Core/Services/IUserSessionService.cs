@@ -5,6 +5,7 @@ namespace HouseholdManagerMobileApp.Core.Services;
 public interface IUserSessionService
 {
     bool IsUserLoggedIn();
+    bool IsOfflineMode();
     bool IsCurrentHouseholdOwner();
     public User? GetCurrentUser();
     public Household? GetCurrentHousehold();

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Supabase;
+using SQLite;
 
 using HouseholdManagerMobileApp.Core.ViewModels;
 using HouseholdManagerMobileApp.Core.Helpers;
@@ -23,6 +24,9 @@ namespace HouseholdManagerMobileApp
 
             // Supabase szolgáltatás regisztrálása:
             builder.Services.AddSingleton(provider => new Client(Constants.SupabaseUrl, Constants.SupabaseKey, new SupabaseOptions() { AutoConnectRealtime = true }));
+
+            // SQLite szolgáltatás regisztrálása:
+            builder.Services.AddSingleton(provider => new SQLiteAsyncConnection(Constants.SqliteDbPath));
 
             // Szolgáltatások regisztrálása:
             builder.Services.AddSingleton<IUserSessionService, UserSessionService>();
