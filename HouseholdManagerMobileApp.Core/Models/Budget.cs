@@ -36,4 +36,7 @@ public class OfflineBudget
 
     [Column("b_amount")]
     public int BudgetAmount { get; set; }
+
+    [Column("b_made_offline")]
+    public bool BudgetMadeOffline { get; set; } = false;
 }

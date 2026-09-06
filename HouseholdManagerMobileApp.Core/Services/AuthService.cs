@@ -133,7 +133,7 @@ public class AuthService : IAuthService
                 long lastLoggedTicks = long.Parse(await SecureStorage.GetAsync($"login-{user.UID}") ?? "0");
                 long currentTicks = DateTime.Now.Ticks;
                 // Lejárt-e a bejelentkezési token:
-                if (lastLoggedTicks == 0 || (lastLoggedTicks + Constants.OfflineLoginValidity) < currentTicks) // DEBUG-olni, valamiért nem mentődik el a kulcs-érték.
+                if (lastLoggedTicks == 0 || (lastLoggedTicks + Constants.OfflineLoginValidity) < currentTicks)
                     return false;
 
                 List<Budget> budgets = [];

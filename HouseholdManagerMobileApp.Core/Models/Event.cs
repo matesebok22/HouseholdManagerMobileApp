@@ -72,4 +72,7 @@ public class OfflineEvent
 
     [Column("last_modified_by")]
     public string LastModifiedBy { get; set; } = string.Empty;
+
+    [Column("e_made_offline")]
+    public bool EventMadeOffline { get; set; } = false;
 }

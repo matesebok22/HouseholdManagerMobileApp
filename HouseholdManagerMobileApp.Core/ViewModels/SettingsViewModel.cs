@@ -4,7 +4,6 @@ using HouseholdManagerMobileApp.Core.Commands;
 using HouseholdManagerMobileApp.Core.Helpers;
 using HouseholdManagerMobileApp.Core.Models;
 using HouseholdManagerMobileApp.Core.Services;
-using Supabase.Gotrue;
 
 namespace HouseholdManagerMobileApp.Core.ViewModels;
 
@@ -280,7 +279,10 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
 
         if (Shell.Current != null)
         {
-            WelcomeMessage = $"Üdv, {_userSessionService.GetCurrentUser().Nickname}";
+            if (_userSessionService.IsOfflineMode())
+                WelcomeMessage = $"{_userSessionService.GetCurrentUser().Nickname} (Offline)";
+            else
+                WelcomeMessage = _userSessionService.GetCurrentUser().Nickname;
         }
     }
 
@@ -336,12 +338,19 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         bool success = await _databaseService.LoadDataAsync(1);
         if (success)
         {
-            foreach (Household household in _userSessionService.GetCurrentHouseholdList())
-                HouseholdsList.Add($"{household.HouseholdName} - {household.HouseholdAccess}");
-
             string userID = _userSessionService.GetCurrentUser().UID;
             Household userHH = _userSessionService.GetCurrentHousehold();
+
+            if (!_userSessionService.IsOfflineMode())
+            {
+                foreach (Household household in _userSessionService.GetCurrentHouseholdList())
+                    HouseholdsList.Add($"{household.HouseholdName} - {household.HouseholdAccess}");
+            }
+            else
+                HouseholdsList.Add($"{userHH.HouseholdName} - {userHH.HouseholdAccess}");
+
             SelectedHousehold = $"{userHH.HouseholdName} - {userHH.HouseholdAccess}";
+
             if (Shell.Current != null)
                 NotificationsIsChecked = bool.Parse(await SecureStorage.GetAsync($"notifications-{userID}-{userHH.HHID}") ?? "true");
         }
@@ -392,6 +401,12 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
             return;
         }
 
+        if (_userSessionService.IsOfflineMode())
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Offline módban nem lehetséges a háztartáshoz csatlakozás.");
+            return;
+        }
+
         if (HouseholdAccessCode.Trim() == string.Empty)
         {
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Háztartás azonosító megadása kötelező!");
@@ -417,6 +432,12 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         {
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Új háztartás készítése sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();
+            return;
+        }
+
+        if (_userSessionService.IsOfflineMode())
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Offline módban nem lehetséges a háztartás készítése.");
             return;
         }
 
@@ -456,6 +477,12 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
 
     private async Task LeaveHouseholdAsync()
     {
+        if (_userSessionService.IsOfflineMode())
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Offline módban nem lehetséges a háztartásból való kilépés.");
+            return;
+        }
+
         if (Shell.Current != null)
         {
             if (await Shell.Current.DisplayAlert("Alert", "Biztosan kilép a jelenlegi háztartásból?", "Igen", "Nem") == false)
@@ -475,6 +502,12 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
 
     private async Task DisbandHouseholdAsync()
     {
+        if (_userSessionService.IsOfflineMode())
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Offline módban nem lehetséges a háztartás felbontása.");
+            return;
+        }
+
         if (Shell.Current != null)
         {
             if (await Shell.Current.DisplayAlert("Alert", "Biztosan felbontja a jelenlegi háztartást?", "Igen", "Nem") == false)
@@ -498,6 +531,12 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         {
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A jelszó megváltoztatása sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();
+            return;
+        }
+
+        if (_userSessionService.IsOfflineMode())
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Offline módban nem lehetséges a jelszó megváltoztatása.");
             return;
         }
 

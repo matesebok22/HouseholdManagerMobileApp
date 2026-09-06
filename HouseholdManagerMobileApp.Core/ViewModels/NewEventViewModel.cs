@@ -136,7 +136,10 @@ public class NewEventViewModel : ViewModelBase
         
         if (Shell.Current != null)
         {
-            WelcomeMessage = $"Üdv, {_userSessionService.GetCurrentUser().Nickname}";
+            if (_userSessionService.IsOfflineMode())
+                WelcomeMessage = $"{_userSessionService.GetCurrentUser().Nickname} (Offline)";
+            else
+                WelcomeMessage = _userSessionService.GetCurrentUser().Nickname;
 
             if (_userSessionService.GetSelectedEvent() != null)
             {
