@@ -15,4 +15,5 @@ public interface IDatabaseService
     Task<bool> EditEventAsync(string eventName, DateTime eventUserDate, string eventType, int eventCost, string eventDesc);
     Task DeleteEventAsync();
     Task<bool> CopyDataToOfflineDB();
+    Task<bool> SyncDatabasesAsync();
 }

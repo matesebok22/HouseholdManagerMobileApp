@@ -1,5 +1,5 @@
-﻿using Supabase;
-using SQLite;
+﻿using SQLite;
+using Supabase;
 
 using HouseholdManagerMobileApp.Core.Models;
 
@@ -146,6 +146,23 @@ public class DatabaseService : IDatabaseService
 
             await _userSessionService.ChangeHousehold(newHousehold, households, budgets);
         }
+        /*else
+        {
+            List<OfflineBudget> offlineBudgets = await _sqliteDb.Table<OfflineBudget>().ToListAsync();
+            List<Budget> budgets = [];
+            foreach (OfflineBudget offlineBudget in offlineBudgets)
+            {
+                budgets.Add(new()
+                {
+                    BID = offlineBudget.BID,
+                    BudgetHousehold = offlineBudget.BudgetHousehold,
+                    BudgetDate = offlineBudget.BudgetDate,
+                    BudgetAmount = offlineBudget.BudgetAmount
+                });
+            }
+
+            await _userSessionService.ChangeHousehold(_userSessionService.GetCurrentHousehold(), [], budgets);
+        }*/
 
         return true;
     }
@@ -175,8 +192,8 @@ public class DatabaseService : IDatabaseService
                 await _supabaseClient.From<Budget>().Insert(new Budget() { BudgetHousehold = _userSessionService.GetCurrentHousehold().HHID, BudgetDate = newDate, BudgetAmount = newHouseholdBudget });
             else
             {
-                string sqliteQuery = @"INSERT INTO offline_budgets (b_hh, b_userdate, b_amount) VALUES (?, ?, ?)";
-                await _sqliteDb.ExecuteAsync(sqliteQuery, _userSessionService.GetCurrentHousehold().HHID, newDate, newHouseholdBudget);
+                string sqliteQuery = @"INSERT INTO offline_budgets (bid, b_hh, b_userdate, b_amount) VALUES (?, ?, ?, ?)";
+                await _sqliteDb.ExecuteAsync(sqliteQuery, Guid.NewGuid().ToString(), _userSessionService.GetCurrentHousehold().HHID, newDate, newHouseholdBudget);
             }
         }
         else
@@ -189,7 +206,8 @@ public class DatabaseService : IDatabaseService
                 else
                 {
                     string sqliteQuery = @"UPDATE offline_budgets SET b_amount = ? AND b_made_offline = 1 WHERE bid = ?";
-                    await _sqliteDb.ExecuteAsync(sqliteQuery, newHouseholdBudget, budget.BID);
+                    //string sqliteQuery = @"UPDATE offline_budgets SET b_amount = ? WHERE bid = ?";
+                    await _sqliteDb.ExecuteAsync(sqliteQuery, budget.BudgetAmount, budget.BID);
                 }
             }
         }
@@ -275,8 +293,8 @@ public class DatabaseService : IDatabaseService
         }
         else
         {
-            string sqliteQuery = @"INSERT INTO offline_events (e_user, e_hh, e_date, e_name, e_userdate, e_type, e_cost, e_desc, last_modified_by, e_made_offline) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)";
-            await _sqliteDb.ExecuteAsync(sqliteQuery, newEvent.EventUser, newEvent.EventHousehold, newEvent.EventDate, newEvent.EventName, newEvent.EventUserDate, newEvent.EventType, newEvent.EventCost, newEvent.EventDescription, newEvent.LastModifiedBy);
+            string sqliteQuery = @"INSERT INTO offline_events (eid, e_user, e_hh, e_date, e_name, e_userdate, e_type, e_cost, e_desc, last_modified_by, e_made_offline) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)";
+            await _sqliteDb.ExecuteAsync(sqliteQuery, Guid.NewGuid().ToString(), newEvent.EventUser, newEvent.EventHousehold, newEvent.EventDate, newEvent.EventName, newEvent.EventUserDate, newEvent.EventType, newEvent.EventCost, newEvent.EventDescription, newEvent.LastModifiedBy);
             return true;
         }
 
@@ -316,23 +334,63 @@ public class DatabaseService : IDatabaseService
 
     public async Task<bool> LoadDataAsync(int mode)
     {
-        if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
-            return true;
-
         switch (mode)
         {
             // Beállítások adatainak betöltése:
             case 1:
                 {
-                    List<Budget> budgets = await LoadBudgetsAsync(_userSessionService.GetCurrentHousehold());
-                    List<Household> households = await LoadHouseholdsAsync(_userSessionService.GetCurrentUser());
-                    await _userSessionService.ChangeHousehold(_userSessionService.GetCurrentHousehold(), households, budgets);
+                    if (!_userSessionService.IsOfflineMode())
+                    {
+                        List<Budget> budgets = await LoadBudgetsAsync(_userSessionService.GetCurrentHousehold());
+                        List<Household> households = await LoadHouseholdsAsync(_userSessionService.GetCurrentUser());
+                        await _userSessionService.ChangeHousehold(_userSessionService.GetCurrentHousehold(), households, budgets);
+                    }
+                    else
+                    {
+                        List<OfflineBudget> offlineBudgets = await _sqliteDb.Table<OfflineBudget>().ToListAsync();
+                        List<Budget> budgets = [];
+                        foreach (OfflineBudget budget in offlineBudgets)
+                        {
+                            budgets.Add(new()
+                            {
+                                BID = budget.BID,
+                                BudgetHousehold = budget.BudgetHousehold,
+                                BudgetDate = budget.BudgetDate,
+                                BudgetAmount = budget.BudgetAmount
+                            });
+                        }
+                        await _userSessionService.ChangeHousehold(_userSessionService.GetCurrentHousehold(), [], budgets);
+                    }
+
                     break;
                 }
             // Eseménynapló adatainak betöltése:
             case 2:
                 {
-                    List<Event> eventlog = await LoadEventLogAsync(_userSessionService.GetCurrentHousehold());
+                    List<Event> eventlog = [];
+                    if (!_userSessionService.IsOfflineMode())
+                        eventlog = await LoadEventLogAsync(_userSessionService.GetCurrentHousehold());
+                    else
+                    {
+                        List<OfflineEvent> offlineEventlog = await _sqliteDb.Table<OfflineEvent>().ToListAsync();
+                        foreach (OfflineEvent _event in offlineEventlog)
+                        {
+                            eventlog.Add(new()
+                            {
+                                EID = _event.EID,
+                                EventUser = _event.EventUser,
+                                EventHousehold = _event.EventHousehold,
+                                EventDate = _event.EventDate,
+                                EventName = _event.EventName,
+                                EventUserDate = _event.EventUserDate,
+                                EventType = _event.EventType,
+                                EventCost = _event.EventCost,
+                                EventDescription = _event.EventDescription,
+                                LastModifiedBy = _event.LastModifiedBy
+                            });
+                        }
+                    }
+
                     await _userSessionService.ReloadEventLog(eventlog);
                     break;
                 }
@@ -467,6 +525,66 @@ public class DatabaseService : IDatabaseService
                 };
                 await _sqliteDb.InsertOrReplaceAsync(offNotification);
             }
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public async Task<bool> SyncDatabasesAsync()
+    {
+        try
+        {
+            // Offline adatbázisban lévő új/módosított adatok feltöltése az online adatbázisba:
+            // Budgets:
+            List<OfflineBudget> newOfflineBudgets = await _sqliteDb.Table<OfflineBudget>().Where(x => x.BudgetMadeOffline).ToListAsync();
+            List<Budget> newBudgets = [];
+            foreach (OfflineBudget offlineBudget in newOfflineBudgets)
+            {
+                newBudgets.Add(new()
+                {
+                    BID = offlineBudget.BID,
+                    BudgetHousehold = offlineBudget.BudgetHousehold,
+                    BudgetDate = offlineBudget.BudgetDate,
+                    BudgetAmount = offlineBudget.BudgetAmount
+                });
+            }
+
+            if (newBudgets.Count > 0) // DEBUG: Úgy tűnik nem ismeri fel a BudgetMadeOffline-t igaznak, miközben módosítottam a Budget-n, lehet hogy a query-vel van probléma.
+                await _supabaseClient.From<Budget>().Upsert(newBudgets);
+
+            // Events:
+            List<OfflineEvent> newOfflineEvents = await _sqliteDb.Table<OfflineEvent>().Where(x => x.EventMadeOffline).ToListAsync();
+            List<Event> newEvents = [];
+            foreach (OfflineEvent _event in newOfflineEvents)
+            {
+                newEvents.Add(new()
+                {
+                    EID = _event.EID,
+                    EventUser = _event.EventUser,
+                    EventHousehold = _event.EventHousehold,
+                    EventDate = _event.EventDate,
+                    EventName = _event.EventName,
+                    EventUserDate = _event.EventUserDate,
+                    EventType = _event.EventType,
+                    EventCost = _event.EventCost,
+                    EventDescription = _event.EventDescription,
+                    LastModifiedBy = _event.LastModifiedBy
+                });
+            }
+
+            if (newEvents.Count > 0)
+                await _supabaseClient.From<Event>().Upsert(newEvents);
+
+            // Offline táblázatok kiürítése:
+            await _sqliteDb.DeleteAllAsync<OfflineUser>();
+            await _sqliteDb.DeleteAllAsync<OfflineHousehold>();
+            await _sqliteDb.DeleteAllAsync<OfflineBudget>();
+            await _sqliteDb.DeleteAllAsync<OfflineEvent>();
+            await _sqliteDb.DeleteAllAsync<OfflineNotification>();
 
             return true;
         }

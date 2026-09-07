@@ -139,6 +139,12 @@ public class NotificationsViewModel : ViewModelBase
 
     private async Task DeleteAllNotificationsAsync()
     {
+        if (_userSessionService.IsOfflineMode())
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Offline módban nem elérhető az értesítések törlése.");
+            return;
+        }
+
         if (Shell.Current != null)
         {
             if (await Shell.Current.DisplayAlert("Megerősítés", "Biztosan törölni szeretnéd az összes értesítést?", "Igen", "Nem"))

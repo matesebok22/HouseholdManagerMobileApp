@@ -79,6 +79,10 @@ public class AuthService : IAuthService
 
                     if (user.CurrentHousehold != string.Empty)
                     {
+                        // Offline-Online adatbázis szinkronizálása:
+                        if (await _databaseService.SyncDatabasesAsync() == false)
+                            return false;
+
                         currentHousehold = await _supabaseClient.From<Household>().Where(x => x.HHID == user.CurrentHousehold).Single();
                         if (currentHousehold != null)
                         {
@@ -94,7 +98,8 @@ public class AuthService : IAuthService
                     await _userSessionService.SetUserSessionAsync(user, currentHousehold, [], budgets, eventlog);
 
                     // Offline adatbázis frissítése:
-                    await _databaseService.CopyDataToOfflineDB();
+                    if (await _databaseService.CopyDataToOfflineDB() == false)
+                        return false;
 
                     // Offline bejelentkezéshez szükséges token beállítása:
                     await SecureStorage.SetAsync($"login-{user.UID}", DateTime.Now.Ticks.ToString());
