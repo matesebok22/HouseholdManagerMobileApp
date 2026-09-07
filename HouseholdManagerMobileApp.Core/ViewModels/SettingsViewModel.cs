@@ -469,6 +469,9 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
             if (Shell.Current != null)
                 _ = Shell.Current.DisplayAlert("Siker", "Háztartás sikeresen módosítva.", "OK");
             IsEditHouseholdVisible = false;
+            
+            EditHouseholdName = _userSessionService.GetCurrentHousehold().HouseholdName;
+
             await LoadHouseholdsAsync();
         }
         else

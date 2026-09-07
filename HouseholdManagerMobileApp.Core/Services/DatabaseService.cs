@@ -179,6 +179,8 @@ public class DatabaseService : IDatabaseService
             {
                 string sqliteQuery = @"UPDATE offline_households SET hh_name = ? WHERE hhid = ?";
                 await _sqliteDb.ExecuteAsync(sqliteQuery, newHouseholdName, _userSessionService.GetCurrentHousehold().HHID);
+
+                _userSessionService.GetCurrentHousehold().HouseholdName = newHouseholdName;
             }
         }
             
@@ -192,7 +194,7 @@ public class DatabaseService : IDatabaseService
                 await _supabaseClient.From<Budget>().Insert(new Budget() { BudgetHousehold = _userSessionService.GetCurrentHousehold().HHID, BudgetDate = newDate, BudgetAmount = newHouseholdBudget });
             else
             {
-                string sqliteQuery = @"INSERT INTO offline_budgets (bid, b_hh, b_userdate, b_amount) VALUES (?, ?, ?, ?)";
+                string sqliteQuery = @"INSERT INTO offline_budgets (bid, b_hh, b_userdate, b_amount, b_made_offline) VALUES (?, ?, ?, ?, 1)";
                 await _sqliteDb.ExecuteAsync(sqliteQuery, Guid.NewGuid().ToString(), _userSessionService.GetCurrentHousehold().HHID, newDate, newHouseholdBudget);
             }
         }
@@ -205,8 +207,7 @@ public class DatabaseService : IDatabaseService
                     await budget.Update<Budget>();
                 else
                 {
-                    string sqliteQuery = @"UPDATE offline_budgets SET b_amount = ? AND b_made_offline = 1 WHERE bid = ?";
-                    //string sqliteQuery = @"UPDATE offline_budgets SET b_amount = ? WHERE bid = ?";
+                    string sqliteQuery = @"UPDATE offline_budgets SET b_amount = ?, b_made_offline = 1 WHERE bid = ?";
                     await _sqliteDb.ExecuteAsync(sqliteQuery, budget.BudgetAmount, budget.BID);
                 }
             }
@@ -553,7 +554,7 @@ public class DatabaseService : IDatabaseService
                 });
             }
 
-            if (newBudgets.Count > 0) // DEBUG: Úgy tűnik nem ismeri fel a BudgetMadeOffline-t igaznak, miközben módosítottam a Budget-n, lehet hogy a query-vel van probléma.
+            if (newBudgets.Count > 0)
                 await _supabaseClient.From<Budget>().Upsert(newBudgets);
 
             // Events:
