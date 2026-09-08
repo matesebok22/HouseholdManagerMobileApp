@@ -68,6 +68,18 @@ public class RegistrationViewModel : ViewModelBase
         }
     }
 
+    private bool isOnline = true;
+    public bool IsOnline
+    {
+        get => isOnline;
+        set
+        {
+            if (isOnline == value) return;
+            isOnline = value;
+            OnPropertyChanged();
+        }
+    }
+
     private bool isLoading = false;
     public bool IsLoading
     {
@@ -90,13 +102,16 @@ public class RegistrationViewModel : ViewModelBase
 
         RegisterButtonCommand = new RelayCommand(async _ => await RegisterAsync(), _ => !IsLoading);
         NavigateToLoginCommand = new RelayCommand(async _ => await Shell.Current.GoToAsync("//LoginPage"));
+
+        if (Shell.Current != null)
+            IsOnline = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
     }
 
     private async Task RegisterAsync()
     {
         ErrorMessage = string.Empty;
 
-        if (Shell.Current != null && Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+        if (!IsOnline)
         {
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Nincs internetkapcsolat, próbáld meg később!");
             return;

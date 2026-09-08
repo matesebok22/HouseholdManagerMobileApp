@@ -151,7 +151,7 @@ public class LoginViewModel : ViewModelBase
         IsLoading = false;
     }
 
-    public void StartConnectivityCheck()
+    private void StartConnectivityCheck()
     {
         // Jelenleg fut-e az ellenőrzés:
         if (_connectivityCheckTask != null && !_connectivityCheckTask.IsCompleted)
@@ -161,7 +161,7 @@ public class LoginViewModel : ViewModelBase
         _connectivityCheckTask = CheckConnectivityPeriodicallyAsync(_connectivityCTS.Token);
     }
 
-    public void StopConnectivityCheck() => _connectivityCTS?.Cancel();
+    private void StopConnectivityCheck() => _connectivityCTS?.Cancel();
 
     private async Task CheckConnectivityPeriodicallyAsync(CancellationToken cancellationToken)
     {

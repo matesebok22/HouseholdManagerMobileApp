@@ -1,5 +1,5 @@
 ﻿using System.Collections.ObjectModel;
-using System.Runtime.CompilerServices;
+
 using HouseholdManagerMobileApp.Core.Commands;
 using HouseholdManagerMobileApp.Core.Helpers;
 using HouseholdManagerMobileApp.Core.Models;
@@ -87,9 +87,9 @@ public class NotificationsViewModel : ViewModelBase
                 WelcomeMessage = $"{_userSessionService.GetCurrentUser().Nickname} (Offline)";
             else
                 WelcomeMessage = _userSessionService.GetCurrentUser().Nickname;
-
-            _ = LoadNotificationsPageAsync();
         }
+
+        _ = LoadNotificationsPageAsync();
     }
 
     private async Task NavigateToHomeAsync()
@@ -130,7 +130,7 @@ public class NotificationsViewModel : ViewModelBase
         await Shell.Current.GoToAsync("//EventLogPage");
     }
 
-    private async Task LoadNotificationsPageAsync()
+    public async Task LoadNotificationsPageAsync()
     {
         Notifications.Clear();
         foreach (Notification notification in await _notificationService.GetAllNotificationsAsync())
@@ -159,7 +159,7 @@ public class NotificationsViewModel : ViewModelBase
     private async Task LogoutAsync()
     {
         IsMenuVisible = false;
-        WelcomeMessage = ErrorMessage = string.Empty;
+        WelcomeMessage = string.Empty;
         await _authService.LogoutAsync();
     }
 }

@@ -230,7 +230,7 @@ public class EventLogViewModel : ViewModelBase
     {
         if (!_userSessionService.IsUserLoggedIn())
         {
-            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A főoldalhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A kezdőlaphoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
             await LogoutAsync();
             return;
         }
@@ -262,7 +262,7 @@ public class EventLogViewModel : ViewModelBase
             return;
         }
 
-        _userSessionService.SetSelectedEvent(null); // Még lehet mozgatni fogom.
+        _userSessionService.SetSelectedEvent(null);
 
         await Shell.Current.GoToAsync("//SettingsPage?test=asd123");
     }
@@ -436,7 +436,7 @@ public class EventLogViewModel : ViewModelBase
 
     private async Task LogoutAsync()
     {
-        WelcomeMessage = ErrorMessage = string.Empty;
+        WelcomeMessage = string.Empty;
         IsLoading = false;
         await _authService.LogoutAsync();
     }

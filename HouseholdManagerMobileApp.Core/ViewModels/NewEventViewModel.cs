@@ -231,7 +231,7 @@ public class NewEventViewModel : ViewModelBase
 
     private async Task LogoutAsync()
     {
-        WelcomeMessage = ErrorMessage = EventName = EventType = EventDesc = string.Empty;
+        WelcomeMessage = EventName = EventType = EventDesc = string.Empty;
         EventDate = DateTime.Today;
         EventTime = DateTime.Now.TimeOfDay;
         EventCost = 0;

@@ -131,7 +131,6 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
             selectedHousehold = value;
             OnPropertyChanged();
 
-            // Frissítsd az adatbázist, amikor új háztartást választ ki
             if (!string.IsNullOrEmpty(selectedHousehold))
             {
                 _ = ChangeSelectedHouseholdAsync();
@@ -583,7 +582,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
     private async Task LogoutAsync()
     {
         IsMenuVisible = false;
-        WelcomeMessage = ErrorMessage = string.Empty;
+        WelcomeMessage = string.Empty;
         await _authService.LogoutAsync();
     }
 
