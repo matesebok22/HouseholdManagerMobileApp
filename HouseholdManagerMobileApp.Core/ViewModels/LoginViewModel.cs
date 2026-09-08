@@ -7,6 +7,8 @@ namespace HouseholdManagerMobileApp.Core.ViewModels;
 public class LoginViewModel : ViewModelBase
 {
     private readonly IAuthService _authService;
+    private CancellationTokenSource _connectivityCTS;
+    private Task? _connectivityCheckTask;
 
     private string username = string.Empty;
     public string Username
@@ -44,6 +46,31 @@ public class LoginViewModel : ViewModelBase
         }
     }
 
+    private bool isOnline = true;
+    public bool IsOnline
+    {
+        get => isOnline;
+        set
+        {
+            if (isOnline == value) return;
+            isOnline = value;
+            OnPropertyChanged();
+        }
+    }
+
+    // Label miatt szükséges.
+    private bool isOffline = false;
+    public bool IsOffline
+    {
+        get => isOffline;
+        set
+        {
+            if (isOffline == value) return;
+            isOffline = value;
+            OnPropertyChanged();
+        }
+    }
+
     private bool isLoading = false;
     public bool IsLoading
     {
@@ -66,14 +93,33 @@ public class LoginViewModel : ViewModelBase
         _authService = authService;
 
         LoginButtonCommand = new RelayCommand(async _ => await LoginAsync(), _ => !IsLoading);
-        NavigateToRegistrationCommand = new RelayCommand(async _ => await Shell.Current.GoToAsync("//RegistrationPage"));
+        NavigateToRegistrationCommand = new RelayCommand(async _ => await NavigateToRegistrationAsync());
+
+        if (Shell.Current != null)
+        {
+            IsOnline = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
+            IsOffline = !IsOnline;
+            StartConnectivityCheck();
+        }
+    }
+
+    private async Task NavigateToRegistrationAsync()
+    {
+        StopConnectivityCheck();
+        await Shell.Current.GoToAsync("//RegistrationPage");
     }
 
     private async Task LoginAsync()
     {
         ErrorMessage = string.Empty;
 
-        if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))
+        if (string.IsNullOrWhiteSpace(Username))
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Kérlek tölts ki minden mezőt!");
+            return;
+        }
+
+        if (IsOnline && string.IsNullOrWhiteSpace(Password))
         {
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Kérlek tölts ki minden mezőt!");
             return;
@@ -86,12 +132,13 @@ public class LoginViewModel : ViewModelBase
         if (success)
         {
             IsLoading = false;
+            StopConnectivityCheck();
             if (Shell.Current != null) // Tesztelés ne akadjon meg.
                 await Shell.Current.GoToAsync("//UserPage");
         }
         else
         {
-            if (Shell.Current != null && Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+            if (!IsOnline)
             {
                 ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Offline bejelentkezéshez kérlek jelentkezz legalább egy fiókba internetkapcsolattal!");
                 IsLoading = false;
@@ -102,5 +149,41 @@ public class LoginViewModel : ViewModelBase
         }
         
         IsLoading = false;
+    }
+
+    public void StartConnectivityCheck()
+    {
+        // Jelenleg fut-e az ellenőrzés:
+        if (_connectivityCheckTask != null && !_connectivityCheckTask.IsCompleted)
+            return;
+
+        _connectivityCTS = new CancellationTokenSource();
+        _connectivityCheckTask = CheckConnectivityPeriodicallyAsync(_connectivityCTS.Token);
+    }
+
+    public void StopConnectivityCheck() => _connectivityCTS?.Cancel();
+
+    private async Task CheckConnectivityPeriodicallyAsync(CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                // Internetkapcsolat ellenőrzés 2 másodpercenként.
+                await Task.Delay(2000, cancellationToken);
+
+                bool isCurrentlyOnline = Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
+                if (IsOnline != isCurrentlyOnline)
+                {
+                    IsOnline = isCurrentlyOnline;
+                    IsOffline = !IsOnline;
+                }
+                    
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Internetkapcsolat ellenőrzés hiba: {ex.Message}");
+            }
+        }
     }
 }

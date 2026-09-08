@@ -5,8 +5,10 @@
              Title="Login Page">
     
     <VerticalStackLayout Padding="30" Spacing="15" VerticalOptions="Center">
+        <Label Text="Offline mód" FontSize="Large" FontAttributes="Bold" HorizontalTextAlignment="Center" IsVisible="{Binding IsOffline}"/>
+
         <Entry Placeholder="Felhasználónév" Text="{Binding Username}"/>
-        <Entry Placeholder="Jelszó" IsPassword="True" Text="{Binding Password}"/>
+        <Entry Placeholder="Jelszó" IsPassword="True" Text="{Binding Password}" IsVisible="{Binding IsOnline}"/>
 
         <Button Text="Bejelentkezés" Command="{Binding LoginButtonCommand}"/>
 
