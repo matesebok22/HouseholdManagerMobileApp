@@ -95,7 +95,7 @@ public class AuthService : IAuthService
                     }
 
                     // Felhasználói session beállítása:
-                    await _userSessionService.SetUserSessionAsync(user, currentHousehold, [], budgets, eventlog);
+                    await _userSessionService.SetUserSessionAsync(user, currentHousehold!, [], budgets, eventlog);
 
                     // Offline adatbázis frissítése:
                     if (await _databaseService.CopyDataToOfflineDB() == false)
@@ -185,7 +185,7 @@ public class AuthService : IAuthService
                 }
 
                 // Felhasználói session beállítása:
-                await _userSessionService.SetUserSessionAsync(user, currentHousehold, [], budgets, eventlog);
+                await _userSessionService.SetUserSessionAsync(user, currentHousehold!, [], budgets, eventlog);
 
                 return true;
             }
@@ -204,7 +204,7 @@ public class AuthService : IAuthService
         {
             Dictionary<string, object> parameters = new()
             {
-                { "p_username", _userSessionService.GetCurrentUser()!.Username }, // A ! jel a null-forgiving operator, amely "elnyomja" a null ellenőrzés hibát.
+                { "p_username", _userSessionService.GetCurrentUser()!.Username },
                 { "p_old_password", oldPassword },
                 { "p_new_password", newPassword }
             };

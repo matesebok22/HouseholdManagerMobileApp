@@ -10,9 +10,6 @@ public interface INotificationService
     // Megjelöl egy értesítést olvasottként.
     Task<bool> MarkNotificationAsReadAsync(string notificationId);
 
-    // Lekéri az összes értesítést egy felhasználónak az adott háztartásban.
-    //Task<List<Notification>> GetNotificationsByHouseholdAsync(string householdId);
-
     // Lekéri az összes értesítést a jelenlegi felhasználónak.
     Task<List<Notification>> GetAllNotificationsAsync();
 

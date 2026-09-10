@@ -11,5 +11,5 @@ public static class Constants
 
     // Egyéb konstansok:
     private const long TicksPerSec = 10000000L;
-    public static long OfflineLoginValidity = 86400L * TicksPerSec; // tickben (24 óra)
+    public const long OfflineLoginValidity = 86400L * TicksPerSec; // tickben (24 óra)
 }

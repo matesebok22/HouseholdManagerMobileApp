@@ -84,9 +84,9 @@ public class NotificationsViewModel : ViewModelBase
         if (Shell.Current != null)
         {
             if (_userSessionService.IsOfflineMode())
-                WelcomeMessage = $"{_userSessionService.GetCurrentUser().Nickname} (Offline)";
+                WelcomeMessage = $"{_userSessionService.GetCurrentUser()!.Nickname} (Offline)";
             else
-                WelcomeMessage = _userSessionService.GetCurrentUser().Nickname;
+                WelcomeMessage = _userSessionService.GetCurrentUser()!.Nickname;
         }
 
         _ = LoadNotificationsPageAsync();

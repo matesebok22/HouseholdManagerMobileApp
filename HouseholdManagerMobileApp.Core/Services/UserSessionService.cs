@@ -1,5 +1,4 @@
 ﻿using HouseholdManagerMobileApp.Core.Models;
-using Supabase.Interfaces;
 
 namespace HouseholdManagerMobileApp.Core.Services;
 
@@ -54,7 +53,7 @@ public class UserSessionService : IUserSessionService
 
     public async Task ChangeHousehold(Household currenthousehold, List<Household> households, List<Budget> budgets)
     {
-        currentHouseholdOwner = currentUser.UID == currenthousehold.HouseholdOwner;
+        currentHouseholdOwner = currentUser!.UID == currenthousehold.HouseholdOwner;
         currentHousehold = currenthousehold;
         householdList.Clear();
         householdList = households;

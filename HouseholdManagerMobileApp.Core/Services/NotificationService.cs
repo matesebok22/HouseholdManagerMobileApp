@@ -1,5 +1,6 @@
-﻿using HouseholdManagerMobileApp.Core.Models;
-using SQLite;
+﻿using SQLite;
+
+using HouseholdManagerMobileApp.Core.Models;
 
 namespace HouseholdManagerMobileApp.Core.Services;
 
@@ -20,7 +21,7 @@ public class NotificationService : INotificationService
     {
         try
         {
-            string currentUserId = _userSessionService.GetCurrentUser().UID;
+            string currentUserId = _userSessionService.GetCurrentUser()!.UID;
             List<string> disabledHouseholds = await GetDisabledNotificationHouseholdsAsync();
             List<Notification> notifications = [];
 
@@ -61,31 +62,11 @@ public class NotificationService : INotificationService
         }
     }
 
-    /*public async Task<List<Notification>> GetNotificationsByHouseholdAsync(string householdId)
-    {
-        try
-        {
-            string currentUserId = _userSessionService.GetCurrentUser().UID;
-            var response = await _supabaseClient
-                .From<Notification>()
-                .Where(x => x.RecipientUserId == currentUserId)
-                .Where(x => x.RelatedHouseholdId == householdId)
-                .Order(x => x.CreatedAt, Supabase.Postgrest.Constants.Ordering.Descending)
-                .Get();
-
-            return response.Models ?? new List<Notification>();
-        }
-        catch (Exception ex)
-        {
-            throw new Exception($"Hiba történt az értesítések betöltése során a háztartáshoz: {householdId}", ex);
-        }
-    }*/
-
     public async Task<List<Notification>> GetAllNotificationsAsync()
     {
         try
         {
-            string currentUserId = _userSessionService.GetCurrentUser().UID;
+            string currentUserId = _userSessionService.GetCurrentUser()!.UID;
             List<string> disabledHouseholds = await GetDisabledNotificationHouseholdsAsync();
             List<Notification> notifications = [];
 
@@ -116,7 +97,7 @@ public class NotificationService : INotificationService
     {
         try
         {
-            var currentUserId = _userSessionService.GetCurrentUser().UID;
+            var currentUserId = _userSessionService.GetCurrentUser()!.UID;
 
             if (!_userSessionService.IsOfflineMode())
             {
@@ -124,7 +105,7 @@ public class NotificationService : INotificationService
 
                 string sqliteQuery = @"UPDATE offline_notifications SET is_read = 1 WHERE recipient_user_id = ? AND is_read = 0";
                 await _sqliteDb.ExecuteAsync(sqliteQuery, currentUserId);
-                // Ha a válasz sikeres, a Models nem null
+
                 return response.Models != null;
             }
             else
@@ -145,7 +126,7 @@ public class NotificationService : INotificationService
     {
         try
         {
-            string currentUserId = _userSessionService.GetCurrentUser().UID;
+            string currentUserId = _userSessionService.GetCurrentUser()!.UID;
             await _supabaseClient.From<Notification>().Where(x => x.RecipientUserId == currentUserId).Delete();
         }
         catch (Exception ex)
@@ -157,7 +138,7 @@ public class NotificationService : INotificationService
     private async Task<List<string>> GetDisabledNotificationHouseholdsAsync()
     {
         List<string> disabledHouseholds = [];
-        User currentUser = _userSessionService.GetCurrentUser();
+        User currentUser = _userSessionService.GetCurrentUser()!;
 
         List<string> householdIds = [];
         householdIds.Add(currentUser.HouseHold1);
@@ -165,7 +146,7 @@ public class NotificationService : INotificationService
         householdIds.Add(currentUser.HouseHold3);
         foreach (string householdId in householdIds)
         {
-            string value = await SecureStorage.GetAsync($"notifications-{currentUser.UID}-{householdId}");
+            string value = await SecureStorage.GetAsync($"notifications-{currentUser.UID}-{householdId}") ?? "";
 
             if (!string.IsNullOrEmpty(value) && !bool.Parse(value))
                 disabledHouseholds.Add(householdId);

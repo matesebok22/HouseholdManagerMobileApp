@@ -216,11 +216,11 @@ public class EventLogViewModel : ViewModelBase
         if (Shell.Current != null)
         {
             if (_userSessionService.IsOfflineMode())
-                WelcomeMessage = $"{_userSessionService.GetCurrentUser().Nickname} (Offline)";
+                WelcomeMessage = $"{_userSessionService.GetCurrentUser()!.Nickname} (Offline)";
             else
-                WelcomeMessage = _userSessionService.GetCurrentUser().Nickname;
+                WelcomeMessage = _userSessionService.GetCurrentUser()!.Nickname;
             
-            CurrentHouseholdName = _userSessionService.GetCurrentHousehold().HouseholdName;
+            CurrentHouseholdName = _userSessionService.GetCurrentHousehold()!.HouseholdName;
 
             _ = LoadEventlogAsync();
         }
@@ -381,7 +381,7 @@ public class EventLogViewModel : ViewModelBase
 
         if (Shell.Current != null)
         {
-            if (await Shell.Current.DisplayAlert("Alert", $"Biztosan törli a(z) {_userSessionService.GetSelectedEvent().EventName} eseményt?", "Igen", "Nem"))
+            if (await Shell.Current.DisplayAlert("Alert", $"Biztosan törli a(z) {_userSessionService.GetSelectedEvent()!.EventName} eseményt?", "Igen", "Nem"))
             {
                 await _databaseService.DeleteEventAsync();
                 await LoadEventlogAsync();

@@ -10,13 +10,11 @@ public class DatabaseService : IDatabaseService
     private readonly Client _supabaseClient;
     private readonly SQLiteAsyncConnection _sqliteDb;
     private readonly IUserSessionService _userSessionService;
-    private readonly INotificationService _notificationService;
-    public DatabaseService(Client supabaseClient, SQLiteAsyncConnection sqliteDb, IUserSessionService userSessionService, INotificationService notificationService)
+    public DatabaseService(Client supabaseClient, SQLiteAsyncConnection sqliteDb, IUserSessionService userSessionService)
     {
         _supabaseClient = supabaseClient;
         _sqliteDb = sqliteDb;
         _userSessionService = userSessionService;
-        _notificationService = notificationService;
     }
 
     public async Task InitializeAsync()
@@ -53,7 +51,7 @@ public class DatabaseService : IDatabaseService
         {
             Dictionary<string, object> parameters = new()
             {
-                { "p_username", _userSessionService.GetCurrentUser().Username },
+                { "p_username", _userSessionService.GetCurrentUser()!.Username },
                 { "p_householdname", householdName }
             };
 
@@ -61,7 +59,7 @@ public class DatabaseService : IDatabaseService
 
             if (response.Content != null && response.Content.Trim() == "true")
             {
-                User? user = await _supabaseClient.From<User>().Where(x => x.Username == _userSessionService.GetCurrentUser().Username).Single();
+                User? user = await _supabaseClient.From<User>().Where(x => x.Username == _userSessionService.GetCurrentUser()!.Username).Single();
                 if (user == null)
                     return false;
 
@@ -87,7 +85,7 @@ public class DatabaseService : IDatabaseService
         if (household == null)
             return false;
 
-        User? user = await _supabaseClient.From<User>().Where(x => x.Username == _userSessionService.GetCurrentUser().Username).Single();
+        User? user = await _supabaseClient.From<User>().Where(x => x.Username == _userSessionService.GetCurrentUser()!.Username).Single();
 
         if (user == null)
             return false;
@@ -133,7 +131,7 @@ public class DatabaseService : IDatabaseService
             if (newHousehold == null)
                 return false;
 
-            User? user = await _supabaseClient.From<User>().Where(x => x.Username == _userSessionService.GetCurrentUser().Username).Single();
+            User? user = await _supabaseClient.From<User>().Where(x => x.Username == _userSessionService.GetCurrentUser()!.Username).Single();
             if (user == null)
                 return false;
 
@@ -154,16 +152,16 @@ public class DatabaseService : IDatabaseService
     {
         string currentDate = $"{householdBudgetMonth.Year}. {householdBudgetMonth.Month}.";
 
-        if (_userSessionService.GetCurrentHousehold().HouseholdName != newHouseholdName)
+        if (_userSessionService.GetCurrentHousehold()!.HouseholdName != newHouseholdName)
         {
             if (!_userSessionService.IsOfflineMode())
-                await _supabaseClient.From<Household>().Where(x => x.HHID == _userSessionService.GetCurrentHousehold().HHID).Set(x => x.HouseholdName, newHouseholdName).Update();
+                await _supabaseClient.From<Household>().Where(x => x.HHID == _userSessionService.GetCurrentHousehold()!.HHID).Set(x => x.HouseholdName, newHouseholdName).Update();
             else
             {
                 string sqliteQuery = @"UPDATE offline_households SET hh_name = ? WHERE hhid = ?";
-                await _sqliteDb.ExecuteAsync(sqliteQuery, newHouseholdName, _userSessionService.GetCurrentHousehold().HHID);
+                await _sqliteDb.ExecuteAsync(sqliteQuery, newHouseholdName, _userSessionService.GetCurrentHousehold()!.HHID);
 
-                _userSessionService.GetCurrentHousehold().HouseholdName = newHouseholdName;
+                _userSessionService.GetCurrentHousehold()!.HouseholdName = newHouseholdName;
             }
         }
             
@@ -174,11 +172,11 @@ public class DatabaseService : IDatabaseService
             DateTime newDate = new(householdBudgetMonth.Year, householdBudgetMonth.Month, 1);
 
             if (!_userSessionService.IsOfflineMode())
-                await _supabaseClient.From<Budget>().Insert(new Budget() { BudgetHousehold = _userSessionService.GetCurrentHousehold().HHID, BudgetDate = newDate, BudgetAmount = newHouseholdBudget });
+                await _supabaseClient.From<Budget>().Insert(new Budget() { BudgetHousehold = _userSessionService.GetCurrentHousehold()!.HHID, BudgetDate = newDate, BudgetAmount = newHouseholdBudget });
             else
             {
                 string sqliteQuery = @"INSERT INTO offline_budgets (bid, b_hh, b_userdate, b_amount, b_made_offline) VALUES (?, ?, ?, ?, 1)";
-                await _sqliteDb.ExecuteAsync(sqliteQuery, Guid.NewGuid().ToString(), _userSessionService.GetCurrentHousehold().HHID, newDate, newHouseholdBudget);
+                await _sqliteDb.ExecuteAsync(sqliteQuery, Guid.NewGuid().ToString(), _userSessionService.GetCurrentHousehold()!.HHID, newDate, newHouseholdBudget);
             }
         }
         else
@@ -201,11 +199,11 @@ public class DatabaseService : IDatabaseService
 
     public async Task<bool> LeaveHouseholdAsync()
     {
-        User? user = await _supabaseClient.From<User>().Where(x => x.UID == _userSessionService.GetCurrentUser().UID).Single();
+        User? user = await _supabaseClient.From<User>().Where(x => x.UID == _userSessionService.GetCurrentUser()!.UID).Single();
         if (user == null)
             return false;
 
-        Household? household = await _supabaseClient.From<Household>().Where(x => x.HHID == _userSessionService.GetCurrentHousehold().HHID).Single();
+        Household? household = await _supabaseClient.From<Household>().Where(x => x.HHID == _userSessionService.GetCurrentHousehold()!.HHID).Single();
         if (household == null)
             return false;
 
@@ -258,15 +256,15 @@ public class DatabaseService : IDatabaseService
     {
         Event newEvent = new()
         {
-            EventUser = _userSessionService.GetCurrentUser().UID,
-            EventHousehold = _userSessionService.GetCurrentHousehold().HHID,
+            EventUser = _userSessionService.GetCurrentUser()!.UID,
+            EventHousehold = _userSessionService.GetCurrentHousehold()!.HHID,
             EventDate = DateTime.Now,
             EventName = eventName,
             EventUserDate = eventUserDate,
             EventType = eventType,
             EventCost = eventCost,
             EventDescription = eventDesc,
-            LastModifiedBy = _userSessionService.GetCurrentUser().UID
+            LastModifiedBy = _userSessionService.GetCurrentUser()!.UID
         };
 
         if (!_userSessionService.IsOfflineMode())
@@ -290,13 +288,13 @@ public class DatabaseService : IDatabaseService
         if (!_userSessionService.IsOfflineMode())
         {
             var response = await _supabaseClient.From<Event>()
-                                    .Where(x => x.EID == _userSessionService.GetSelectedEvent().EID)
+                                    .Where(x => x.EID == _userSessionService.GetSelectedEvent()!.EID)
                                     .Set(x => x.EventName, eventName)
                                     .Set(x => x.EventUserDate, eventUserDate)
                                     .Set(x => x.EventType, eventType)
                                     .Set(x => x.EventCost, eventCost)
                                     .Set(x => x.EventDescription, eventDesc)
-                                    .Set(x => x.LastModifiedBy, _userSessionService.GetCurrentUser().UID)
+                                    .Set(x => x.LastModifiedBy, _userSessionService.GetCurrentUser()!.UID)
                                     .Update();
             if (response.Models != null && response.Models.Count > 0)
                 return true;
@@ -304,7 +302,7 @@ public class DatabaseService : IDatabaseService
         else
         {
             string sqliteQuery = @"UPDATE offline_events SET e_name = ?, e_userdate = ?, e_type = ?, e_cost = ?, e_desc = ?, last_modified_by = ?, e_made_offline = 1 WHERE eid = ?";
-            await _sqliteDb.ExecuteAsync(sqliteQuery, eventName, eventUserDate, eventType, eventCost, eventDesc, _userSessionService.GetCurrentUser().UID, _userSessionService.GetSelectedEvent().EID);
+            await _sqliteDb.ExecuteAsync(sqliteQuery, eventName, eventUserDate, eventType, eventCost, eventDesc, _userSessionService.GetCurrentUser()!.UID, _userSessionService.GetSelectedEvent()!.EID);
             return true;
         }
 
@@ -313,7 +311,7 @@ public class DatabaseService : IDatabaseService
 
     public async Task DeleteEventAsync()
     {
-        await _supabaseClient.From<Event>().Where(x => x.EID == _userSessionService.GetSelectedEvent().EID).Delete();
+        await _supabaseClient.From<Event>().Where(x => x.EID == _userSessionService.GetSelectedEvent()!.EID).Delete();
     }
 
     public async Task<bool> LoadDataAsync(int mode)
@@ -325,9 +323,9 @@ public class DatabaseService : IDatabaseService
                 {
                     if (!_userSessionService.IsOfflineMode())
                     {
-                        List<Budget> budgets = await LoadBudgetsAsync(_userSessionService.GetCurrentHousehold());
-                        List<Household> households = await LoadHouseholdsAsync(_userSessionService.GetCurrentUser());
-                        await _userSessionService.ChangeHousehold(_userSessionService.GetCurrentHousehold(), households, budgets);
+                        List<Budget> budgets = await LoadBudgetsAsync(_userSessionService.GetCurrentHousehold()!);
+                        List<Household> households = await LoadHouseholdsAsync(_userSessionService.GetCurrentUser()!);
+                        await _userSessionService.ChangeHousehold(_userSessionService.GetCurrentHousehold()!, households, budgets);
                     }
                     else
                     {
@@ -343,7 +341,7 @@ public class DatabaseService : IDatabaseService
                                 BudgetAmount = budget.BudgetAmount
                             });
                         }
-                        await _userSessionService.ChangeHousehold(_userSessionService.GetCurrentHousehold(), [], budgets);
+                        await _userSessionService.ChangeHousehold(_userSessionService.GetCurrentHousehold()!, [], budgets);
                     }
 
                     break;
@@ -353,7 +351,7 @@ public class DatabaseService : IDatabaseService
                 {
                     List<Event> eventlog = [];
                     if (!_userSessionService.IsOfflineMode())
-                        eventlog = await LoadEventLogAsync(_userSessionService.GetCurrentHousehold());
+                        eventlog = await LoadEventLogAsync(_userSessionService.GetCurrentHousehold()!);
                     else
                     {
                         List<OfflineEvent> offlineEventlog = await _sqliteDb.Table<OfflineEvent>().ToListAsync();
@@ -420,27 +418,12 @@ public class DatabaseService : IDatabaseService
         return eventlog;
     }
 
-    // Sok esemény esetén darabosan tölti be a listát:
-    private async Task<(List<Event> Events, int TotalCount)> LoadEventLogAsync(Household household, int pageNumber = 1, int pageSize = 20)
-    {
-        var query = _supabaseClient.From<Event>()
-                                   .Where(x => x.EventHousehold == household.HHID)
-                                   .Order(x => x.EventUserDate, Supabase.Postgrest.Constants.Ordering.Descending);
-
-        var countQuery = await query.Get();
-        var totalCount = countQuery.Models?.Count ?? 0;
-
-        var paginatedQuery = await query.Range((pageNumber - 1) * pageSize, (pageNumber * pageSize) - 1).Get();
-
-        return (paginatedQuery.Models ?? [], totalCount);
-    }
-
     public async Task<bool> CopyDataToOfflineDB()
     {
         try
         {
-            User user = _userSessionService.GetCurrentUser();
-            Household household = _userSessionService.GetCurrentHousehold();
+            User user = _userSessionService.GetCurrentUser()!;
+            Household household = _userSessionService.GetCurrentHousehold()!;
             List<Budget> budgets = _userSessionService.GetCurrentBudgets();
             List<Event> eventlog = _userSessionService.GetCurrentEventLog();
 

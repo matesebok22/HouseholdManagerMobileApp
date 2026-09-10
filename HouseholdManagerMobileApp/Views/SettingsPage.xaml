@@ -31,25 +31,26 @@
                 <!-- Háztartás kezelés -->
                 <Label Text="Háztartások kezelése" FontSize="Medium"/>
 
-                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="10">
                     <Label Grid.Column="0" Text="Jelenlegi háztartás: " VerticalOptions="Center"/>
                     <Picker Grid.Column="1" ItemsSource="{Binding HouseholdsList}" SelectedItem="{Binding SelectedHousehold}"/>
+                    <ActivityIndicator Grid.Column="2" IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}"/>
                 </Grid>
 
-                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="5" Padding="10">
+                <Grid ColumnDefinitions="*, *, *" ColumnSpacing="5" Padding="10">
                     <Button Grid.Column="0" Text="Csatlakozás háztartásba" Command="{Binding ShowJoinHouseholdButtonCommand}" LineBreakMode="WordWrap" BackgroundColor="Aqua"/>
                     <Button Grid.Column="1" Text="Új háztartás készítése" Command="{Binding ShowCreateHouseholdButtonCommand}" LineBreakMode="WordWrap" BackgroundColor="Aqua"/>
                     <Button Grid.Column="2" Text="Kilépés a jelenlegi háztartásból" Command="{Binding LeaveHouseholdButtonCommand}" LineBreakMode="WordWrap" BackgroundColor="#e65247"/>
                 </Grid>
 
-                <Grid ColumnDefinitions="*,*" ColumnSpacing="5" Padding="10">
+                <Grid ColumnDefinitions="*, *" ColumnSpacing="5" Padding="10">
                     <Button Grid.Column="0" Text="Jelenlegi háztartás módosítása" Command="{Binding ShowEditHouseholdButtonCommand}" LineBreakMode="WordWrap"  BackgroundColor="Aqua"/>
                     <Button Grid.Column="1" Text="Jelenlegi háztartás felbontása" Command="{Binding DisbandHouseholdButtonCommand}" LineBreakMode="WordWrap" BackgroundColor="#e65247"/>
                 </Grid>
 
                 <!-- Háztartás: Új háztartás csatlakozás kezelés -->
                 <VerticalStackLayout IsVisible="{Binding IsJoinHouseholdVisible}">
-                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                    <Grid ColumnDefinitions="Auto, *" ColumnSpacing="10">
                         <Label Grid.Column="0" Text="Csatlakozás háztartásba: " VerticalOptions="Center"/>
                         <Entry Grid.Column="1" Text="{Binding HouseholdAccessCode}" Placeholder="Azonosító kód (6 karakter)" MaxLength="6" TextTransform="Uppercase"/>
                     </Grid>
@@ -59,7 +60,7 @@
 
                 <!-- Háztartás: Új háztartás készítés kezelés -->
                 <VerticalStackLayout IsVisible="{Binding IsCreateHouseholdVisible}">
-                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                    <Grid ColumnDefinitions="Auto, *" ColumnSpacing="10">
                         <Label Grid.Column="0" Text="Új háztartás neve: " VerticalOptions="Center"/>
                         <Entry Grid.Column="1" Text="{Binding NewHouseholdName}" Placeholder="3-10 karakter"/>
                     </Grid>
@@ -69,17 +70,17 @@
 
                 <!-- Háztartás: Háztartás módosítás kezelés -->
                 <VerticalStackLayout IsVisible="{Binding IsEditHouseholdVisible}">
-                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                    <Grid ColumnDefinitions="Auto, *" ColumnSpacing="10">
                         <Label Grid.Column="0" Text="Háztartás átnevezése: " VerticalOptions="Center"/>
                         <Entry Grid.Column="1" Text="{Binding EditHouseholdName}" Placeholder="3-10 karakter"/>
                     </Grid>
 
-                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                    <Grid ColumnDefinitions="Auto, *" ColumnSpacing="10">
                         <Label Grid.Column="0" Text="Háztartás hónapjának kiválasztása: " VerticalOptions="Center"/>
                         <DatePicker Grid.Column="1" Date="{Binding EditHouseholdDate}" Format="yyyy. MM."/>
                     </Grid>
 
-                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                    <Grid ColumnDefinitions="Auto, *" ColumnSpacing="10">
                         <Label Grid.Column="0" Text="Havi összeg módosítása: " VerticalOptions="Center"/>
                         <Entry Grid.Column="1" Text="{Binding EditHouseholdBudget}" Placeholder="3-10 karakter"/>
                     </Grid>

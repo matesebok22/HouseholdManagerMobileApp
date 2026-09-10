@@ -49,6 +49,18 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         }
     }
 
+    private bool isLoading = false;
+    public bool IsLoading
+    {
+        get => isLoading;
+        set
+        {
+            if (isLoading == value) return;
+            isLoading = value;
+            OnPropertyChanged();
+        }
+    }
+
     private bool isJoinHouseholdVisible = false;
     public bool IsJoinHouseholdVisible
     {
@@ -279,9 +291,9 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         if (Shell.Current != null)
         {
             if (_userSessionService.IsOfflineMode())
-                WelcomeMessage = $"{_userSessionService.GetCurrentUser().Nickname} (Offline)";
+                WelcomeMessage = $"{_userSessionService.GetCurrentUser()!.Nickname} (Offline)";
             else
-                WelcomeMessage = _userSessionService.GetCurrentUser().Nickname;
+                WelcomeMessage = _userSessionService.GetCurrentUser()!.Nickname;
         }
     }
 
@@ -337,8 +349,8 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         bool success = await _databaseService.LoadDataAsync(1);
         if (success)
         {
-            string userID = _userSessionService.GetCurrentUser().UID;
-            Household userHH = _userSessionService.GetCurrentHousehold();
+            string userID = _userSessionService.GetCurrentUser()!.UID;
+            Household userHH = _userSessionService.GetCurrentHousehold()!;
 
             if (!_userSessionService.IsOfflineMode())
             {
@@ -359,6 +371,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
     {
         try
         {
+            IsLoading = true;
             IsCreateHouseholdVisible = IsEditHouseholdVisible = IsJoinHouseholdVisible = false;
 
             string[] parts = SelectedHousehold.Split(" - ");
@@ -372,18 +385,20 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
                     LeaveHouseholdButtonCommand.RefreshCanExecute();
                     DisbandHouseholdButtonCommand.RefreshCanExecute();
 
-                    EditHouseholdName = _userSessionService.GetCurrentHousehold().HouseholdName;
+                    EditHouseholdName = _userSessionService.GetCurrentHousehold()!.HouseholdName;
                     EditHouseholdDate = DateTime.Today;
                     LoadSelectedMonthBudget();
 
-                    string userID = _userSessionService.GetCurrentUser().UID;
-                    string userHH = _userSessionService.GetCurrentHousehold().HHID;
+                    string userID = _userSessionService.GetCurrentUser()!.UID;
+                    string userHH = _userSessionService.GetCurrentHousehold()!.HHID;
                     if (Shell.Current != null)
                         NotificationsIsChecked = bool.Parse(await SecureStorage.GetAsync($"notifications-{userID}-{userHH}") ?? "true");
                 }
                 else
                     ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Háztartás váltás sikertelen!");
             }
+
+            IsLoading = false;
         }
         catch (Exception ex)
         {
@@ -469,7 +484,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
                 _ = Shell.Current.DisplayAlert("Siker", "Háztartás sikeresen módosítva.", "OK");
             IsEditHouseholdVisible = false;
             
-            EditHouseholdName = _userSessionService.GetCurrentHousehold().HouseholdName;
+            EditHouseholdName = _userSessionService.GetCurrentHousehold()!.HouseholdName;
 
             await LoadHouseholdsAsync();
         }
@@ -574,8 +589,8 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
     private async Task ToggleNotificationsAsync()
     {
         // A telefon értesítések engedélyezése vagy letiltása a felhasználói beállítások alapján:
-        string userID = _userSessionService.GetCurrentUser().UID;
-        string userHH = _userSessionService.GetCurrentHousehold().HHID;
+        string userID = _userSessionService.GetCurrentUser()!.UID;
+        string userHH = _userSessionService.GetCurrentHousehold()!.HHID;
         await SecureStorage.SetAsync($"notifications-{userID}-{userHH}", NotificationsIsChecked.ToString());
     }
 
