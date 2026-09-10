@@ -23,8 +23,6 @@
 	  <Compile Remove="Helpers\StringEqualsConverter.cs" />
 	  <Compile Remove="Models\RegisterViewModel.cs" />
 	  <Compile Remove="Models\UserPushToken.cs" />
-	  <Compile Remove="Services\CacheService.cs" />
-	  <Compile Remove="Services\ICacheService.cs" />
 	  <Compile Remove="ViewModels\RegisterViewModel.cs" />
 	</ItemGroup>
 

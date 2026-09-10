@@ -21,7 +21,7 @@
 		<Nullable>enable</Nullable>
 
 		<!-- Display name -->
-		<ApplicationTitle>Household Manager</ApplicationTitle>
+		<ApplicationTitle>HouseholdManagerMobileApp</ApplicationTitle>
 
 		<!-- App Identifier -->
 		<ApplicationId>com.companyname.householdmanagermobileapp</ApplicationId>
