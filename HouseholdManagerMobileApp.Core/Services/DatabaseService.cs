@@ -1,7 +1,7 @@
-﻿using SQLite;
+﻿using HouseholdManagerMobileApp.Core.Models;
+using SQLite;
 using Supabase;
-
-using HouseholdManagerMobileApp.Core.Models;
+using Supabase.Postgrest.Responses;
 
 namespace HouseholdManagerMobileApp.Core.Services;
 
@@ -146,23 +146,6 @@ public class DatabaseService : IDatabaseService
 
             await _userSessionService.ChangeHousehold(newHousehold, households, budgets);
         }
-        /*else
-        {
-            List<OfflineBudget> offlineBudgets = await _sqliteDb.Table<OfflineBudget>().ToListAsync();
-            List<Budget> budgets = [];
-            foreach (OfflineBudget offlineBudget in offlineBudgets)
-            {
-                budgets.Add(new()
-                {
-                    BID = offlineBudget.BID,
-                    BudgetHousehold = offlineBudget.BudgetHousehold,
-                    BudgetDate = offlineBudget.BudgetDate,
-                    BudgetAmount = offlineBudget.BudgetAmount
-                });
-            }
-
-            await _userSessionService.ChangeHousehold(_userSessionService.GetCurrentHousehold(), [], budgets);
-        }*/
 
         return true;
     }
@@ -402,27 +385,17 @@ public class DatabaseService : IDatabaseService
 
     private async Task<List<Household>> LoadHouseholdsAsync(User user)
     {
-        List<Household> householdList = [];
-        if (user.HouseHold1 != null)
-        {
-            Household? hh1 = await _supabaseClient.From<Household>().Where(x => x.HHID == user.HouseHold1).Single();
-            if (hh1 != null)
-                householdList.Add(hh1);
-        }
-        if (user.HouseHold2 != null)
-        {
-            Household? hh2 = await _supabaseClient.From<Household>().Where(x => x.HHID == user.HouseHold2).Single();
-            if (hh2 != null)
-                householdList.Add(hh2);
-        }
-        if (user.HouseHold3 != null)
-        {
-            Household? hh3 = await _supabaseClient.From<Household>().Where(x => x.HHID == user.HouseHold3).Single();
-            if (hh3 != null)
-                householdList.Add(hh3);
-        }
+        List<string> householdIds = new();
+        if (!string.IsNullOrEmpty(user.HouseHold1)) householdIds.Add(user.HouseHold1);
+        if (!string.IsNullOrEmpty(user.HouseHold2)) householdIds.Add(user.HouseHold2);
+        if (!string.IsNullOrEmpty(user.HouseHold3)) householdIds.Add(user.HouseHold3);
 
-        return householdList;
+        if (householdIds.Count == 0)
+            return [];
+
+        ModeledResponse<Household> householdList = await _supabaseClient.From<Household>().Where(x => householdIds.Contains(x.HHID)).Get();
+
+        return householdList.Models ?? [];
     }
 
     private async Task<List<Budget>> LoadBudgetsAsync(Household household)
@@ -447,85 +420,78 @@ public class DatabaseService : IDatabaseService
         return eventlog;
     }
 
+    // Sok esemény esetén darabosan tölti be a listát:
+    private async Task<(List<Event> Events, int TotalCount)> LoadEventLogAsync(Household household, int pageNumber = 1, int pageSize = 20)
+    {
+        var query = _supabaseClient.From<Event>()
+                                   .Where(x => x.EventHousehold == household.HHID)
+                                   .Order(x => x.EventUserDate, Supabase.Postgrest.Constants.Ordering.Descending);
+
+        var countQuery = await query.Get();
+        var totalCount = countQuery.Models?.Count ?? 0;
+
+        var paginatedQuery = await query.Range((pageNumber - 1) * pageSize, (pageNumber * pageSize) - 1).Get();
+
+        return (paginatedQuery.Models ?? [], totalCount);
+    }
+
     public async Task<bool> CopyDataToOfflineDB()
     {
         try
         {
             User user = _userSessionService.GetCurrentUser();
-            OfflineUser offUser = new()
-            {
-                UID = user.UID,
-                Username = user.Username,
-                Password = user.Password,
-                CurrentHousehold = user.CurrentHousehold,
-                HouseHold1 = user.HouseHold1,
-                HouseHold2 = user.HouseHold2,
-                HouseHold3 = user.HouseHold3,
-                Nickname = user.Nickname
-            };
-            await _sqliteDb.InsertOrReplaceAsync(offUser);
-
             Household household = _userSessionService.GetCurrentHousehold();
-            OfflineHousehold offHousehold = new()
-            {
-                HHID = household.HHID,
-                HouseholdName = household.HouseholdName,
-                HouseholdAccess = household.HouseholdAccess,
-                HouseholdOwner = household.HouseholdOwner
-            };
-            await _sqliteDb.InsertOrReplaceAsync(offHousehold);
-
             List<Budget> budgets = _userSessionService.GetCurrentBudgets();
-            foreach (Budget budget in budgets)
-            {
-                OfflineBudget offBudget = new()
-                {
-                    BID = budget.BID,
-                    BudgetHousehold = budget.BudgetHousehold,
-                    BudgetDate = budget.BudgetDate,
-                    BudgetAmount = budget.BudgetAmount
-                };
-                await _sqliteDb.InsertOrReplaceAsync(offBudget);
-            }
-
             List<Event> eventlog = _userSessionService.GetCurrentEventLog();
-            foreach (Event _event in eventlog)
-            {
-                OfflineEvent offEvent = new()
-                {
-                    EID = _event.EID,
-                    EventUser = _event.EventUser,
-                    EventHousehold = _event.EventHousehold,
-                    EventDate = _event.EventDate,
-                    EventName = _event.EventName,
-                    EventUserDate = _event.EventUserDate,
-                    EventType = _event.EventType,
-                    EventCost = _event.EventCost,
-                    EventDescription = _event.EventDescription,
-                    LastModifiedBy = _event.LastModifiedBy
-                };
-                await _sqliteDb.InsertOrReplaceAsync(offEvent);
-            }
 
-            var response = await _supabaseClient.From<Notification>().Where(x => x.RecipientUserId == user.UID).Get();
-            List<Notification> notifications = response.Models ?? [];
-            foreach (Notification notification in notifications)
+            var offlineData = new
             {
-                OfflineNotification offNotification = new()
+                User = new OfflineUser
                 {
-                    NID = notification.NID,
-                    RecipientUserId = notification.RecipientUserId,
-                    EventId = notification.EventId,
-                    NotificationType = notification.NotificationType,
-                    Title = notification.Title,
-                    Message = notification.Message,
-                    RelatedHouseholdId = notification.RelatedHouseholdId,
-                    IsRead = notification.IsRead,
-                    CreatedAt = notification.CreatedAt,
-                    UpdatedAt = notification.UpdatedAt
-                };
-                await _sqliteDb.InsertOrReplaceAsync(offNotification);
-            }
+                    UID = user.UID,
+                    Username = user.Username,
+                    Password = user.Password,
+                    CurrentHousehold = user.CurrentHousehold,
+                    HouseHold1 = user.HouseHold1,
+                    HouseHold2 = user.HouseHold2,
+                    HouseHold3 = user.HouseHold3,
+                    Nickname = user.Nickname
+                },
+                Household = new OfflineHousehold
+                {
+                    HHID = household.HHID,
+                    HouseholdName = household.HouseholdName,
+                    HouseholdAccess = household.HouseholdAccess,
+                    HouseholdOwner = household.HouseholdOwner
+                },
+                Budgets = budgets.Select(x => new OfflineBudget
+                {
+                    BID = x.BID,
+                    BudgetHousehold = x.BudgetHousehold,
+                    BudgetDate = x.BudgetDate,
+                    BudgetAmount = x.BudgetAmount
+                }).ToList(),
+                Events = eventlog.Select(x => new OfflineEvent
+                {
+                    EID = x.EID,
+                    EventUser = x.EventUser,
+                    EventHousehold = x.EventHousehold,
+                    EventDate = x.EventDate,
+                    EventName = x.EventName,
+                    EventUserDate = x.EventUserDate,
+                    EventType = x.EventType,
+                    EventCost = x.EventCost,
+                    EventDescription = x.EventDescription,
+                    LastModifiedBy = x.LastModifiedBy
+                }).ToList()
+            };
+
+            await _sqliteDb.InsertAsync(offlineData.User);
+            await _sqliteDb.InsertAsync(offlineData.Household);
+            if (offlineData.Budgets.Count > 0)
+                await _sqliteDb.InsertAllAsync(offlineData.Budgets);
+            if (offlineData.Events.Count > 0)
+                await _sqliteDb.InsertAllAsync(offlineData.Events);
 
             return true;
         }
@@ -540,52 +506,49 @@ public class DatabaseService : IDatabaseService
         try
         {
             // Offline adatbázisban lévő új/módosított adatok feltöltése az online adatbázisba:
-            // Budgets:
             List<OfflineBudget> newOfflineBudgets = await _sqliteDb.Table<OfflineBudget>().Where(x => x.BudgetMadeOffline).ToListAsync();
-            List<Budget> newBudgets = [];
-            foreach (OfflineBudget offlineBudget in newOfflineBudgets)
-            {
-                newBudgets.Add(new()
-                {
-                    BID = offlineBudget.BID,
-                    BudgetHousehold = offlineBudget.BudgetHousehold,
-                    BudgetDate = offlineBudget.BudgetDate,
-                    BudgetAmount = offlineBudget.BudgetAmount
-                });
-            }
-
-            if (newBudgets.Count > 0)
-                await _supabaseClient.From<Budget>().Upsert(newBudgets);
-
-            // Events:
             List<OfflineEvent> newOfflineEvents = await _sqliteDb.Table<OfflineEvent>().Where(x => x.EventMadeOffline).ToListAsync();
-            List<Event> newEvents = [];
-            foreach (OfflineEvent _event in newOfflineEvents)
+
+            if (newOfflineBudgets.Count > 0)
             {
-                newEvents.Add(new()
+                List<Budget> budgets = newOfflineBudgets.Select(x => new Budget
                 {
-                    EID = _event.EID,
-                    EventUser = _event.EventUser,
-                    EventHousehold = _event.EventHousehold,
-                    EventDate = _event.EventDate,
-                    EventName = _event.EventName,
-                    EventUserDate = _event.EventUserDate,
-                    EventType = _event.EventType,
-                    EventCost = _event.EventCost,
-                    EventDescription = _event.EventDescription,
-                    LastModifiedBy = _event.LastModifiedBy
-                });
+                    BID = x.BID,
+                    BudgetHousehold = x.BudgetHousehold,
+                    BudgetDate = x.BudgetDate,
+                    BudgetAmount = x.BudgetAmount
+                }).ToList();
+
+                await _supabaseClient.From<Budget>().Upsert(budgets);
             }
 
-            if (newEvents.Count > 0)
-                await _supabaseClient.From<Event>().Upsert(newEvents);
+            if (newOfflineEvents.Count > 0)
+            {
+                List<Event> events = newOfflineEvents.Select(x => new Event
+                {
+                    EID = x.EID,
+                    EventUser = x.EventUser,
+                    EventHousehold = x.EventHousehold,
+                    EventDate = x.EventDate,
+                    EventName = x.EventName,
+                    EventUserDate = x.EventUserDate,
+                    EventType = x.EventType,
+                    EventCost = x.EventCost,
+                    EventDescription = x.EventDescription,
+                    LastModifiedBy = x.LastModifiedBy
+                }).ToList();
+
+                await _supabaseClient.From<Event>().Upsert(events);
+            }
 
             // Offline táblázatok kiürítése:
-            await _sqliteDb.DeleteAllAsync<OfflineUser>();
-            await _sqliteDb.DeleteAllAsync<OfflineHousehold>();
-            await _sqliteDb.DeleteAllAsync<OfflineBudget>();
-            await _sqliteDb.DeleteAllAsync<OfflineEvent>();
-            await _sqliteDb.DeleteAllAsync<OfflineNotification>();
+            await Task.WhenAll(
+                _sqliteDb.DeleteAllAsync<OfflineUser>(),
+                _sqliteDb.DeleteAllAsync<OfflineHousehold>(),
+                _sqliteDb.DeleteAllAsync<OfflineBudget>(),
+                _sqliteDb.DeleteAllAsync<OfflineEvent>(),
+                _sqliteDb.DeleteAllAsync<OfflineNotification>()
+                );
 
             return true;
         }
