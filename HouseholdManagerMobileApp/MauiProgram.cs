@@ -6,6 +6,7 @@ using HouseholdManagerMobileApp.Core.ViewModels;
 using HouseholdManagerMobileApp.Core.Helpers;
 using HouseholdManagerMobileApp.Core.Services;
 using HouseholdManagerMobileApp.Views;
+using HouseholdManagerMobileApp.Core.Models;
 
 namespace HouseholdManagerMobileApp
 {

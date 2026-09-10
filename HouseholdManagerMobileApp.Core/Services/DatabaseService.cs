@@ -10,13 +10,12 @@ public class DatabaseService : IDatabaseService
     private readonly Client _supabaseClient;
     private readonly SQLiteAsyncConnection _sqliteDb;
     private readonly IUserSessionService _userSessionService;
-    private readonly INotificationService _notificationService;
-    public DatabaseService(Client supabaseClient, SQLiteAsyncConnection sqliteDb, IUserSessionService userSessionService, INotificationService notificationService)
+
+    public DatabaseService(Client supabaseClient, SQLiteAsyncConnection sqliteDb, IUserSessionService userSessionService)
     {
         _supabaseClient = supabaseClient;
         _sqliteDb = sqliteDb;
         _userSessionService = userSessionService;
-        _notificationService = notificationService;
     }
 
     public async Task InitializeAsync()
@@ -195,7 +194,7 @@ public class DatabaseService : IDatabaseService
                 }
             }
         }
-        
+
         return true;
     }
 
@@ -418,21 +417,6 @@ public class DatabaseService : IDatabaseService
             eventlog.Add(_event);
 
         return eventlog;
-    }
-
-    // Sok esemény esetén darabosan tölti be a listát:
-    private async Task<(List<Event> Events, int TotalCount)> LoadEventLogAsync(Household household, int pageNumber = 1, int pageSize = 20)
-    {
-        var query = _supabaseClient.From<Event>()
-                                   .Where(x => x.EventHousehold == household.HHID)
-                                   .Order(x => x.EventUserDate, Supabase.Postgrest.Constants.Ordering.Descending);
-
-        var countQuery = await query.Get();
-        var totalCount = countQuery.Models?.Count ?? 0;
-
-        var paginatedQuery = await query.Range((pageNumber - 1) * pageSize, (pageNumber * pageSize) - 1).Get();
-
-        return (paginatedQuery.Models ?? [], totalCount);
     }
 
     public async Task<bool> CopyDataToOfflineDB()
