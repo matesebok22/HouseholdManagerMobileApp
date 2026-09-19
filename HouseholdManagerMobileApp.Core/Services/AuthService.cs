@@ -86,11 +86,13 @@ public class AuthService : IAuthService
                         currentHousehold = await _supabaseClient.From<Household>().Where(x => x.HHID == user.CurrentHousehold).Single();
                         if (currentHousehold != null)
                         {
-                            var budgetquery = await _supabaseClient.From<Budget>().Where(x => x.BudgetHousehold == currentHousehold.HHID).Get();
-                            budgets = budgetquery.Models.ToList();
+                            var budgetquery = _supabaseClient.From<Budget>().Where(x => x.BudgetHousehold == currentHousehold.HHID).Get();
+                            var eventquery = _supabaseClient.From<Event>().Where(x => x.EventHousehold == currentHousehold.HHID).Get();
 
-                            var eventquery = await _supabaseClient.From<Event>().Where(x => x.EventHousehold == currentHousehold.HHID).Get();
-                            eventlog = eventquery.Models.ToList();
+                            await Task.WhenAll(budgetquery,  eventquery);
+
+                            budgets = budgetquery.Result.Models.ToList();
+                            eventlog = eventquery.Result.Models.ToList();
                         }
                     }
 
@@ -158,8 +160,13 @@ public class AuthService : IAuthService
                             HouseholdAccess = householdquery.HouseholdAccess
                         };
 
-                        List<OfflineBudget> budgetquery = await _sqliteDb.Table<OfflineBudget>().Where(x => x.BudgetHousehold == currentHousehold.HHID).ToListAsync();
-                        budgets = budgetquery.Select(x => new Budget
+                        var budgetquery = _sqliteDb.Table<OfflineBudget>().Where(x => x.BudgetHousehold == currentHousehold.HHID).ToListAsync();
+
+                        var eventquery = _sqliteDb.Table<OfflineEvent>().Where(x => x.EventHousehold == currentHousehold.HHID).ToListAsync();
+
+                        await Task.WhenAll(budgetquery, eventquery);
+
+                        budgets = budgetquery.Result.Select(x => new Budget
                         {
                             BID = x.BID,
                             BudgetHousehold = x.BudgetHousehold,
@@ -167,8 +174,7 @@ public class AuthService : IAuthService
                             BudgetAmount = x.BudgetAmount
                         }).ToList();
 
-                        List<OfflineEvent> eventquery = await _sqliteDb.Table<OfflineEvent>().Where(x => x.EventHousehold == currentHousehold.HHID).ToListAsync();
-                        eventlog = eventquery.Select(x => new Event
+                        eventlog = eventquery.Result.Select(x => new Event
                         {
                             EID = x.EID,
                             EventUser = x.EventUser,

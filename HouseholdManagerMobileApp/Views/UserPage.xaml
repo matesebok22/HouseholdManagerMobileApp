@@ -9,6 +9,7 @@
     <ContentPage.Resources>
         <ResourceDictionary>
             <helpers:StringEqualsToBooleanConverter x:Key="StringEqualsToBooleanConverter"/>
+            <helpers:BudgetToColorConverter x:Key="BudgetToColorConverter"/>
         </ResourceDictionary>
     </ContentPage.Resources>
 
@@ -69,7 +70,14 @@
                         <Label Grid.Row="2" Grid.Column="0" Text="{Binding CurrentMonthBudget}" HorizontalTextAlignment="Center" FontSize="Medium" FontAttributes="Bold" Margin="0, 5, 0, 0"/>
 
                         <Label Grid.Row="1" Grid.Column="1" Text="Felhasználható" HorizontalTextAlignment="Center"/>
-                        <Label Grid.Row="2" Grid.Column="1" Text="{Binding CurrentMonthUseableBudget}" HorizontalTextAlignment="Center" FontSize="Medium" FontAttributes="Bold" TextColor="Green" Margin="0, 5, 0, 0"/>
+                        <Label Grid.Row="2" Grid.Column="1" Text="{Binding CurrentMonthUseableBudget}" HorizontalTextAlignment="Center" FontSize="Medium" FontAttributes="Bold" Margin="0, 5, 0, 0">
+                            <Label.TextColor>
+                                <MultiBinding Converter="{StaticResource BudgetToColorConverter}">
+                                    <Binding Path="CurrentMonthUseableBudget"/>
+                                    <Binding Path="CurrentMonthBudget"/>
+                                </MultiBinding>
+                            </Label.TextColor>
+                        </Label>
                     </Grid>
                 </Border>
 
