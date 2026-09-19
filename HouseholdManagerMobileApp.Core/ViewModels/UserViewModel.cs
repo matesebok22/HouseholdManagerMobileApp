@@ -72,7 +72,7 @@ public class UserViewModel : ViewModelBase
         }
     }
 
-    private string currentMonth = DateTime.Today.ToString("MMMM");
+    private string currentMonth = string.Empty;
     public string CurrentMonth
     {
         get => currentMonth;
@@ -184,6 +184,8 @@ public class UserViewModel : ViewModelBase
                 WelcomeMessage = $"{_userSessionService.GetCurrentUser()!.Nickname} (Offline)";
             else
                 WelcomeMessage = _userSessionService.GetCurrentUser()!.Nickname;
+
+            CurrentMonth = $"{_userSessionService.GetCurrentHousehold()!.HouseholdName} - {DateTime.Today.ToString("MMMM")}";
 
             _ = LoadUserPageAsync();
         }
