@@ -44,10 +44,13 @@ public class UserSessionService : IUserSessionService
         userLoggedIn = false;
         currentUser = null;
         currentHousehold = null;
-        currentBudgets.Clear();
-        currentEventLog.Clear();
         currentHouseholdOwner = false;
         selectedEvent = null;
+
+        householdList.Clear();
+        currentBudgets.Clear();
+        currentEventLog.Clear();
+
         await Task.CompletedTask;
     }
 
@@ -56,8 +59,9 @@ public class UserSessionService : IUserSessionService
         currentHouseholdOwner = currentUser!.UID == currenthousehold.HouseholdOwner;
         currentHousehold = currenthousehold;
         householdList.Clear();
-        householdList = households;
         currentBudgets.Clear();
+        currentEventLog.Clear();
+        householdList = households;
         currentBudgets = budgets;
 
         await Task.CompletedTask;
@@ -67,16 +71,6 @@ public class UserSessionService : IUserSessionService
     {
         currentEventLog.Clear();
         currentEventLog = eventlog;
-
-        await Task.CompletedTask;
-    }
-
-    public async Task ReloadDataForSettings(List<Household> households, List<Budget> budgets)
-    {
-        householdList.Clear();
-        householdList = households;
-        currentBudgets.Clear();
-        currentBudgets = budgets;
 
         await Task.CompletedTask;
     }
