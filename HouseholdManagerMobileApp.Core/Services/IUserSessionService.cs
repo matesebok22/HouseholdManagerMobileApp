@@ -10,12 +10,13 @@ public interface IUserSessionService
     public User? GetCurrentUser();
     public Household? GetCurrentHousehold();
     public List<Household> GetCurrentHouseholdList();
+    public List<User> GetCurrentHouseholdUsers();
     public List<Budget> GetCurrentBudgets();
     public List<Event> GetCurrentEventLog();
     public Event? GetSelectedEvent();
     public void SetSelectedEvent(Event? _event);
     Task SetUserSessionAsync(User user, Household household, List<Household> hhList, List<Budget> budgets, List<Event> eventlog); // Sikeres bejelentkezéskor beállítja a sessiont.
     Task ClearUserSessionAsync(); // Sikeres kijelentkezéskor kiüríti a sessiont.
-    Task ChangeHousehold(Household household, List<Household> households, List<Budget> budgets); // Felhasználó háztartást vált.
+    Task ChangeHousehold(Household currenthousehold, List<User> householdusers, List<Household> households, List<Budget> budgets); // Felhasználó háztartást vált.
     Task ReloadEventLog(List<Event> eventlog); // Eseménynapló újratöltése.
 }

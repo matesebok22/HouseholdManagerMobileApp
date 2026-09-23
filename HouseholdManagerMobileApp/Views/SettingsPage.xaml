@@ -31,10 +31,17 @@
                 <!-- Háztartás kezelés -->
                 <Label Text="Háztartások kezelése" FontSize="Medium"/>
 
-                <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="10">
-                    <Label Grid.Column="0" Text="Jelenlegi háztartás: " VerticalOptions="Center"/>
-                    <Picker Grid.Column="1" ItemsSource="{Binding HouseholdsList}" SelectedItem="{Binding SelectedHousehold}"/>
-                    <ActivityIndicator Grid.Column="2" IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}"/>
+                <Grid RowDefinitions="Auto, Auto, Auto, Auto" ColumnDefinitions="*, Auto" ColumnSpacing="10">
+                    <Label Grid.Row="0" Grid.ColumnSpan="2" Text="Jelenlegi háztartás és kódja:" VerticalOptions="Center"/>
+                    <Picker Grid.Row="1" Grid.Column="0" ItemsSource="{Binding HouseholdsList}" SelectedItem="{Binding SelectedHousehold}"/>
+                    <ActivityIndicator Grid.Row="1" Grid.Column="1" IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}"/>
+
+                    <Label Grid.Row="2" Grid.ColumnSpan="2" Text="Jelenlegi háztartás tagjai:"/>
+                    <CollectionView Grid.Row="3" Grid.ColumnSpan="2" ItemsSource="{Binding UsersInHousehold}" MaximumHeightRequest="60">
+                        <CollectionView.EmptyView>
+                            <Label Text="Offline módban nem láthatóak a háztartás tagjai." VerticalOptions="Center" HorizontalOptions="Center"/>
+                        </CollectionView.EmptyView>
+                    </CollectionView>
                 </Grid>
 
                 <Grid ColumnDefinitions="*, *, *" ColumnSpacing="5" Padding="10">

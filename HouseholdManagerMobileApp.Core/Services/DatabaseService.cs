@@ -141,8 +141,9 @@ public class DatabaseService : IDatabaseService
             List<Budget> budgets = await LoadBudgetsAsync(newHousehold);
             List<Event> eventlog = await LoadEventLogAsync(newHousehold);
             List<Household> households = await LoadHouseholdsAsync(user);
+            List<User> householdUsers = await LoadHouseholdUsersAsync(newHousehold);
 
-            await _userSessionService.ChangeHousehold(newHousehold, households, budgets);
+            await _userSessionService.ChangeHousehold(newHousehold, householdUsers, households, budgets);
         }
 
         return true;
@@ -325,7 +326,7 @@ public class DatabaseService : IDatabaseService
                     {
                         List<Budget> budgets = await LoadBudgetsAsync(_userSessionService.GetCurrentHousehold()!);
                         List<Household> households = await LoadHouseholdsAsync(_userSessionService.GetCurrentUser()!);
-                        await _userSessionService.ChangeHousehold(_userSessionService.GetCurrentHousehold()!, households, budgets);
+                        await _userSessionService.ChangeHousehold(_userSessionService.GetCurrentHousehold()!, _userSessionService.GetCurrentHouseholdUsers(), households, budgets);
                     }
                     else
                     {
@@ -341,7 +342,7 @@ public class DatabaseService : IDatabaseService
                                 BudgetAmount = budget.BudgetAmount
                             });
                         }
-                        await _userSessionService.ChangeHousehold(_userSessionService.GetCurrentHousehold()!, [], budgets);
+                        await _userSessionService.ChangeHousehold(_userSessionService.GetCurrentHousehold()!, [], [], budgets);
                     }
 
                     break;
@@ -396,26 +397,41 @@ public class DatabaseService : IDatabaseService
         return householdList.Models ?? [];
     }
 
+    private async Task<List<User>> LoadHouseholdUsersAsync(Household household)
+    {
+        // Jelenlegi háztartás tagjai:
+        ModeledResponse<User> usersquery = await _supabaseClient.From<User>()
+            .Or(
+            [
+                new Supabase.Postgrest.QueryFilter("hh_1", Supabase.Postgrest.Constants.Operator.Equals, household.HHID),
+                new Supabase.Postgrest.QueryFilter("hh_2", Supabase.Postgrest.Constants.Operator.Equals, household.HHID),
+                new Supabase.Postgrest.QueryFilter("hh_3", Supabase.Postgrest.Constants.Operator.Equals, household.HHID)
+            ])
+            .Get();
+
+        return usersquery.Models ?? [];
+    }
+
     private async Task<List<Budget>> LoadBudgetsAsync(Household household)
     {
         // Jelenlegi háztartásban elérhető költségkeretek:
-        List<Budget> budgets = [];
-        var budgetquery = await _supabaseClient.From<Budget>().Where(x => x.BudgetHousehold == household.HHID).Get();
-        foreach (Budget budget in budgetquery.Models)
-            budgets.Add(budget);
+        /*List<Budget> budgets = [];*/
+        ModeledResponse<Budget> budgetquery = await _supabaseClient.From<Budget>().Where(x => x.BudgetHousehold == household.HHID).Get();
+        /*foreach (Budget budget in budgetquery.Models)
+            budgets.Add(budget);*/
 
-        return budgets;
+        return budgetquery.Models ?? [];
     }
 
     private async Task<List<Event>> LoadEventLogAsync(Household household)
     {
         // Jelenlegi háztartásban elérhető eseménynapló:
-        List<Event> eventlog = [];
-        var eventquery = await _supabaseClient.From<Event>().Where(x => x.EventHousehold == household.HHID).Get();
-        foreach (Event _event in eventquery.Models)
-            eventlog.Add(_event);
+        /*List<Event> eventlog = [];*/
+        ModeledResponse<Event> eventquery = await _supabaseClient.From<Event>().Where(x => x.EventHousehold == household.HHID).Get();
+        /*foreach (Event _event in eventquery.Models)
+            eventlog.Add(_event);*/
 
-        return eventlog;
+        return eventquery.Models ?? [];
     }
 
     public async Task<bool> CopyDataToOfflineDB()

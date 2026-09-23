@@ -150,6 +150,18 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         }
     }
 
+    private ObservableCollection<string> usersInHousehold = [];
+    public ObservableCollection<string> UsersInHousehold
+    {
+        get => usersInHousehold;
+        set
+        {
+            if (usersInHousehold == value) return;
+            usersInHousehold = value;
+            OnPropertyChanged();
+        }
+    }
+
     private string householdAccessCode = string.Empty;
     public string HouseholdAccessCode
     {
@@ -393,6 +405,16 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
                     string userHH = _userSessionService.GetCurrentHousehold()!.HHID;
                     if (Shell.Current != null)
                         NotificationsIsChecked = bool.Parse(await SecureStorage.GetAsync($"notifications-{userID}-{userHH}") ?? "true");
+
+                    // Jelenlegi háztartás tagjainak listázása:
+                    UsersInHousehold.Clear();
+                    foreach (User user in _userSessionService.GetCurrentHouseholdUsers())
+                    {
+                        string userText = user.Nickname;
+                        userText += user.UID == _userSessionService.GetCurrentUser()!.UID ? " (Ön)" : "";
+                        userText += user.UID == _userSessionService.GetCurrentHousehold()!.HouseholdOwner ? " (Alapító)" : "";
+                        UsersInHousehold.Add(userText);
+                    }
                 }
                 else
                     ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Háztartás váltás sikertelen!");
