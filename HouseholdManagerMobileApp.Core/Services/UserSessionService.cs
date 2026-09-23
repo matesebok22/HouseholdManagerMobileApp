@@ -9,6 +9,7 @@ public class UserSessionService : IUserSessionService
     private User? currentUser = null;
     private Household? currentHousehold = null;
     private List<Household> householdList = [];
+    private List<User> householdUsers = [];
     private List<Budget> currentBudgets = [];
     private List<Event> currentEventLog = [];
     private bool currentHouseholdOwner = false;
@@ -21,6 +22,7 @@ public class UserSessionService : IUserSessionService
     public User? GetCurrentUser() => currentUser;
     public Household? GetCurrentHousehold() => currentHousehold;
     public List<Household> GetCurrentHouseholdList() => householdList;
+    public List<User> GetCurrentHouseholdUsers() => householdUsers;
     public List<Budget> GetCurrentBudgets() => currentBudgets;
     public List<Event> GetCurrentEventLog() => currentEventLog;
     public Event? GetSelectedEvent() => selectedEvent;
@@ -48,16 +50,18 @@ public class UserSessionService : IUserSessionService
         selectedEvent = null;
 
         householdList.Clear();
+        householdUsers.Clear();
         currentBudgets.Clear();
         currentEventLog.Clear();
 
         await Task.CompletedTask;
     }
 
-    public async Task ChangeHousehold(Household currenthousehold, List<Household> households, List<Budget> budgets)
+    public async Task ChangeHousehold(Household currenthousehold, List<User> householdusers, List<Household> households, List<Budget> budgets)
     {
         currentHouseholdOwner = currentUser!.UID == currenthousehold.HouseholdOwner;
         currentHousehold = currenthousehold;
+        householdUsers = householdusers;
         householdList.Clear();
         currentBudgets.Clear();
         currentEventLog.Clear();
