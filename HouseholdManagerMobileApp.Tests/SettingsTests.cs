@@ -70,6 +70,7 @@ public class SettingsTests
         Household household = new() { HHID = "hhid123", HouseholdName = "HH123" };
         _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(household);
         _mockUserSessionService.Setup(x => x.GetCurrentBudgets()).Returns([]);
+        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdUsers()).Returns([]);
 
         // Act
         viewModel.SelectedHousehold = "testHH - ASD123";
@@ -153,6 +154,7 @@ public class SettingsTests
         _mockUserSessionService.Setup(x => x.GetCurrentBudgets()).Returns([]);
         List<Household> householdList = new List<Household> { household };
         _mockUserSessionService.Setup(x => x.GetCurrentHouseholdList()).Returns(householdList);
+        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdUsers()).Returns([]);
 
         viewModel.HouseholdAccessCode = "ABC123";
 
@@ -242,6 +244,7 @@ public class SettingsTests
         List<Household> householdList = new List<Household> { household };
         _mockUserSessionService.Setup(x => x.GetCurrentHouseholdList()).Returns(householdList);
         _mockUserSessionService.Setup(x => x.GetCurrentBudgets()).Returns([]);
+        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdUsers()).Returns([]);
 
         viewModel.NewHouseholdName = "testhh";
 
@@ -283,6 +286,7 @@ public class SettingsTests
         _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
         _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(mockHousehold);
         _mockUserSessionService.Setup(x => x.GetCurrentBudgets()).Returns([]);
+        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdUsers()).Returns([]);
 
         viewModel.NewHouseholdName = "testhh";
         viewModel.HouseholdAccessCode = "ASD123";
@@ -338,6 +342,7 @@ public class SettingsTests
         _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
         _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(mockHousehold);
         _mockUserSessionService.Setup(x => x.GetCurrentBudgets()).Returns([]);
+        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdUsers()).Returns([]);
 
         viewModel.NewHouseholdName = "testhh";
         viewModel.HouseholdAccessCode = "ASD123";
@@ -393,6 +398,7 @@ public class SettingsTests
         _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
         _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(mockHousehold);
         _mockUserSessionService.Setup(x => x.GetCurrentBudgets()).Returns([]);
+        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdUsers()).Returns([]);
 
         viewModel.NewHouseholdName = "testhh";
         viewModel.HouseholdAccessCode = "ASD123";
