@@ -37,7 +37,7 @@
                     <ActivityIndicator Grid.Row="1" Grid.Column="1" IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}"/>
 
                     <Label Grid.Row="2" Grid.ColumnSpan="2" Text="Jelenlegi háztartás tagjai:"/>
-                    <CollectionView Grid.Row="3" Grid.ColumnSpan="2" ItemsSource="{Binding UsersInHousehold}" MaximumHeightRequest="60" Margin="10, 0, 0, 0">
+                    <CollectionView Grid.Row="3" Grid.ColumnSpan="2" ItemsSource="{Binding UsersInHousehold}" Margin="10, 0, 0, 0" MaximumHeightRequest="60">
                         <CollectionView.EmptyView>
                             <Label Text="Offline módban nem láthatóak a háztartás tagjai." VerticalOptions="Center" HorizontalOptions="Center"/>
                         </CollectionView.EmptyView>
