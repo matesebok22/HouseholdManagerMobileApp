@@ -4,7 +4,8 @@
              xmlns:models="clr-namespace:HouseholdManagerMobileApp.Core.Models;assembly=HouseholdManagerMobileApp.Core"
              xmlns:vm="clr-namespace:HouseholdManagerMobileApp.Core.ViewModels;assembly=HouseholdManagerMobileApp.Core"
              xmlns:helpers="clr-namespace:HouseholdManagerMobileApp.Core.Helpers;assembly=HouseholdManagerMobileApp.Core"
-             x:Class="HouseholdManagerMobileApp.Views.EventLogPage">
+             x:Class="HouseholdManagerMobileApp.Views.EventLogPage"
+             BackgroundColor="#1F1F1F">
 
     <ContentPage.Resources>
         <ResourceDictionary>
@@ -17,7 +18,7 @@
         <!-- Fejléc -->
         <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Padding="10" BackgroundColor="Grey">
             <Button Grid.Column="0" Text="☰" FontSize="24" Command="{Binding ToggleMenuButtonCommand}" BackgroundColor="Grey" TextColor="White" Padding="0" WidthRequest="44"/>
-            <Label Grid.Column="1" Text="{Binding WelcomeMessage}" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" Margin="10, 0, 0, 0"/>
+            <Label Grid.Column="1" Text="{Binding WelcomeMessage}" TextColor="#FFFFFF" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" Margin="10, 0, 0, 0"/>
         </Grid>
 
         <!-- Menü -->
@@ -35,12 +36,12 @@
 
         <!-- Fő tartalom -->
         <Grid Grid.Row="1" RowDefinitions="Auto, Auto, *" Padding="10">
-            <Label Grid.Row="0" Text="{Binding CurrentHouseholdName}" HorizontalOptions="Center" FontSize="30"/>
+            <Label Grid.Row="0" Text="{Binding CurrentHouseholdName}" TextColor="#FFFFFF" HorizontalOptions="Center" FontSize="30"/>
 
             <VerticalStackLayout Grid.Row="1">
                 <Grid ColumnDefinitions="*, *">
-                    <Button Grid.Column="0" Text="Új esemény létrehozása" Command="{Binding NavigateNewEventButtonCommand}" LineBreakMode="WordWrap" Margin="10"/>
-                    <Button Grid.Column="1" Text="{Binding ChangeSortTypeName}" Command="{Binding ChangeSortTypeButtonCommand}" LineBreakMode="WordWrap" Margin="10"/>
+                    <Button Grid.Column="0" Text="Új esemény létrehozása" Command="{Binding NavigateNewEventButtonCommand}" TextColor="#FFFFFF" LineBreakMode="WordWrap" Margin="10"/>
+                    <Button Grid.Column="1" Text="{Binding ChangeSortTypeName}" Command="{Binding ChangeSortTypeButtonCommand}" TextColor="#FFFFFF" LineBreakMode="WordWrap" Margin="10"/>
                 </Grid>
                 
                 <Grid ColumnDefinitions="*, 200, *" Padding="10">
@@ -50,7 +51,7 @@
                         </Path.GestureRecognizers>
                     </Path>
 
-                    <Label Grid.Column="1" Text="{Binding SelectedTypeName}" FontSize="Medium" FontAttributes="Bold" HorizontalTextAlignment="Center"/>
+                    <Label Grid.Column="1" Text="{Binding SelectedTypeName}" TextColor="#FFFFFF" FontSize="Medium" FontAttributes="Bold" HorizontalTextAlignment="Center"/>
 
                     <Path Grid.Column="2" Data="M 4,2 L 16,12 L 4,22 Z" Fill="#AC99EA" Stroke="#AC99EA" StrokeThickness="5" StrokeLineJoin="Round" HorizontalOptions="Start">
                         <Path.GestureRecognizers>
@@ -60,10 +61,10 @@
                 </Grid>
 
                 <Grid RowDefinitions="*, *" ColumnDefinitions="*, *">
-                    <Label Grid.Row="0" Grid.Column="0" Text="Költségkeret" HorizontalTextAlignment="Center"/>
-                    <Label Grid.Row="1" Grid.Column="0" Text="{Binding SelectedMonthBudget}" HorizontalTextAlignment="Center" FontSize="Medium" FontAttributes="Bold" Margin="0, 5, 0, 20"/>
+                    <Label Grid.Row="0" Grid.Column="0" Text="Költségkeret" TextColor="#FFFFFF" HorizontalTextAlignment="Center"/>
+                    <Label Grid.Row="1" Grid.Column="0" Text="{Binding SelectedMonthBudget}" TextColor="#FFFFFF" HorizontalTextAlignment="Center" FontSize="Medium" FontAttributes="Bold" Margin="0, 5, 0, 20"/>
 
-                    <Label Grid.Row="0" Grid.Column="1" Text="Felhasználható" HorizontalTextAlignment="Center"/>
+                    <Label Grid.Row="0" Grid.Column="1" Text="Felhasználható" TextColor="#FFFFFF" HorizontalTextAlignment="Center"/>
                     <Label Grid.Row="1" Grid.Column="1" Text="{Binding SelectedMonthUseableBudget}" HorizontalTextAlignment="Center" FontSize="Medium" FontAttributes="Bold" Margin="0, 5, 0, 20">
                         <Label.TextColor>
                             <MultiBinding Converter="{StaticResource BudgetToColorConverter}">
@@ -128,7 +129,7 @@
                 </CollectionView.ItemTemplate>
 
                 <CollectionView.EmptyView>
-                    <Label HorizontalOptions="Center" Text="Nincsenek megjeleníthető események." VerticalOptions="Center"/>
+                    <Label HorizontalOptions="Center" Text="Nincsenek megjeleníthető események." TextColor="#FFFFFF" VerticalOptions="Center"/>
                 </CollectionView.EmptyView>
             </CollectionView>
         </Grid>
