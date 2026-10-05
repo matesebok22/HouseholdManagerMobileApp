@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="HouseholdManagerMobileApp.Views.SettingsPage">
+             x:Class="HouseholdManagerMobileApp.Views.SettingsPage"
+             BackgroundColor="#1F1F1F">
 
     <ScrollView>
         <Grid RowDefinitions="Auto,*" Padding="0">
             <!-- Fejléc -->
             <Grid ColumnDefinitions="Auto,*" Padding="10" BackgroundColor="Grey">
                 <Button Grid.Column="0" Text="☰" FontSize="24" Command="{Binding ToggleMenuButtonCommand}" BackgroundColor="Grey" TextColor="White" Padding="0" WidthRequest="44"/>
-                <Label Grid.Column="1" Text="{Binding WelcomeMessage}" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" Margin="10,0,0,0"/>
+                <Label Grid.Column="1" Text="{Binding WelcomeMessage}" TextColor="#FFFFFF" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" Margin="10,0,0,0"/>
             </Grid>
 
             <!-- Menü -->
@@ -26,83 +27,88 @@
 
             <!-- Fő tartalom -->
             <VerticalStackLayout Grid.Row="1" Padding="10">
-                <Label Text="Beállítások" FontSize="Large"/>
+                <Label Text="Beállítások" TextColor="#FFFFFF" FontSize="Large"/>
 
                 <!-- Háztartás kezelés -->
-                <Label Text="Háztartások kezelése" FontSize="Medium"/>
+                <Label Text="Háztartások kezelése" TextColor="#FFFFFF" FontSize="Medium"/>
 
                 <Grid RowDefinitions="Auto, Auto, Auto, Auto" ColumnDefinitions="*, Auto" ColumnSpacing="10">
-                    <Label Grid.Row="0" Grid.ColumnSpan="2" Text="Jelenlegi háztartás és kódja:" VerticalOptions="Center"/>
-                    <Picker Grid.Row="1" Grid.Column="0" ItemsSource="{Binding HouseholdsList}" SelectedItem="{Binding SelectedHousehold}"/>
-                    <ActivityIndicator Grid.Row="1" Grid.Column="1" IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}"/>
+                    <Label Grid.Row="0" Grid.ColumnSpan="2" Text="Jelenlegi háztartás és kódja:" TextColor="#FFFFFF" VerticalOptions="Center"/>
+                    <Picker Grid.Row="1" Grid.Column="0" ItemsSource="{Binding HouseholdsList}" SelectedItem="{Binding SelectedHousehold}" TextColor="#FFFFFF"/>
+                    <ActivityIndicator Grid.Row="1" Grid.Column="1" IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}" Color="#FFFFFF"/>
 
-                    <Label Grid.Row="2" Grid.ColumnSpan="2" Text="Jelenlegi háztartás tagjai:"/>
+                    <Label Grid.Row="2" Grid.ColumnSpan="2" Text="Jelenlegi háztartás tagjai:" TextColor="#FFFFFF"/>
                     <CollectionView Grid.Row="3" Grid.ColumnSpan="2" ItemsSource="{Binding UsersInHousehold}" MaximumHeightRequest="60" Margin="10, 0, 0, 0">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Label Text="{Binding .}" TextColor="#FFFFFF"/>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
                         <CollectionView.EmptyView>
-                            <Label Text="Offline módban nem láthatóak a háztartás tagjai." VerticalOptions="Center" HorizontalOptions="Center"/>
+                            <Label Text="Offline módban nem láthatóak a háztartás tagjai." TextColor="#FFFFFF" VerticalOptions="Center" HorizontalOptions="Center"/>
                         </CollectionView.EmptyView>
                     </CollectionView>
                 </Grid>
 
                 <Grid ColumnDefinitions="*, *, *" ColumnSpacing="5" Padding="10">
-                    <Button Grid.Column="0" Text="Csatlakozás háztartásba" Command="{Binding ShowJoinHouseholdButtonCommand}" LineBreakMode="WordWrap" BackgroundColor="Aqua"/>
-                    <Button Grid.Column="1" Text="Új háztartás készítése" Command="{Binding ShowCreateHouseholdButtonCommand}" LineBreakMode="WordWrap" BackgroundColor="Aqua"/>
+                    <Button Grid.Column="0" Text="Csatlakozás háztartásba" Command="{Binding ShowJoinHouseholdButtonCommand}" LineBreakMode="WordWrap" TextColor="#000000" BackgroundColor="Aqua"/>
+                    <Button Grid.Column="1" Text="Új háztartás készítése" Command="{Binding ShowCreateHouseholdButtonCommand}" LineBreakMode="WordWrap" TextColor="#000000" BackgroundColor="Aqua"/>
                     <Button Grid.Column="2" Text="Kilépés a jelenlegi háztartásból" Command="{Binding LeaveHouseholdButtonCommand}" LineBreakMode="WordWrap" BackgroundColor="#e65247"/>
                 </Grid>
 
                 <Grid ColumnDefinitions="*, *" ColumnSpacing="5" Padding="10">
-                    <Button Grid.Column="0" Text="Jelenlegi háztartás módosítása" Command="{Binding ShowEditHouseholdButtonCommand}" LineBreakMode="WordWrap"  BackgroundColor="Aqua"/>
+                    <Button Grid.Column="0" Text="Jelenlegi háztartás módosítása" Command="{Binding ShowEditHouseholdButtonCommand}" LineBreakMode="WordWrap" TextColor="#000000" BackgroundColor="Aqua"/>
                     <Button Grid.Column="1" Text="Jelenlegi háztartás felbontása" Command="{Binding DisbandHouseholdButtonCommand}" LineBreakMode="WordWrap" BackgroundColor="#e65247"/>
                 </Grid>
 
                 <!-- Háztartás: Új háztartás csatlakozás kezelés -->
                 <VerticalStackLayout IsVisible="{Binding IsJoinHouseholdVisible}">
                     <Grid ColumnDefinitions="Auto, *" ColumnSpacing="10">
-                        <Label Grid.Column="0" Text="Csatlakozás háztartásba: " VerticalOptions="Center"/>
-                        <Entry Grid.Column="1" Text="{Binding HouseholdAccessCode}" Placeholder="Azonosító kód (6 karakter)" MaxLength="6" TextTransform="Uppercase"/>
+                        <Label Grid.Column="0" Text="Csatlakozás háztartásba: " TextColor="#FFFFFF" VerticalOptions="Center"/>
+                        <Entry Grid.Column="1" Text="{Binding HouseholdAccessCode}" TextColor="#FFFFFF" Placeholder="Azonosító kód (6 karakter)" MaxLength="6" TextTransform="Uppercase"/>
                     </Grid>
 
-                    <Button Text="Csatlakozás" Command="{Binding JoinHouseholdButtonCommand}" WidthRequest="200"/>
+                    <Button Text="Csatlakozás" TextColor="#FFFFFF" Command="{Binding JoinHouseholdButtonCommand}" WidthRequest="200"/>
                 </VerticalStackLayout>
 
                 <!-- Háztartás: Új háztartás készítés kezelés -->
                 <VerticalStackLayout IsVisible="{Binding IsCreateHouseholdVisible}">
                     <Grid ColumnDefinitions="Auto, *" ColumnSpacing="10">
-                        <Label Grid.Column="0" Text="Új háztartás neve: " VerticalOptions="Center"/>
-                        <Entry Grid.Column="1" Text="{Binding NewHouseholdName}" Placeholder="3-10 karakter"/>
+                        <Label Grid.Column="0" Text="Új háztartás neve: " TextColor="#FFFFFF" VerticalOptions="Center"/>
+                        <Entry Grid.Column="1" Text="{Binding NewHouseholdName}" TextColor="#FFFFFF" Placeholder="3-10 karakter"/>
                     </Grid>
 
-                    <Button Text="Új háztartás" Command="{Binding CreateHouseholdButtonCommand}" WidthRequest="200"/>
+                    <Button Text="Új háztartás" Command="{Binding CreateHouseholdButtonCommand}" TextColor="#FFFFFF" WidthRequest="200"/>
                 </VerticalStackLayout>
 
                 <!-- Háztartás: Háztartás módosítás kezelés -->
                 <VerticalStackLayout IsVisible="{Binding IsEditHouseholdVisible}">
                     <Grid ColumnDefinitions="Auto, *" ColumnSpacing="10">
-                        <Label Grid.Column="0" Text="Háztartás átnevezése: " VerticalOptions="Center"/>
-                        <Entry Grid.Column="1" Text="{Binding EditHouseholdName}" Placeholder="3-10 karakter"/>
+                        <Label Grid.Column="0" Text="Háztartás átnevezése: " TextColor="#FFFFFF" VerticalOptions="Center"/>
+                        <Entry Grid.Column="1" Text="{Binding EditHouseholdName}" TextColor="#FFFFFF" Placeholder="3-10 karakter"/>
                     </Grid>
 
                     <Grid ColumnDefinitions="Auto, *" ColumnSpacing="10">
-                        <Label Grid.Column="0" Text="Háztartás hónapjának kiválasztása: " VerticalOptions="Center"/>
-                        <DatePicker Grid.Column="1" Date="{Binding EditHouseholdDate}" Format="yyyy. MM."/>
+                        <Label Grid.Column="0" Text="Háztartás hónapjának kiválasztása: " TextColor="#FFFFFF" VerticalOptions="Center"/>
+                        <DatePicker Grid.Column="1" Date="{Binding EditHouseholdDate}" TextColor="#FFFFFF" Format="yyyy. MM."/>
                     </Grid>
 
                     <Grid ColumnDefinitions="Auto, *" ColumnSpacing="10">
-                        <Label Grid.Column="0" Text="Havi összeg módosítása: " VerticalOptions="Center"/>
-                        <Entry Grid.Column="1" Text="{Binding EditHouseholdBudget}" Placeholder="3-10 karakter"/>
+                        <Label Grid.Column="0" Text="Havi összeg módosítása: " TextColor="#FFFFFF" VerticalOptions="Center"/>
+                        <Entry Grid.Column="1" Text="{Binding EditHouseholdBudget}" TextColor="#FFFFFF" Placeholder="3-10 karakter"/>
                     </Grid>
 
-                    <Button Text="Módosítás" Command="{Binding EditHouseholdButtonCommand}" WidthRequest="200"/>
+                    <Button Text="Módosítás" Command="{Binding EditHouseholdButtonCommand}" TextColor="#FFFFFF" WidthRequest="200"/>
                 </VerticalStackLayout>
 
                 <BoxView Color="LightGray" HeightRequest="1" Margin="0,10,0,10"/>
                 
                 <!-- Értesítések kezelése -->
-                <Label Text="Értesítések kezelése" FontSize="Medium"/>
+                <Label Text="Értesítések kezelése" TextColor="#FFFFFF" FontSize="Medium"/>
                 
                 <HorizontalStackLayout>
-                    <CheckBox IsChecked="{Binding NotificationsIsChecked}"/>
-                    <Label Text="Értesítések fogadása a jelenlegi háztartásnál" VerticalOptions="Center">
+                    <CheckBox IsChecked="{Binding NotificationsIsChecked}" Color="#FFFFFF"/>
+                    <Label Text="Értesítések fogadása a jelenlegi háztartásnál" TextColor="#FFFFFF" VerticalOptions="Center">
                         <Label.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding ToggleNotificationsCommand}"/>
                         </Label.GestureRecognizers>
@@ -112,13 +118,13 @@
                 <BoxView Color="LightGray" HeightRequest="1" Margin="0,10,0,10"/>
 
                 <!-- Jelszó kezelés -->
-                <Label Text="Jelszó változtatása" FontSize="Medium"/>
+                <Label Text="Jelszó változtatása" TextColor="#FFFFFF" FontSize="Medium"/>
 
-                <Entry Placeholder="Régi jelszó" IsPassword="True" Text="{Binding OldPassword}"/>
-                <Entry Placeholder="Új jelszó" IsPassword="True" Text="{Binding NewPassword}"/>
-                <Entry Placeholder="Új jelszó megerősítése" IsPassword="True" Text="{Binding ConfirmNewPassword}"/>
+                <Entry Placeholder="Régi jelszó" IsPassword="True" Text="{Binding OldPassword}" TextColor="#FFFFFF"/>
+                <Entry Placeholder="Új jelszó" IsPassword="True" Text="{Binding NewPassword}" TextColor="#FFFFFF"/>
+                <Entry Placeholder="Új jelszó megerősítése" IsPassword="True" Text="{Binding ConfirmNewPassword}" TextColor="#FFFFFF"/>
 
-                <Button Text="Jelszó megváltoztatása" Command="{Binding ChangePasswordButtonCommand}"/>
+                <Button Text="Jelszó megváltoztatása" Command="{Binding ChangePasswordButtonCommand}" TextColor="#FFFFFF"/>
 
             </VerticalStackLayout>
         </Grid>

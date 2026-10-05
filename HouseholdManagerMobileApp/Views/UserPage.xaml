@@ -4,7 +4,8 @@
              xmlns:models="clr-namespace:HouseholdManagerMobileApp.Core.Models;assembly=HouseholdManagerMobileApp.Core"
              xmlns:vm="clr-namespace:HouseholdManagerMobileApp.Core.ViewModels;assembly=HouseholdManagerMobileApp.Core"
              xmlns:helpers="clr-namespace:HouseholdManagerMobileApp.Core.Helpers;assembly=HouseholdManagerMobileApp.Core"
-             x:Class="HouseholdManagerMobileApp.Views.UserPage">
+             x:Class="HouseholdManagerMobileApp.Views.UserPage"
+             BackgroundColor="#1F1F1F">
 
     <ContentPage.Resources>
         <ResourceDictionary>
@@ -17,7 +18,7 @@
         <!-- Fejléc -->
         <Grid ColumnDefinitions="Auto,*" Padding="10" BackgroundColor="Grey">
             <Button Grid.Column="0" Text="☰" FontSize="24" Command="{Binding ToggleMenuButtonCommand}" BackgroundColor="Grey" TextColor="White" Padding="0" WidthRequest="44"/>
-            <Label Grid.Column="1" Text="{Binding WelcomeMessage}" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" Margin="10,0,0,0"/>
+            <Label Grid.Column="1" Text="{Binding WelcomeMessage}" TextColor="#FFFFFF" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" Margin="10,0,0,0"/>
         </Grid>
 
         <!-- Menü -->
@@ -35,7 +36,7 @@
 
         <!-- Fő tartalom -->
         <Grid Grid.Row="1" RowDefinitions="150, Auto, *">
-            <!-- Értesítések szekció -->
+            <!-- Értesítések -->
             <Grid Grid.Row="0" Margin="5">
                 <Border Stroke="Gray" StrokeThickness="1" StrokeShape="RoundRectangle 6" Margin="0, 10, 0, 0" Padding="10">
                     <CollectionView ItemsSource="{Binding UnreadNotifications}">
@@ -52,24 +53,24 @@
                         </CollectionView.ItemTemplate>
 
                         <CollectionView.EmptyView>
-                            <Label HorizontalOptions="Center" Text="Nincsenek új értesítések." Margin="0, 40, 0, 0"/>
+                            <Label HorizontalOptions="Center" Text="Nincsenek új értesítések." TextColor="#FFFFFF" Margin="0, 40, 0, 0"/>
                         </CollectionView.EmptyView>
                     </CollectionView>
                 </Border>
 
-                <Label Text="Értesítések" BackgroundColor="#202020" FontAttributes="Bold" HorizontalOptions="Start" VerticalOptions="Start" Margin="10, 0, 0, 0" Padding="5, 0"/>
+                <Label Text="Értesítések" TextColor="#FFFFFF" BackgroundColor="#202020" FontAttributes="Bold" HorizontalOptions="Start" VerticalOptions="Start" Margin="10, 0, 0, 0" Padding="5, 0"/>
             </Grid>
 
-            <!-- Költségkeret szekció -->
+            <!-- Költségkeret -->
             <Grid Grid.Row="1" Margin="5">
                 <Border Stroke="Gray" StrokeThickness="1" StrokeShape="RoundRectangle 6" Margin="0, 10, 0, 0" Padding="10">
                     <Grid RowDefinitions="Auto, *, *" ColumnDefinitions="*, *">
-                        <Label Grid.Row="0" Grid.ColumnSpan="2" Text="{Binding CurrentMonth}" HorizontalOptions="Center" FontSize="Medium" TextTransform="Uppercase" Margin="0, 0, 0, 5"/>
+                        <Label Grid.Row="0" Grid.ColumnSpan="2" Text="{Binding CurrentMonth}" TextColor="#FFFFFF" HorizontalOptions="Center" FontSize="Medium" TextTransform="Uppercase" Margin="0, 0, 0, 5"/>
 
-                        <Label Grid.Row="1" Grid.Column="0" Text="Összes" HorizontalTextAlignment="Center"/>
-                        <Label Grid.Row="2" Grid.Column="0" Text="{Binding CurrentMonthBudget}" HorizontalTextAlignment="Center" FontSize="Medium" FontAttributes="Bold" Margin="0, 5, 0, 0"/>
+                        <Label Grid.Row="1" Grid.Column="0" Text="Összes" TextColor="#FFFFFF" HorizontalTextAlignment="Center"/>
+                        <Label Grid.Row="2" Grid.Column="0" Text="{Binding CurrentMonthBudget}" TextColor="#FFFFFF" HorizontalTextAlignment="Center" FontSize="Medium" FontAttributes="Bold" Margin="0, 5, 0, 0"/>
 
-                        <Label Grid.Row="1" Grid.Column="1" Text="Felhasználható" HorizontalTextAlignment="Center"/>
+                        <Label Grid.Row="1" Grid.Column="1" Text="Felhasználható" TextColor="#FFFFFF" HorizontalTextAlignment="Center"/>
                         <Label Grid.Row="2" Grid.Column="1" Text="{Binding CurrentMonthUseableBudget}" HorizontalTextAlignment="Center" FontSize="Medium" FontAttributes="Bold" Margin="0, 5, 0, 0">
                             <Label.TextColor>
                                 <MultiBinding Converter="{StaticResource BudgetToColorConverter}">
@@ -81,23 +82,23 @@
                     </Grid>
                 </Border>
 
-                <Label Text="Költségkeret" BackgroundColor="#202020" FontAttributes="Bold" HorizontalOptions="Start" VerticalOptions="Start" Margin="10, 0, 0, 0" Padding="5, 0"/>
+                <Label Text="Költségkeret" TextColor="#FFFFFF" BackgroundColor="#202020" FontAttributes="Bold" HorizontalOptions="Start" VerticalOptions="Start" Margin="10, 0, 0, 0" Padding="5, 0"/>
             </Grid>
 
-            <!-- Eseménynapló szekció -->
+            <!-- Eseménynapló -->
             <Grid Grid.Row="2" Margin="5">
                 <Border Stroke="Gray" StrokeThickness="1" StrokeShape="RoundRectangle 6" Margin="0, 10, 0, 0" Padding="10">
                     <Grid RowDefinitions="Auto, Auto, *">
-                        <Label Grid.Row="0" Text="{Binding CurrentWeekLabel}" HorizontalOptions="Center" FontSize="Medium"/>
+                        <Label Grid.Row="0" Text="{Binding CurrentWeekLabel}" TextColor="#FFFFFF" HorizontalOptions="Center" FontSize="Medium"/>
 
                         <Grid Grid.Row="1" ColumnDefinitions="*, *, *, *, *, *, *" Margin="0, 5, 0, 10" ColumnSpacing="5">
-                            <Button Grid.Column="0" Text="H" Command="{Binding MondayEventsButtonCommand}"/>
-                            <Button Grid.Column="1" Text="K" Command="{Binding TuesdayEventsButtonCommand}"/>
-                            <Button Grid.Column="2" Text="Sze" Padding="0" Command="{Binding WednesdayEventsButtonCommand}"/>
-                            <Button Grid.Column="3" Text="Cs" Command="{Binding ThursdayEventsButtonCommand}"/>
-                            <Button Grid.Column="4" Text="P" Command="{Binding FridayEventsButtonCommand}"/>
-                            <Button Grid.Column="5" Text="Szo" Padding="0" Command="{Binding SaturdayEventsButtonCommand}"/>
-                            <Button Grid.Column="6" Text="V" Command="{Binding SundayEventsButtonCommand}"/>
+                            <Button Grid.Column="0" Text="H" TextColor="#FFFFFF" Command="{Binding MondayEventsButtonCommand}"/>
+                            <Button Grid.Column="1" Text="K" TextColor="#FFFFFF" Command="{Binding TuesdayEventsButtonCommand}"/>
+                            <Button Grid.Column="2" Text="Sze" TextColor="#FFFFFF" Padding="0" Command="{Binding WednesdayEventsButtonCommand}"/>
+                            <Button Grid.Column="3" Text="Cs" TextColor="#FFFFFF" Command="{Binding ThursdayEventsButtonCommand}"/>
+                            <Button Grid.Column="4" Text="P" TextColor="#FFFFFF" Command="{Binding FridayEventsButtonCommand}"/>
+                            <Button Grid.Column="5" Text="Szo" TextColor="#FFFFFF" Padding="0" Command="{Binding SaturdayEventsButtonCommand}"/>
+                            <Button Grid.Column="6" Text="V" TextColor="#FFFFFF" Command="{Binding SundayEventsButtonCommand}"/>
                         </Grid>
 
                         <CollectionView Grid.Row="2" ItemsSource="{Binding EventLog}">
@@ -148,13 +149,13 @@
                             </CollectionView.ItemTemplate>
 
                             <CollectionView.EmptyView>
-                                <Label HorizontalOptions="Center" Text="Nincsenek megjeleníthető események." VerticalOptions="Center"/>
+                                <Label HorizontalOptions="Center" Text="Nincsenek megjeleníthető események." TextColor="#FFFFFF" VerticalOptions="Center"/>
                             </CollectionView.EmptyView>
                         </CollectionView>
                     </Grid>
                 </Border>
 
-                <Label Text="Eseménynapló" BackgroundColor="#202020" FontAttributes="Bold" HorizontalOptions="Start" VerticalOptions="Start" Margin="10, 0, 0, 0" Padding="5, 0"/>
+                <Label Text="Eseménynapló" TextColor="#FFFFFF" BackgroundColor="#202020" FontAttributes="Bold" HorizontalOptions="Start" VerticalOptions="Start" Margin="10, 0, 0, 0" Padding="5, 0"/>
             </Grid>
         </Grid>
     </Grid>

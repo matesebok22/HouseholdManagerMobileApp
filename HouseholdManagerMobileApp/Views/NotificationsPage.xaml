@@ -2,13 +2,14 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:models="clr-namespace:HouseholdManagerMobileApp.Core.Models;assembly=HouseholdManagerMobileApp.Core"
-             x:Class="HouseholdManagerMobileApp.Views.NotificationsPage">
+             x:Class="HouseholdManagerMobileApp.Views.NotificationsPage"
+             BackgroundColor="#1F1F1F">
 
     <Grid RowDefinitions="Auto,*" Padding="0">
         <!-- Fejléc -->
         <Grid ColumnDefinitions="Auto,*" Padding="10" BackgroundColor="Grey">
             <Button Grid.Column="0" Text="☰" FontSize="24" Command="{Binding ToggleMenuButtonCommand}" BackgroundColor="Grey" TextColor="White" Padding="0" WidthRequest="44"/>
-            <Label Grid.Column="1" Text="{Binding WelcomeMessage}" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" Margin="10,0,0,0"/>
+            <Label Grid.Column="1" Text="{Binding WelcomeMessage}" TextColor="#FFFFFF" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" Margin="10,0,0,0"/>
         </Grid>
 
         <!-- Menü -->
@@ -26,9 +27,9 @@
 
         <!-- Fő tartalom -->
         <Grid Grid.Row="1" RowDefinitions="Auto, Auto, *" ColumnDefinitions="*, Auto" Margin="5">
-            <Label Text="Értesítések" FontSize="Large" VerticalOptions="End"/>
-            <Button Grid.Row="0" Grid.Column="1" Text="Összes értesítés törlése" Command="{Binding DeleteAllNotificationsButtonCommand}" BackgroundColor="#e65247"/>
-            <Label Grid.Row="1" Grid.ColumnSpan="2" HorizontalOptions="Center" Text="14 napnál régebbi értesítések automatikusan törlődnek." Margin="0, 5, 0, 0"/>
+            <Label Text="Értesítések" TextColor="#FFFFFF" FontSize="Large" VerticalOptions="End"/>
+            <Button Grid.Row="0" Grid.Column="1" Text="Összes értesítés törlése" Command="{Binding DeleteAllNotificationsButtonCommand}" TextColor="#FFFFFF" BackgroundColor="#e65247"/>
+            <Label Grid.Row="1" Grid.ColumnSpan="2" HorizontalOptions="Center" Text="14 napnál régebbi értesítések automatikusan törlődnek." TextColor="#FFFFFF" Margin="0, 5, 0, 0"/>
 
             <CollectionView Grid.Row="2" Grid.ColumnSpan="2" ItemsSource="{Binding Notifications}" Margin="0, 10, 0, 0">
                 <CollectionView.ItemTemplate>
@@ -44,7 +45,7 @@
                 </CollectionView.ItemTemplate>
 
                 <CollectionView.EmptyView>
-                    <Label HorizontalOptions="Center" Text="Nincsenek értesítések."/>
+                    <Label HorizontalOptions="Center" Text="Nincsenek értesítések." TextColor="#FFFFFF"/>
                 </CollectionView.EmptyView>
             </CollectionView>
         </Grid>
