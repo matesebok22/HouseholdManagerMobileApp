@@ -37,8 +37,8 @@
                     <Picker Grid.Row="1" Grid.Column="0" ItemsSource="{Binding HouseholdsList}" SelectedItem="{Binding SelectedHousehold}" TextColor="#FFFFFF"/>
                     <ActivityIndicator Grid.Row="1" Grid.Column="1" IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}" Color="#FFFFFF"/>
 
-                    <Label Grid.Row="2" Grid.ColumnSpan="2" Text="Jelenlegi háztartás tagjai:" TextColor="#FFFFFF"/>
-                    <CollectionView Grid.Row="3" Grid.ColumnSpan="2" ItemsSource="{Binding UsersInHousehold}" MaximumHeightRequest="60" Margin="10, 0, 0, 0">
+                    <Label Grid.Row="2" Grid.ColumnSpan="2" IsVisible="{Binding ActiveHousehold}" Text="Jelenlegi háztartás tagjai:" TextColor="#FFFFFF"/>
+                    <CollectionView Grid.Row="3" Grid.ColumnSpan="2" IsVisible="{Binding ActiveHousehold}" IsEnabled="{Binding ActiveHousehold}" MaximumHeightRequest="60" Margin="10, 0, 0, 0">
                         <CollectionView.ItemTemplate>
                             <DataTemplate>
                                 <Label Text="{Binding .}" TextColor="#FFFFFF"/>

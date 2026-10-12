@@ -12,6 +12,8 @@
         <Entry Placeholder="Jelszó" IsPassword="True" Text="{Binding Password}" TextColor="#FFFFFF"/>
         <Entry Placeholder="Jelszó megerősítése" IsPassword="True" Text="{Binding ConfirmPassword}" TextColor="#FFFFFF"/>
 
+        <Label Text="A jelszónak legalább 8 karakter hosszúnak kell lennie, tartalmazni kell legalább 1 kis-, nagybetűt és számot!" TextColor="LightGray"/>
+
         <Button Text="Regisztráció" TextColor="#FFFFFF" Command="{Binding RegisterButtonCommand}"/>
 
         <ActivityIndicator IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}"/>

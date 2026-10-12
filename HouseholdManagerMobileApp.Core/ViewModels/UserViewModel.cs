@@ -185,7 +185,10 @@ public class UserViewModel : ViewModelBase
             else
                 WelcomeMessage = _userSessionService.GetCurrentUser()!.Nickname;
 
-            CurrentMonth = $"{_userSessionService.GetCurrentHousehold()!.HouseholdName} - {DateTime.Today.ToString("MMMM")}";
+            if (_userSessionService.GetCurrentHousehold() != null)
+                CurrentMonth = $"{_userSessionService.GetCurrentHousehold()!.HouseholdName} - {DateTime.Today.ToString("MMMM")}";
+            else
+                CurrentMonth = $"Nem vagy háztartás tag";
 
             _ = LoadUserPageAsync();
         }

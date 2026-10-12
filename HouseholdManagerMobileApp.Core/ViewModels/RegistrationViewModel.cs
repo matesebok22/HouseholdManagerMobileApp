@@ -122,6 +122,26 @@ public class RegistrationViewModel : ViewModelBase
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Kérlek tölts ki minden mezőt!");
             return;
         }
+        else if (Password.Length < 8)
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A jelszónak legalább 8 karakter hosszúnak kell lennie!");
+            return;
+        }
+        else if (!Password.Any(char.IsUpper))
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A jelszónak tartalmaznia kell legalább egy nagybetűt!");
+            return;
+        }
+        else if (!Password.Any(char.IsLower))
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A jelszónak tartalmaznia kell legalább egy kisbetűt!");
+            return;
+        }
+        else if (!Password.Any(char.IsDigit))
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A jelszónak tartalmaznia kell legalább egy számot!");
+            return;
+        }
         else if (Password != ConfirmPassword)
         {
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A jelszavak nem egyeznek!");

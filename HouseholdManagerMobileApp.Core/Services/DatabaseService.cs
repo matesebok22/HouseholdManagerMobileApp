@@ -210,7 +210,7 @@ public class DatabaseService : IDatabaseService
 
         if (user.HouseHold1 == household.HHID)
         {
-            user.HouseHold1 = null;
+            user.HouseHold1 = null!;
             if (user.HouseHold2 != null)
                 user.CurrentHousehold = user.HouseHold2;
             if (user.HouseHold3 != null)
@@ -219,7 +219,7 @@ public class DatabaseService : IDatabaseService
             
         if (user.HouseHold2 == household.HHID)
         {
-            user.HouseHold2 = null;
+            user.HouseHold2 = null!;
             if (user.HouseHold1 != null)
                 user.CurrentHousehold = user.HouseHold1;
             if (user.HouseHold3 != null)
@@ -228,7 +228,7 @@ public class DatabaseService : IDatabaseService
             
         if (user.HouseHold3 == household.HHID)
         {
-            user.HouseHold3 = null;
+            user.HouseHold3 = null!;
             if (user.HouseHold1 != null)
                 user.CurrentHousehold = user.HouseHold1;
             if (user.HouseHold2 != null)
@@ -243,7 +243,7 @@ public class DatabaseService : IDatabaseService
         // Ha a jelenlegi háztartás tulajdonosa, akkor megszünteti a háztartást is.
         if (_userSessionService.IsCurrentHouseholdOwner())
         {
-            household.HouseholdOwner = null;
+            household.HouseholdOwner = null!;
             await household.Update<Household>();
             await household.Delete<Household>();
         }
@@ -415,10 +415,7 @@ public class DatabaseService : IDatabaseService
     private async Task<List<Budget>> LoadBudgetsAsync(Household household)
     {
         // Jelenlegi háztartásban elérhető költségkeretek:
-        /*List<Budget> budgets = [];*/
         ModeledResponse<Budget> budgetquery = await _supabaseClient.From<Budget>().Where(x => x.BudgetHousehold == household.HHID).Get();
-        /*foreach (Budget budget in budgetquery.Models)
-            budgets.Add(budget);*/
 
         return budgetquery.Models ?? [];
     }
@@ -426,10 +423,7 @@ public class DatabaseService : IDatabaseService
     private async Task<List<Event>> LoadEventLogAsync(Household household)
     {
         // Jelenlegi háztartásban elérhető eseménynapló:
-        /*List<Event> eventlog = [];*/
         ModeledResponse<Event> eventquery = await _supabaseClient.From<Event>().Where(x => x.EventHousehold == household.HHID).Get();
-        /*foreach (Event _event in eventquery.Models)
-            eventlog.Add(_event);*/
 
         return eventquery.Models ?? [];
     }
@@ -439,7 +433,7 @@ public class DatabaseService : IDatabaseService
         try
         {
             User user = _userSessionService.GetCurrentUser()!;
-            Household household = _userSessionService.GetCurrentHousehold()!;
+            Household household = _userSessionService.GetCurrentHousehold() ?? new();
             List<Budget> budgets = _userSessionService.GetCurrentBudgets();
             List<Event> eventlog = _userSessionService.GetCurrentEventLog();
 
@@ -485,12 +479,12 @@ public class DatabaseService : IDatabaseService
                 }).ToList()
             };
 
-            await _sqliteDb.InsertAsync(offlineData.User);
-            await _sqliteDb.InsertAsync(offlineData.Household);
+            await _sqliteDb.InsertOrReplaceAsync(offlineData.User);
+            await _sqliteDb.InsertOrReplaceAsync(offlineData.Household);
             if (offlineData.Budgets.Count > 0)
-                await _sqliteDb.InsertAllAsync(offlineData.Budgets);
+                await _sqliteDb.InsertOrReplaceAsync(offlineData.Budgets);
             if (offlineData.Events.Count > 0)
-                await _sqliteDb.InsertAllAsync(offlineData.Events);
+                await _sqliteDb.InsertOrReplaceAsync(offlineData.Events);
 
             return true;
         }

@@ -61,6 +61,18 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         }
     }
 
+    private bool activeHousehold = false;
+    public bool ActiveHousehold
+    {
+        get => activeHousehold;
+        set
+        {
+            if (activeHousehold == value) return;
+            activeHousehold = value;
+            OnPropertyChanged();
+        }
+    }
+
     private bool isJoinHouseholdVisible = false;
     public bool IsJoinHouseholdVisible
     {
@@ -295,8 +307,8 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         JoinHouseholdButtonCommand = new RelayCommand(async _ => await JoinHouseholdAsync());
         EditHouseholdButtonCommand = new RelayCommand(async _ => await EditHouseholdAsync());
         ChangePasswordButtonCommand = new RelayCommand(async _ => await ChangePasswordAsync());
-        LeaveHouseholdButtonCommand = new RelayCommand(async _ => await LeaveHouseholdAsync(), _ => !_userSessionService.IsCurrentHouseholdOwner());
-        DisbandHouseholdButtonCommand = new RelayCommand(async _ => await DisbandHouseholdAsync(), _ => _userSessionService.IsCurrentHouseholdOwner());
+        LeaveHouseholdButtonCommand = new RelayCommand(async _ => await LeaveHouseholdAsync(), _ => (ActiveHousehold && !_userSessionService.IsCurrentHouseholdOwner()));
+        DisbandHouseholdButtonCommand = new RelayCommand(async _ => await DisbandHouseholdAsync(), _ => (ActiveHousehold && _userSessionService.IsCurrentHouseholdOwner()));
         ToggleNotificationsCommand = new RelayCommand(async _ => await Task.Run(() => NotificationsIsChecked = !NotificationsIsChecked));
         LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
 
@@ -306,6 +318,9 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
                 WelcomeMessage = $"{_userSessionService.GetCurrentUser()!.Nickname} (Offline)";
             else
                 WelcomeMessage = _userSessionService.GetCurrentUser()!.Nickname;
+
+            if (_userSessionService.GetCurrentHousehold() != null)
+                ActiveHousehold = true;
         }
     }
 

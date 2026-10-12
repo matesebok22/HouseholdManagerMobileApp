@@ -25,7 +25,7 @@ public class AuthService : IAuthService
     {
         try
         {
-            Dictionary<string, object> parameters = new()
+            Dictionary<string, string> parameters = new()
             {
                 { "p_username", username },
                 { "p_nickname", nickname },
@@ -53,7 +53,7 @@ public class AuthService : IAuthService
 
         try
         {
-            Dictionary<string, object> parameters = new()
+            Dictionary<string, string> parameters = new()
             {
                 { "p_username", username },
                 { "p_raw_password", password }
@@ -208,7 +208,7 @@ public class AuthService : IAuthService
     {
         try
         {
-            Dictionary<string, object> parameters = new()
+            Dictionary<string, string> parameters = new()
             {
                 { "p_username", _userSessionService.GetCurrentUser()!.Username },
                 { "p_old_password", oldPassword },

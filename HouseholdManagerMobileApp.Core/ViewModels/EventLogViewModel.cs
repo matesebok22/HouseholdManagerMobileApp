@@ -49,6 +49,18 @@ public class EventLogViewModel : ViewModelBase
         }
     }
 
+    private bool activeHousehold = false;
+    public bool ActiveHousehold
+    {
+        get => activeHousehold;
+        set
+        {
+            if (activeHousehold == value) return;
+            activeHousehold = value;
+            OnPropertyChanged();
+        }
+    }
+
     private string currentHouseholdName = string.Empty;
     public string CurrentHouseholdName
     {
@@ -220,7 +232,13 @@ public class EventLogViewModel : ViewModelBase
             else
                 WelcomeMessage = _userSessionService.GetCurrentUser()!.Nickname;
             
-            CurrentHouseholdName = _userSessionService.GetCurrentHousehold()!.HouseholdName;
+            if (_userSessionService.GetCurrentHousehold() != null)
+            {
+                CurrentHouseholdName = _userSessionService.GetCurrentHousehold()!.HouseholdName;
+                ActiveHousehold = true;
+            }
+            else
+                CurrentHouseholdName = "Nem vagy háztartásban";
 
             _ = LoadEventlogAsync();
         }
