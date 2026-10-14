@@ -458,8 +458,8 @@ public class SettingsTests
         Assert.That(viewModel.ErrorMessage, Is.EqualTo("Minden jelszó mezőt ki kell tölteni."));
     }
 
-    [TestCase("oldpassword", "oldpassword", "newpassword")]
-    [TestCase("oldpassword", "newpassword", "oldpassword")]
+    [TestCase("Oldpassword123", "Oldpassword123", "Newpassword123")]
+    [TestCase("Oldpassword123", "Newpassword123", "Oldpassword123")]
     public void ChangePasswordAsync_OldNewPasswordSame(string oldpass, string newpass1, string newpass2)
     {
         // Arrange
@@ -476,14 +476,33 @@ public class SettingsTests
         Assert.That(viewModel.ErrorMessage, Is.EqualTo("A régi jelszó nem egyezhet az új jelszóval."));
     }
 
+    [TestCase("New123", "Az új jelszónak legalább 8 karakter hosszúnak kell lennie!")]
+    [TestCase("newpassword123", "Az új jelszónak tartalmaznia kell legalább egy nagybetűt!")]
+    [TestCase("NEWPASSWORD123", "Az új jelszónak tartalmaznia kell legalább egy kisbetűt!")]
+    [TestCase("Newpassword", "Az új jelszónak tartalmaznia kell legalább egy számot!")]
+    public void ChangePasswordAsync_WeakNewPassword(string newpassword, string errorMessage)
+    {
+        // Arrange
+        _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
+        viewModel.OldPassword = "Oldpassword123";
+        viewModel.NewPassword = newpassword;
+        viewModel.ConfirmNewPassword = newpassword;
+
+        // Acts
+        viewModel.ChangePasswordButtonCommand.Execute(string.Empty);
+
+        // Assert
+        Assert.That(viewModel.ErrorMessage, Is.EqualTo(errorMessage));
+    }
+
     [Test]
     public void ChangePasswordAsync_NewPasswordsNotSame()
     {
         // Arrange
         _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
 
-        viewModel.OldPassword = "oldpassword";
-        viewModel.NewPassword = "newpassword";
+        viewModel.OldPassword = "Oldpassword123";
+        viewModel.NewPassword = "Newpassword123";
         viewModel.ConfirmNewPassword = "newpass";
 
         // Acts
@@ -500,9 +519,9 @@ public class SettingsTests
         _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
         _mockAuthService.Setup(x => x.ChangePasswordAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(false);
 
-        viewModel.OldPassword = "oldpassword";
-        viewModel.NewPassword = "newpassword";
-        viewModel.ConfirmNewPassword = "newpassword";
+        viewModel.OldPassword = "Oldpassword123";
+        viewModel.NewPassword = "Newpassword123";
+        viewModel.ConfirmNewPassword = "Newpassword123";
 
         // Acts
         viewModel.ChangePasswordButtonCommand.Execute(string.Empty);
@@ -518,9 +537,9 @@ public class SettingsTests
         _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
         _mockAuthService.Setup(x => x.ChangePasswordAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
 
-        viewModel.OldPassword = "oldpassword";
-        viewModel.NewPassword = "newpassword";
-        viewModel.ConfirmNewPassword = "newpassword";
+        viewModel.OldPassword = "Oldpassword123";
+        viewModel.NewPassword = "Newpassword123";
+        viewModel.ConfirmNewPassword = "Newpassword123";
 
         // Acts
         viewModel.ChangePasswordButtonCommand.Execute(string.Empty);

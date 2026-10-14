@@ -1,4 +1,6 @@
-﻿using HouseholdManagerMobileApp.Core.Models;
+﻿using System.Diagnostics;
+using HouseholdManagerMobileApp.Core.Models;
+using Microsoft.IdentityModel.Tokens;
 using SQLite;
 using Supabase;
 using Supabase.Postgrest.Responses;
@@ -382,8 +384,68 @@ public class DatabaseService : IDatabaseService
         return true;
     }
 
+    public async Task<bool> LoadUserPageAsync()
+    {
+        // Szükséges adatok: currenthousehold, eventlog, budgets
+        Household? currenthousehold = await LoadCurrentHouseholdAsync(_userSessionService.GetCurrentUser()!);
+        if (currenthousehold != null)
+        {
+            List<Event> eventlog = await LoadEventLogAsync(currenthousehold);
+            List<Budget> budgets = await LoadBudgetsAsync(currenthousehold);
+
+            await _userSessionService.ChangeHousehold(currenthousehold, [], [], budgets);
+            await _userSessionService.ReloadEventLog(eventlog);
+        }
+
+        if (await CopyDataToOfflineDB() == false)
+            return false;
+
+        return true;
+    }
+
+    public async Task<bool> LoadSettingsPageAsync(string selectedHouseholdAccess = "")
+    {
+        // Szükséges adatok: currenthousehold, householdlist, householdusers, budgets
+        if (!selectedHouseholdAccess.IsNullOrEmpty())
+        {
+            Household? household = await _supabaseClient.From<Household>().Where(x => x.HouseholdAccess == selectedHouseholdAccess).Single();
+            if (household != null)
+            {
+                await _supabaseClient.From<User>().Where(x => x.UID == _userSessionService.GetCurrentUser()!.UID).Set(x => x.CurrentHousehold, household.HHID).Update();
+                User? user = await _supabaseClient.From<User>().Where(x => x.UID == _userSessionService.GetCurrentUser()!.UID).Single();
+                if (user != null)
+                    await _userSessionService.ReloadUser(user);
+            }
+        }
+
+        Household? currenthousehold = await LoadCurrentHouseholdAsync(_userSessionService.GetCurrentUser()!);
+        if (currenthousehold != null)
+        {
+            List<Household> householdList = await LoadHouseholdsAsync(_userSessionService.GetCurrentUser()!);
+            List<User> householdUsers = await LoadHouseholdUsersAsync(currenthousehold);
+            List<Budget> budgets = await LoadBudgetsAsync(currenthousehold);
+
+            await _userSessionService.ChangeHousehold(currenthousehold, householdUsers, householdList, budgets);
+        }
+
+        if (await CopyDataToOfflineDB() == false)
+            return false;
+
+        return true;
+    }
+
+    public async Task<bool> LoadEventlogPageAsync()
+    {
+
+        return true;
+    }
+
     private async Task<List<Household>> LoadHouseholdsAsync(User user)
     {
+        if (_userSessionService.IsOfflineMode())
+            return [];
+
+        // Felhasználó háztartásai:
         List<string> householdIds = new();
         if (!string.IsNullOrEmpty(user.HouseHold1)) householdIds.Add(user.HouseHold1);
         if (!string.IsNullOrEmpty(user.HouseHold2)) householdIds.Add(user.HouseHold2);
@@ -399,6 +461,9 @@ public class DatabaseService : IDatabaseService
 
     private async Task<List<User>> LoadHouseholdUsersAsync(Household household)
     {
+        if (_userSessionService.IsOfflineMode())
+            return [];
+
         // Jelenlegi háztartás tagjai:
         ModeledResponse<User> usersquery = await _supabaseClient.From<User>()
             .Or(
@@ -412,20 +477,90 @@ public class DatabaseService : IDatabaseService
         return usersquery.Models ?? [];
     }
 
+    private async Task<Household?> LoadCurrentHouseholdAsync(User user)
+    {
+        // Jelenlegi háztartás:
+        Household? currenthousehold = null;
+        if (!_userSessionService.IsOfflineMode())
+            currenthousehold = await _supabaseClient.From<Household>().Where(x => x.HHID == user.CurrentHousehold).Single();
+        else
+        {
+            OfflineHousehold? offlineHousehold = await _sqliteDb.Table<OfflineHousehold>().Where(x => x.HHID == user.CurrentHousehold).FirstOrDefaultAsync();
+            if (offlineHousehold != null)
+            {
+                currenthousehold = new()
+                {
+                    HHID = offlineHousehold.HHID,
+                    HouseholdName = offlineHousehold.HouseholdName,
+                    HouseholdOwner = offlineHousehold.HouseholdOwner,
+                    HouseholdAccess = offlineHousehold.HouseholdAccess
+                };
+            }
+        }
+
+        return currenthousehold;
+    }
+
     private async Task<List<Budget>> LoadBudgetsAsync(Household household)
     {
         // Jelenlegi háztartásban elérhető költségkeretek:
-        ModeledResponse<Budget> budgetquery = await _supabaseClient.From<Budget>().Where(x => x.BudgetHousehold == household.HHID).Get();
+        if (!_userSessionService.IsOfflineMode())
+        {
+            ModeledResponse<Budget> budgetquery = await _supabaseClient.From<Budget>().Where(x => x.BudgetHousehold == household.HHID).Get();
 
-        return budgetquery.Models ?? [];
+            return budgetquery.Models ?? [];
+        }
+        else
+        {
+            List<OfflineBudget> offlineBudgets = await _sqliteDb.Table<OfflineBudget>().Where(x => x.BudgetHousehold == household.HHID).ToListAsync();
+            List<Budget> budgets = [];
+            foreach (OfflineBudget offlinebudget in offlineBudgets)
+            {
+                budgets.Add(new()
+                {
+                    BID = offlinebudget.BID,
+                    BudgetHousehold = offlinebudget.BudgetHousehold,
+                    BudgetDate = offlinebudget.BudgetDate,
+                    BudgetAmount = offlinebudget.BudgetAmount
+                });
+            }
+
+            return budgets ?? [];
+        }
     }
 
     private async Task<List<Event>> LoadEventLogAsync(Household household)
     {
         // Jelenlegi háztartásban elérhető eseménynapló:
-        ModeledResponse<Event> eventquery = await _supabaseClient.From<Event>().Where(x => x.EventHousehold == household.HHID).Get();
+        if (!_userSessionService.IsOfflineMode())
+        {
+            ModeledResponse<Event> eventquery = await _supabaseClient.From<Event>().Where(x => x.EventHousehold == household.HHID).Get();
 
-        return eventquery.Models ?? [];
+            return eventquery.Models ?? [];
+        }
+        else
+        {
+            List<OfflineEvent> offlineEventlog = await _sqliteDb.Table<OfflineEvent>().Where(x => x.EventHousehold == household.HHID).ToListAsync();
+            List<Event> eventlog = [];
+            foreach (OfflineEvent offlineevent in offlineEventlog)
+            {
+                eventlog.Add(new()
+                {
+                    EID = offlineevent.EID,
+                    EventUser = offlineevent.EventUser,
+                    EventHousehold = offlineevent.EventHousehold,
+                    EventDate = offlineevent.EventDate,
+                    EventName = offlineevent.EventName,
+                    EventUserDate = offlineevent.EventUserDate,
+                    EventType = offlineevent.EventType,
+                    EventCost = offlineevent.EventCost,
+                    EventDescription = offlineevent.EventDescription,
+                    LastModifiedBy = offlineevent.LastModifiedBy
+                });
+            }
+
+            return eventlog ?? [];
+        }
     }
 
     public async Task<bool> CopyDataToOfflineDB()
@@ -482,14 +617,22 @@ public class DatabaseService : IDatabaseService
             await _sqliteDb.InsertOrReplaceAsync(offlineData.User);
             await _sqliteDb.InsertOrReplaceAsync(offlineData.Household);
             if (offlineData.Budgets.Count > 0)
-                await _sqliteDb.InsertOrReplaceAsync(offlineData.Budgets);
+            {
+                foreach (OfflineBudget budget in offlineData.Budgets)
+                    await _sqliteDb.InsertOrReplaceAsync(budget);
+            }
+                
             if (offlineData.Events.Count > 0)
-                await _sqliteDb.InsertOrReplaceAsync(offlineData.Events);
+            {
+                foreach (OfflineEvent _event in offlineData.Events)
+                    await _sqliteDb.InsertOrReplaceAsync(_event);
+            }
 
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            Debug.WriteLine($"Hiba a másolás közben: {ex}");
             return false;
         }
     }

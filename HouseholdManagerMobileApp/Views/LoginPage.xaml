@@ -8,8 +8,8 @@
         <Label Text="Bejelentkezés" FontSize="Large" FontAttributes="Bold" TextColor="#FFFFFF" HorizontalOptions="Center"/>
         <Label Text="Offline mód" FontSize="Large" FontAttributes="Bold" TextColor="#FFFFFF" HorizontalOptions="Center" IsVisible="{Binding IsOffline}"/>
 
-        <Entry Placeholder="Felhasználónév" Text="{Binding Username}" TextColor="#FFFFFF"/>
-        <Entry Placeholder="Jelszó" IsPassword="True" Text="{Binding Password}" IsVisible="{Binding IsOnline}" TextColor="#FFFFFF"/>
+        <Entry Placeholder="Felhasználónév" Text="{Binding Username}" TextColor="#FFFFFF" ReturnType="Next"/>
+        <Entry Placeholder="Jelszó" IsPassword="True" Text="{Binding Password}" IsVisible="{Binding IsOnline}" TextColor="#FFFFFF" ReturnType="Send" ReturnCommand="{Binding LoginButtonCommand}"/>
 
         <Button Text="Bejelentkezés" TextColor="#FFFFFF" Command="{Binding LoginButtonCommand}"/>
 

@@ -3,6 +3,7 @@ using HouseholdManagerMobileApp.Core.Commands;
 using HouseholdManagerMobileApp.Core.Helpers;
 using HouseholdManagerMobileApp.Core.Models;
 using HouseholdManagerMobileApp.Core.Services;
+using Microsoft.IdentityModel.Tokens;
 
 namespace HouseholdManagerMobileApp.Core.ViewModels;
 
@@ -10,6 +11,7 @@ public class UserViewModel : ViewModelBase
 {
     private readonly IAuthService _authService;
     private readonly IUserSessionService _userSessionService;
+    private readonly IDatabaseService _databaseService;
     private readonly INotificationService _notificationService;
 
     private string welcomeMessage = string.Empty;
@@ -158,10 +160,11 @@ public class UserViewModel : ViewModelBase
     public RelayCommand SundayEventsButtonCommand { get; }
     public RelayCommand LogoutButtonCommand { get; }
 
-    public UserViewModel(IAuthService authService, IUserSessionService userSessionService, INotificationService notificationService)
+    public UserViewModel(IAuthService authService, IUserSessionService userSessionService, IDatabaseService databaseService, INotificationService notificationService)
     {
         _authService = authService;
         _userSessionService = userSessionService;
+        _databaseService = databaseService;
         _notificationService = notificationService;
 
         ToggleMenuButtonCommand = new RelayCommand(async _ => await Task.Run(() => IsMenuVisible = !IsMenuVisible));
@@ -179,19 +182,7 @@ public class UserViewModel : ViewModelBase
         LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
 
         if (Shell.Current != null)
-        {
-            if (_userSessionService.IsOfflineMode())
-                WelcomeMessage = $"{_userSessionService.GetCurrentUser()!.Nickname} (Offline)";
-            else
-                WelcomeMessage = _userSessionService.GetCurrentUser()!.Nickname;
-
-            if (_userSessionService.GetCurrentHousehold() != null)
-                CurrentMonth = $"{_userSessionService.GetCurrentHousehold()!.HouseholdName} - {DateTime.Today.ToString("MMMM")}";
-            else
-                CurrentMonth = $"Nem vagy háztartás tag";
-
             _ = LoadUserPageAsync();
-        }
     }
 
     private async Task NavigateToSettingsAsync()
@@ -237,6 +228,18 @@ public class UserViewModel : ViewModelBase
 
     private async Task LoadUserPageAsync()
     {
+        await _databaseService.LoadUserPageAsync();
+
+        if (_userSessionService.IsOfflineMode())
+            WelcomeMessage = $"{_userSessionService.GetCurrentUser()!.Nickname} (Offline)";
+        else
+            WelcomeMessage = _userSessionService.GetCurrentUser()!.Nickname;
+
+        if (_userSessionService.GetCurrentHousehold() != null && !_userSessionService.GetCurrentHousehold()!.HHID.IsNullOrEmpty())
+            CurrentMonth = $"{_userSessionService.GetCurrentHousehold()!.HouseholdName} - {DateTime.Today.ToString("MMMM")}";
+        else
+            CurrentMonth = $"Nem vagy háztartás tag";
+
         // Olvasatlan értesítések betöltése:
         UnreadNotifications.Clear();
         List<Notification> unreadNotifications = await _notificationService.GetUnreadNotificationsAsync();

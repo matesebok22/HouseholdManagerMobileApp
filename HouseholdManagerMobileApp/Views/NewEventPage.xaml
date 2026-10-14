@@ -16,14 +16,14 @@
             <VerticalStackLayout Grid.Row="1" Padding="10" Spacing="15" VerticalOptions="Center">
                 <Label Text="Esemény létrehozása" TextColor="#FFFFFF" HorizontalOptions="Center" FontSize="Large"/>
 
-                <Entry Placeholder="Esemény neve (maximum 30 karakter)" Text="{Binding EventName}" TextColor="#FFFFFF"/>
+                <Entry Placeholder="Esemény neve (maximum 30 karakter)" Text="{Binding EventName}" TextColor="#FFFFFF" ReturnType="Next"/>
                 <HorizontalStackLayout>
                     <Label Text="Esemény dátum: " TextColor="#FFFFFF" VerticalOptions="Center"/>
                     <DatePicker Date="{Binding EventDate}" TextColor="#FFFFFF" Margin="10, 0, 0, 0"/>
                     <TimePicker Time="{Binding EventTime}" TextColor="#FFFFFF" Margin="10, 0, 0, 0"/>
                 </HorizontalStackLayout>
-                <Entry Placeholder="Esemény típusa (opcionális, maximum 20 karakter)" Text="{Binding EventType}" TextColor="#FFFFFF"/>
-                <Entry Placeholder="Esemény költsége" Text="{Binding EventCost}" TextColor="#FFFFFF"/>
+                <Entry Placeholder="Esemény típusa (opcionális, maximum 20 karakter)" Text="{Binding EventType}" TextColor="#FFFFFF" ReturnType="Next"/>
+                <Entry Placeholder="Esemény költsége" Text="{Binding EventCost}" TextColor="#FFFFFF" ReturnType="Next"/>
                 <Editor Placeholder="Esemény leírása (opcionális, maximum 500 karakter)" Text="{Binding EventDesc}" TextColor="#FFFFFF" AutoSize="TextChanges"/>
 
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="5" Padding="10">

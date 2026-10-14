@@ -7,10 +7,10 @@
     <VerticalStackLayout Padding="30" Spacing="15" VerticalOptions="Center">
         <Label Text="Regisztráció" TextColor="#FFFFFF" FontSize="Large" FontAttributes="Bold" HorizontalOptions="Center"/>
 
-        <Entry Placeholder="Felhasználónév" Text="{Binding Username}" TextColor="#FFFFFF"/>
-        <Entry Placeholder="Becenév" Text="{Binding Nickname}" TextColor="#FFFFFF"/>
-        <Entry Placeholder="Jelszó" IsPassword="True" Text="{Binding Password}" TextColor="#FFFFFF"/>
-        <Entry Placeholder="Jelszó megerősítése" IsPassword="True" Text="{Binding ConfirmPassword}" TextColor="#FFFFFF"/>
+        <Entry Placeholder="Felhasználónév" Text="{Binding Username}" TextColor="#FFFFFF" ReturnType="Next"/>
+        <Entry Placeholder="Becenév" Text="{Binding Nickname}" TextColor="#FFFFFF" ReturnType="Next"/>
+        <Entry Placeholder="Jelszó" IsPassword="True" Text="{Binding Password}" TextColor="#FFFFFF" ReturnType="Next"/>
+        <Entry Placeholder="Jelszó megerősítése" IsPassword="True" Text="{Binding ConfirmPassword}" TextColor="#FFFFFF" ReturnType="Send" ReturnCommand="{Binding RegisterButtonCommand}"/>
 
         <Label Text="A jelszónak legalább 8 karakter hosszúnak kell lennie, tartalmazni kell legalább 1 kis-, nagybetűt és számot!" TextColor="LightGray"/>
 

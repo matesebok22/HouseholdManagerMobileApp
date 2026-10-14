@@ -68,9 +68,6 @@ public class AuthService : IAuthService
                 if (userList != null && userList.Count > 0)
                 {
                     User user = userList[0];
-                    List<Budget> budgets = [];
-                    List<Event> eventlog = [];
-                    Household? currentHousehold = null;
 
                     // Minden online bejelentkezésnél a korábbi offline token törlése:
                     string? lastLoggedUID = Preferences.Get("last_logged_uid", null);
@@ -82,26 +79,14 @@ public class AuthService : IAuthService
                         // Offline-Online adatbázis szinkronizálása:
                         if (await _databaseService.SyncDatabasesAsync() == false)
                             return false;
-
-                        currentHousehold = await _supabaseClient.From<Household>().Where(x => x.HHID == user.CurrentHousehold).Single();
-                        if (currentHousehold != null)
-                        {
-                            var budgetquery = _supabaseClient.From<Budget>().Where(x => x.BudgetHousehold == currentHousehold.HHID).Get();
-                            var eventquery = _supabaseClient.From<Event>().Where(x => x.EventHousehold == currentHousehold.HHID).Get();
-
-                            await Task.WhenAll(budgetquery,  eventquery);
-
-                            budgets = budgetquery.Result.Models.ToList();
-                            eventlog = eventquery.Result.Models.ToList();
-                        }
                     }
 
                     // Felhasználói session beállítása:
-                    await _userSessionService.SetUserSessionAsync(user, currentHousehold!, [], budgets, eventlog);
+                    await _userSessionService.SetUserSessionAsync(user);
 
                     // Offline adatbázis frissítése:
-                    if (await _databaseService.CopyDataToOfflineDB() == false)
-                        return false;
+                    /*if (await _databaseService.CopyDataToOfflineDB() == false)
+                        return false;*/
 
                     // Offline bejelentkezéshez szükséges token beállítása:
                     await SecureStorage.SetAsync($"login-{user.UID}", DateTime.Now.Ticks.ToString());
@@ -143,11 +128,7 @@ public class AuthService : IAuthService
                 if (lastLoggedTicks == 0 || (lastLoggedTicks + Constants.OfflineLoginValidity) < currentTicks)
                     return false;
 
-                List<Budget> budgets = [];
-                List<Event> eventlog = [];
-                Household? currentHousehold = null;
-
-                if (user.CurrentHousehold != string.Empty)
+                /*if (user.CurrentHousehold != string.Empty)
                 {
                     OfflineHousehold? householdquery = await _sqliteDb.Table<OfflineHousehold>().Where(x => x.HHID == user.CurrentHousehold).FirstOrDefaultAsync();
                     if (householdquery != null)
@@ -188,10 +169,10 @@ public class AuthService : IAuthService
                             LastModifiedBy = x.LastModifiedBy
                         }).ToList();
                     }
-                }
+                }*/
 
                 // Felhasználói session beállítása:
-                await _userSessionService.SetUserSessionAsync(user, currentHousehold!, [], budgets, eventlog);
+                await _userSessionService.SetUserSessionAsync(user);
 
                 return true;
             }

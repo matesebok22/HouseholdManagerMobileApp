@@ -38,7 +38,7 @@
                     <ActivityIndicator Grid.Row="1" Grid.Column="1" IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}" Color="#FFFFFF"/>
 
                     <Label Grid.Row="2" Grid.ColumnSpan="2" IsVisible="{Binding ActiveHousehold}" Text="Jelenlegi háztartás tagjai:" TextColor="#FFFFFF"/>
-                    <CollectionView Grid.Row="3" Grid.ColumnSpan="2" IsVisible="{Binding ActiveHousehold}" IsEnabled="{Binding ActiveHousehold}" MaximumHeightRequest="60" Margin="10, 0, 0, 0">
+                    <CollectionView Grid.Row="3" Grid.ColumnSpan="2" ItemsSource="{Binding UsersInHousehold}" IsVisible="{Binding ActiveHousehold}" IsEnabled="{Binding ActiveHousehold}" MaximumHeightRequest="60" Margin="10, 0, 0, 0">
                         <CollectionView.ItemTemplate>
                             <DataTemplate>
                                 <Label Text="{Binding .}" TextColor="#FFFFFF"/>
@@ -120,9 +120,9 @@
                 <!-- Jelszó kezelés -->
                 <Label Text="Jelszó változtatása" TextColor="#FFFFFF" FontSize="Medium"/>
 
-                <Entry Placeholder="Régi jelszó" IsPassword="True" Text="{Binding OldPassword}" TextColor="#FFFFFF"/>
-                <Entry Placeholder="Új jelszó" IsPassword="True" Text="{Binding NewPassword}" TextColor="#FFFFFF"/>
-                <Entry Placeholder="Új jelszó megerősítése" IsPassword="True" Text="{Binding ConfirmNewPassword}" TextColor="#FFFFFF"/>
+                <Entry Placeholder="Régi jelszó" IsPassword="True" Text="{Binding OldPassword}" TextColor="#FFFFFF" ReturnType="Next"/>
+                <Entry Placeholder="Új jelszó" IsPassword="True" Text="{Binding NewPassword}" TextColor="#FFFFFF" ReturnType="Next"/>
+                <Entry Placeholder="Új jelszó megerősítése" IsPassword="True" Text="{Binding ConfirmNewPassword}" TextColor="#FFFFFF" ReturnType="Send" ReturnCommand="{Binding ChangePasswordButtonCommand}"/>
 
                 <Button Text="Jelszó megváltoztatása" Command="{Binding ChangePasswordButtonCommand}" TextColor="#FFFFFF"/>
 
