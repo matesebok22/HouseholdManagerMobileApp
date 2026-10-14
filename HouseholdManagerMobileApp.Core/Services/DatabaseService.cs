@@ -83,12 +83,11 @@ public class DatabaseService : IDatabaseService
     public async Task<bool> JoinHouseholdAsync(string householdAccess)
     {
         Household? household = await _supabaseClient.From<Household>().Where(x => x.HouseholdAccess == householdAccess).Single();
-
         if (household == null)
             return false;
 
-        User? user = await _supabaseClient.From<User>().Where(x => x.Username == _userSessionService.GetCurrentUser()!.Username).Single();
-
+        //User? user = await _supabaseClient.From<User>().Where(x => x.Username == _userSessionService.GetCurrentUser()!.Username).Single();
+        User? user = await _supabaseClient.From<User>().Where(x => x.UID == _userSessionService.GetCurrentUser()!.UID).Single();
         if (user == null)
             return false;
 
@@ -98,31 +97,20 @@ public class DatabaseService : IDatabaseService
 
         // Van-e szabad háztartás hely a felhasználónak:
         if (user.HouseHold1 == null)
-        {
             user.HouseHold1 = household.HHID;
-            user.CurrentHousehold = household.HHID;
-            await user.Update<User>();
-
-            return true;
-        }
         else if (user.HouseHold2 == null)
-        {
             user.HouseHold2 = household.HHID;
-            user.CurrentHousehold = household.HHID;
-            await user.Update<User>();
-
-            return true;
-        }
         else if (user.HouseHold3 == null)
-        {
             user.HouseHold3 = household.HHID;
-            user.CurrentHousehold = household.HHID;
-            await user.Update<User>();
+        else
+            return false;
 
-            return true;
-        }
+        user.CurrentHousehold = household.HHID;
+        await user.Update<User>();
 
-        return false;
+        await _userSessionService.ReloadUser(user);
+
+        return true;
     }
 
     public async Task<bool> ChangeSelectedHouseholdAsync(string currentHousehold)

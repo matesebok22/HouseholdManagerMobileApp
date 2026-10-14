@@ -65,7 +65,7 @@
                 <VerticalStackLayout IsVisible="{Binding IsJoinHouseholdVisible}">
                     <Grid ColumnDefinitions="Auto, *" ColumnSpacing="10">
                         <Label Grid.Column="0" Text="Csatlakozás háztartásba: " TextColor="#FFFFFF" VerticalOptions="Center"/>
-                        <Entry Grid.Column="1" Text="{Binding HouseholdAccessCode}" TextColor="#FFFFFF" Placeholder="Azonosító kód (6 karakter)" MaxLength="6" TextTransform="Uppercase"/>
+                        <Entry Grid.Column="1" Text="{Binding HouseholdAccessCode}" TextColor="#FFFFFF" Placeholder="Azonosító kód (6 karakter)" MaxLength="6" TextTransform="Uppercase" ReturnType="Send" ReturnCommand="{Binding JoinHouseholdButtonCommand}"/>
                     </Grid>
 
                     <Button Text="Csatlakozás" TextColor="#FFFFFF" Command="{Binding JoinHouseholdButtonCommand}" WidthRequest="200"/>
@@ -75,7 +75,7 @@
                 <VerticalStackLayout IsVisible="{Binding IsCreateHouseholdVisible}">
                     <Grid ColumnDefinitions="Auto, *" ColumnSpacing="10">
                         <Label Grid.Column="0" Text="Új háztartás neve: " TextColor="#FFFFFF" VerticalOptions="Center"/>
-                        <Entry Grid.Column="1" Text="{Binding NewHouseholdName}" TextColor="#FFFFFF" Placeholder="3-10 karakter"/>
+                        <Entry Grid.Column="1" Text="{Binding NewHouseholdName}" TextColor="#FFFFFF" Placeholder="3-10 karakter" ReturnType="Send" ReturnCommand="{Binding CreateHouseholdButtonCommand}"/>
                     </Grid>
 
                     <Button Text="Új háztartás" Command="{Binding CreateHouseholdButtonCommand}" TextColor="#FFFFFF" WidthRequest="200"/>

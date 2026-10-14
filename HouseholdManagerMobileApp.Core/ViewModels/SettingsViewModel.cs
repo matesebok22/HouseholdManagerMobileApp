@@ -354,8 +354,8 @@ public class SettingsViewModel : ViewModelBase//, IQueryAttributable
 
     private async Task LoadHouseholdsAsync()
     {
-        // Háztartásváltásnál a kiválaszott háztartás nem változik (_userSession-ben), javítani!!!
         IsLoading = true;
+        IsCreateHouseholdVisible = IsEditHouseholdVisible = IsJoinHouseholdVisible = false;
         bool success = false;
 
         if (SelectedHousehold.IsNullOrEmpty())
@@ -413,7 +413,13 @@ public class SettingsViewModel : ViewModelBase//, IQueryAttributable
                 string userID = _userSessionService.GetCurrentUser()!.UID;
                 Household? userHH = _userSessionService.GetCurrentHousehold();
                 if (userHH != null)
+                {
                     NotificationsIsChecked = bool.Parse(await SecureStorage.GetAsync($"notifications-{userID}-{userHH.HHID}") ?? "true");
+
+                    EditHouseholdName = userHH.HouseholdName;
+                    EditHouseholdDate = DateTime.Today;
+                    LoadSelectedMonthBudget();
+                }
             }
 
             ShowEditHouseholdButtonCommand.RefreshCanExecute();
@@ -423,55 +429,6 @@ public class SettingsViewModel : ViewModelBase//, IQueryAttributable
 
         IsLoading = false;
     }
-
-    /*private async Task ChangeSelectedHouseholdAsync()
-    {
-        try
-        {
-            IsLoading = true;
-            IsCreateHouseholdVisible = IsEditHouseholdVisible = IsJoinHouseholdVisible = false;
-
-            string[] parts = SelectedHousehold.Split(" - ");
-            if (parts.Length == 2)
-            {
-                string householdAccessCode = parts[1];
-                bool success = await _databaseService.ChangeSelectedHouseholdAsync(householdAccessCode);
-                if (success)
-                {
-                    ShowEditHouseholdButtonCommand.RefreshCanExecute();
-                    LeaveHouseholdButtonCommand.RefreshCanExecute();
-                    DisbandHouseholdButtonCommand.RefreshCanExecute();
-
-                    EditHouseholdName = _userSessionService.GetCurrentHousehold()!.HouseholdName;
-                    EditHouseholdDate = DateTime.Today;
-                    LoadSelectedMonthBudget();
-
-                    string userID = _userSessionService.GetCurrentUser()!.UID;
-                    string userHH = _userSessionService.GetCurrentHousehold()!.HHID;
-                    if (Shell.Current != null)
-                        NotificationsIsChecked = bool.Parse(await SecureStorage.GetAsync($"notifications-{userID}-{userHH}") ?? "true");
-
-                    // Jelenlegi háztartás tagjainak listázása:
-                    UsersInHousehold.Clear();
-                    foreach (User user in _userSessionService.GetCurrentHouseholdUsers())
-                    {
-                        string userText = user.Nickname;
-                        userText += user.UID == _userSessionService.GetCurrentUser()!.UID ? " (Ön)" : "";
-                        userText += user.UID == _userSessionService.GetCurrentHousehold()!.HouseholdOwner ? " (Alapító)" : "";
-                        UsersInHousehold.Add(userText);
-                    }
-                }
-                else
-                    ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Háztartás váltás sikertelen!");
-            }
-
-            IsLoading = false;
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync($"Hiba a háztartás váltásakor: {ex.Message}");
-        }
-    }*/
 
     private async Task JoinHouseholdAsync()
     {
@@ -499,8 +456,9 @@ public class SettingsViewModel : ViewModelBase//, IQueryAttributable
         {
             if (Shell.Current != null)
                 _ = Shell.Current.DisplayAlert("Siker", "Háztartáshoz sikeresen csatlakozva.", "OK");
-            HouseholdAccessCode = string.Empty;
+            HouseholdAccessCode = SelectedHousehold = string.Empty;
             IsJoinHouseholdVisible = false;
+
             await LoadHouseholdsAsync();
         }
         else
