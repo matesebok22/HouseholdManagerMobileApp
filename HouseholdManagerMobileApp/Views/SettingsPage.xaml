@@ -85,7 +85,7 @@
                 <VerticalStackLayout IsVisible="{Binding IsEditHouseholdVisible}">
                     <Grid ColumnDefinitions="Auto, *" ColumnSpacing="10">
                         <Label Grid.Column="0" Text="Háztartás átnevezése: " TextColor="#FFFFFF" VerticalOptions="Center"/>
-                        <Entry Grid.Column="1" Text="{Binding EditHouseholdName}" TextColor="#FFFFFF" Placeholder="3-10 karakter"/>
+                        <Entry Grid.Column="1" Text="{Binding EditHouseholdName}" TextColor="#FFFFFF" Placeholder="3-25 karakter"/>
                     </Grid>
 
                     <Grid ColumnDefinitions="Auto, *" ColumnSpacing="10">
@@ -95,7 +95,7 @@
 
                     <Grid ColumnDefinitions="Auto, *" ColumnSpacing="10">
                         <Label Grid.Column="0" Text="Havi összeg módosítása: " TextColor="#FFFFFF" VerticalOptions="Center"/>
-                        <Entry Grid.Column="1" Text="{Binding EditHouseholdBudget}" TextColor="#FFFFFF" Placeholder="3-10 karakter"/>
+                        <Entry Keyboard="Numeric" Grid.Column="1" Text="{Binding EditHouseholdBudget}" TextColor="#FFFFFF" Placeholder="3-10 karakter"/>
                     </Grid>
 
                     <Button Text="Módosítás" Command="{Binding EditHouseholdButtonCommand}" TextColor="#FFFFFF" WidthRequest="200"/>

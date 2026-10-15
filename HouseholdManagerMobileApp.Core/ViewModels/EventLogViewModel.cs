@@ -226,22 +226,7 @@ public class EventLogViewModel : ViewModelBase
         LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
 
         if (Shell.Current != null)
-        {
-            if (_userSessionService.IsOfflineMode())
-                WelcomeMessage = $"{_userSessionService.GetCurrentUser()!.Nickname} (Offline)";
-            else
-                WelcomeMessage = _userSessionService.GetCurrentUser()!.Nickname;
-            
-            if (_userSessionService.GetCurrentHousehold() != null)
-            {
-                CurrentHouseholdName = _userSessionService.GetCurrentHousehold()!.HouseholdName;
-                ActiveHousehold = true;
-            }
-            else
-                CurrentHouseholdName = "Nem vagy háztartásban";
-
             _ = LoadEventlogAsync();
-        }
     }
 
     private async Task NavigateToHomeAsync()
@@ -299,9 +284,21 @@ public class EventLogViewModel : ViewModelBase
 
     private async Task LoadEventlogAsync()
     {
+        if (_userSessionService.IsOfflineMode())
+            WelcomeMessage = $"{_userSessionService.GetCurrentUser()!.Nickname} (Offline)";
+        else
+            WelcomeMessage = _userSessionService.GetCurrentUser()!.Nickname;
+
+        if (_userSessionService.GetCurrentHousehold() != null)
+            CurrentHouseholdName = _userSessionService.GetCurrentHousehold()!.HouseholdName;
+        else
+            CurrentHouseholdName = "Nem vagy háztartásban";
+
+        ActiveHousehold = _userSessionService.GetCurrentHousehold() != null;
+
         EventTypes.Clear();
 
-        bool success = await _databaseService.LoadDataAsync(2);
+        bool success = await _databaseService.LoadEventlogPageAsync();
         if (success)
             await LoadMonthAsync();
 

@@ -8,15 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace HouseholdManagerMobileApp.Core.ViewModels;
 
-/* AMI NEM MŰKÖDIK:
-- Háztartáshoz csatlakozáskor, létrehozáskor, kilépéskor, felbontáskor a háztartás listája, kiválaszott elem, tagok listája nem frissül (csak ki- és bejelentkezéskor).
-- Valamit kezdeni a SelectedHousehold változóval, hogy ne hívja kétszer ugyanazt a metódust.
-- A tagok listája még ki- bejelentkezéskor sem frissül.
-- Esemény létrehozása után nem enged bejelentkezni.
-- Az offline adatbázis csak bejelentkezéskor frissül, nem frissül ha új eseményt adunk hozzá, háztartást váltunk stb.
-- Potenciális hiba, amikor online jelentkezünk be, de utána elmegy az internet és váltunk oldalt, akkor kivételt dobhat, nem dob ki a bejelentkezéshez.
-*/
-public class SettingsViewModel : ViewModelBase//, IQueryAttributable
+public class SettingsViewModel : ViewModelBase
 {
     private readonly IAuthService _authService;
     private readonly IDatabaseService _databaseService;
@@ -354,6 +346,23 @@ public class SettingsViewModel : ViewModelBase//, IQueryAttributable
 
     private async Task LoadHouseholdsAsync()
     {
+        if (_userSessionService.IsOfflineMode())
+            WelcomeMessage = $"{_userSessionService.GetCurrentUser()!.Nickname} (Offline)";
+        else
+        {
+            WelcomeMessage = _userSessionService.GetCurrentUser()!.Nickname;
+
+            if (Shell.Current != null)
+            {
+                if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+                {
+                    ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Nincs internetkapcsolat. Kérlek, jelentkezz be újra.");
+                    await LogoutAsync();
+                    return;
+                }
+            }
+        }
+
         IsLoading = true;
         IsCreateHouseholdVisible = IsEditHouseholdVisible = IsJoinHouseholdVisible = false;
         bool success = false;
@@ -366,13 +375,7 @@ public class SettingsViewModel : ViewModelBase//, IQueryAttributable
             success = await _databaseService.LoadSettingsPageAsync(parts[1]);
         }
 
-        if (_userSessionService.IsOfflineMode())
-            WelcomeMessage = $"{_userSessionService.GetCurrentUser()!.Nickname} (Offline)";
-        else
-            WelcomeMessage = _userSessionService.GetCurrentUser()!.Nickname;
-
-        if (_userSessionService.GetCurrentHousehold() != null)
-            ActiveHousehold = true;
+        ActiveHousehold = _userSessionService.GetCurrentHousehold() != null;
 
         if (success)
         {
@@ -421,11 +424,11 @@ public class SettingsViewModel : ViewModelBase//, IQueryAttributable
                     LoadSelectedMonthBudget();
                 }
             }
-
-            ShowEditHouseholdButtonCommand.RefreshCanExecute();
-            LeaveHouseholdButtonCommand.RefreshCanExecute();
-            DisbandHouseholdButtonCommand.RefreshCanExecute();
         }
+
+        ShowEditHouseholdButtonCommand.RefreshCanExecute();
+        LeaveHouseholdButtonCommand.RefreshCanExecute();
+        DisbandHouseholdButtonCommand.RefreshCanExecute();
 
         IsLoading = false;
     }
@@ -443,6 +446,18 @@ public class SettingsViewModel : ViewModelBase//, IQueryAttributable
         {
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Offline módban nem lehetséges a háztartáshoz csatlakozás.");
             return;
+        }
+        else
+        {
+            if (Shell.Current != null)
+            {
+                if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+                {
+                    ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Nincs internetkapcsolat. Kérlek, jelentkezz be újra.");
+                    await LogoutAsync();
+                    return;
+                }
+            }
         }
 
         if (HouseholdAccessCode.Trim() == string.Empty)
@@ -479,6 +494,18 @@ public class SettingsViewModel : ViewModelBase//, IQueryAttributable
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Offline módban nem lehetséges a háztartás készítése.");
             return;
         }
+        else
+        {
+            if (Shell.Current != null)
+            {
+                if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+                {
+                    ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Nincs internetkapcsolat. Kérlek, jelentkezz be újra.");
+                    await LogoutAsync();
+                    return;
+                }
+            }
+        }
 
         if (NewHouseholdName.Trim() == string.Empty)
         {
@@ -513,6 +540,23 @@ public class SettingsViewModel : ViewModelBase//, IQueryAttributable
 
     private async Task EditHouseholdAsync()
     {
+        // TESZTELNI KELL!!!
+        if (EditHouseholdName.Trim() == string.Empty)
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Háztartásnév megadása kötelező!");
+            return;
+        }
+        else if (EditHouseholdName.Length < 3)
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A háztartásnév túl rövid!");
+            return;
+        }
+        else if (EditHouseholdName.Length > 25)
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A háztartásnév túl hosszú!");
+            return;
+        }
+
         bool success = await _databaseService.EditHouseholdAsync(EditHouseholdName, EditHouseholdDate, EditHouseholdBudget);
 
         if (success)
@@ -522,6 +566,8 @@ public class SettingsViewModel : ViewModelBase//, IQueryAttributable
             IsEditHouseholdVisible = false;
             
             EditHouseholdName = _userSessionService.GetCurrentHousehold()!.HouseholdName;
+
+            SelectedHousehold = string.Empty;
 
             await LoadHouseholdsAsync();
         }
@@ -536,6 +582,18 @@ public class SettingsViewModel : ViewModelBase//, IQueryAttributable
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Offline módban nem lehetséges a háztartásból való kilépés.");
             return;
         }
+        else
+        {
+            if (Shell.Current != null)
+            {
+                if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+                {
+                    ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Nincs internetkapcsolat. Kérlek, jelentkezz be újra.");
+                    await LogoutAsync();
+                    return;
+                }
+            }
+        }
 
         if (Shell.Current != null)
         {
@@ -548,6 +606,9 @@ public class SettingsViewModel : ViewModelBase//, IQueryAttributable
         {
             if (Shell.Current != null)
                 _ = Shell.Current.DisplayAlert("Siker", "Háztartásból sikeresen kilépve.", "OK");
+
+            SelectedHousehold = string.Empty;
+
             await LoadHouseholdsAsync();
         }
         else
@@ -561,6 +622,18 @@ public class SettingsViewModel : ViewModelBase//, IQueryAttributable
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Offline módban nem lehetséges a háztartás felbontása.");
             return;
         }
+        else
+        {
+            if (Shell.Current != null)
+            {
+                if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+                {
+                    ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Nincs internetkapcsolat. Kérlek, jelentkezz be újra.");
+                    await LogoutAsync();
+                    return;
+                }
+            }
+        }
 
         if (Shell.Current != null)
         {
@@ -573,6 +646,9 @@ public class SettingsViewModel : ViewModelBase//, IQueryAttributable
         {
             if (Shell.Current != null)
                 _ = Shell.Current.DisplayAlert("Siker", "Háztartás sikeresen felbontva.", "OK");
+
+            SelectedHousehold = string.Empty;
+
             await LoadHouseholdsAsync();
         }
         else
@@ -592,6 +668,18 @@ public class SettingsViewModel : ViewModelBase//, IQueryAttributable
         {
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Offline módban nem lehetséges a jelszó megváltoztatása.");
             return;
+        }
+        else
+        {
+            if (Shell.Current != null)
+            {
+                if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+                {
+                    ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Nincs internetkapcsolat. Kérlek, jelentkezz be újra.");
+                    await LogoutAsync();
+                    return;
+                }
+            }
         }
 
         if (string.IsNullOrEmpty(OldPassword) || string.IsNullOrEmpty(NewPassword) || string.IsNullOrEmpty(ConfirmNewPassword))
@@ -645,7 +733,7 @@ public class SettingsViewModel : ViewModelBase//, IQueryAttributable
 
     private async Task ToggleNotificationsAsync()
     {
-        // A telefon értesítések engedélyezése vagy letiltása a felhasználói beállítások alapján:
+        // Az értesítések engedélyezése vagy letiltása a felhasználói beállítások alapján:
         string userID = _userSessionService.GetCurrentUser()!.UID;
         string userHH = _userSessionService.GetCurrentHousehold()!.HHID;
         await SecureStorage.SetAsync($"notifications-{userID}-{userHH}", NotificationsIsChecked.ToString());

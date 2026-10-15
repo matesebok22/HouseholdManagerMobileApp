@@ -12,6 +12,9 @@ public class DatabaseService : IDatabaseService
     private readonly Client _supabaseClient;
     private readonly SQLiteAsyncConnection _sqliteDb;
     private readonly IUserSessionService _userSessionService;
+
+    private bool loadOfflineDBOnce = false;
+
     public DatabaseService(Client supabaseClient, SQLiteAsyncConnection sqliteDb, IUserSessionService userSessionService)
     {
         _supabaseClient = supabaseClient;
@@ -67,6 +70,8 @@ public class DatabaseService : IDatabaseService
 
                 await _userSessionService.ReloadUser(user);
 
+                loadOfflineDBOnce = false;
+
                 return true;
             }
 
@@ -108,31 +113,7 @@ public class DatabaseService : IDatabaseService
 
         await _userSessionService.ReloadUser(user);
 
-        return true;
-    }
-
-    public async Task<bool> ChangeSelectedHouseholdAsync(string currentHousehold)
-    {
-        if (!_userSessionService.IsOfflineMode())
-        {
-            Household? newHousehold = await _supabaseClient.From<Household>().Where(x => x.HouseholdAccess == currentHousehold).Single();
-            if (newHousehold == null)
-                return false;
-
-            User? user = await _supabaseClient.From<User>().Where(x => x.Username == _userSessionService.GetCurrentUser()!.Username).Single();
-            if (user == null)
-                return false;
-
-            user.CurrentHousehold = newHousehold.HHID;
-            await user.Update<User>();
-
-            List<Budget> budgets = await LoadBudgetsAsync(newHousehold);
-            List<Event> eventlog = await LoadEventLogAsync(newHousehold);
-            List<Household> households = await LoadHouseholdsAsync(user);
-            List<User> householdUsers = await LoadHouseholdUsersAsync(newHousehold);
-
-            await _userSessionService.ChangeHousehold(newHousehold, householdUsers, households, budgets);
-        }
+        loadOfflineDBOnce = false;
 
         return true;
     }
@@ -161,7 +142,11 @@ public class DatabaseService : IDatabaseService
             DateTime newDate = new(householdBudgetMonth.Year, householdBudgetMonth.Month, 1);
 
             if (!_userSessionService.IsOfflineMode())
+            {
                 await _supabaseClient.From<Budget>().Insert(new Budget() { BudgetHousehold = _userSessionService.GetCurrentHousehold()!.HHID, BudgetDate = newDate, BudgetAmount = newHouseholdBudget });
+
+                loadOfflineDBOnce = false;
+            }
             else
             {
                 string sqliteQuery = @"INSERT INTO offline_budgets (bid, b_hh, b_userdate, b_amount, b_made_offline) VALUES (?, ?, ?, ?, 1)";
@@ -174,7 +159,11 @@ public class DatabaseService : IDatabaseService
             {
                 budget.BudgetAmount = newHouseholdBudget;
                 if (!_userSessionService.IsOfflineMode())
+                {
                     await budget.Update<Budget>();
+
+                    loadOfflineDBOnce = false;
+                }
                 else
                 {
                     string sqliteQuery = @"UPDATE offline_budgets SET b_amount = ?, b_made_offline = 1 WHERE bid = ?";
@@ -196,35 +185,20 @@ public class DatabaseService : IDatabaseService
         if (household == null)
             return false;
 
-        if (user.HouseHold1 == household.HHID)
-        {
-            user.HouseHold1 = null!;
-            if (user.HouseHold2 != null)
-                user.CurrentHousehold = user.HouseHold2;
-            if (user.HouseHold3 != null)
-                user.CurrentHousehold = user.HouseHold3;
-        }
-            
-        if (user.HouseHold2 == household.HHID)
-        {
-            user.HouseHold2 = null!;
-            if (user.HouseHold1 != null)
-                user.CurrentHousehold = user.HouseHold1;
-            if (user.HouseHold3 != null)
-                user.CurrentHousehold = user.HouseHold3;
-        }
-            
-        if (user.HouseHold3 == household.HHID)
-        {
-            user.HouseHold3 = null!;
-            if (user.HouseHold1 != null)
-                user.CurrentHousehold = user.HouseHold1;
-            if (user.HouseHold2 != null)
-                user.CurrentHousehold = user.HouseHold2;
-        }
+        string[] households = [user.HouseHold1, user.HouseHold2, user.HouseHold3];
+        int householdIndex = Array.FindIndex(households, x => x == household.HHID);
 
-        if (user.HouseHold1 == null && user.HouseHold2 == null && user.HouseHold3 == null)
-            user.CurrentHousehold = "";
+        if (householdIndex != -1)
+        {
+            switch (householdIndex)
+            {
+                case 0: user.HouseHold1 = null!; break;
+                case 1: user.HouseHold2 = null!; break;
+                case 2: user.HouseHold3 = null!; break;
+            }
+
+            user.CurrentHousehold = households.Where(x => x != null && x != household.HHID).FirstOrDefault() ?? null!;
+        }
 
         await user.Update<User>();
 
@@ -235,6 +209,10 @@ public class DatabaseService : IDatabaseService
             await household.Update<Household>();
             await household.Delete<Household>();
         }
+
+        await _userSessionService.ReloadUser(user);
+
+        loadOfflineDBOnce = false;
 
         SecureStorage.Remove($"notifications-{user.UID}-{household.HHID}");
 
@@ -260,7 +238,11 @@ public class DatabaseService : IDatabaseService
         {
             var response = await _supabaseClient.From<Event>().Insert(newEvent);
             if (response.Models != null && response.Models.Count > 0)
+            {
+                loadOfflineDBOnce = false;
+
                 return true;
+            }
         }
         else
         {
@@ -286,7 +268,11 @@ public class DatabaseService : IDatabaseService
                                     .Set(x => x.LastModifiedBy, _userSessionService.GetCurrentUser()!.UID)
                                     .Update();
             if (response.Models != null && response.Models.Count > 0)
+            {
+                loadOfflineDBOnce = false;
+
                 return true;
+            }
         }
         else
         {
@@ -301,73 +287,8 @@ public class DatabaseService : IDatabaseService
     public async Task DeleteEventAsync()
     {
         await _supabaseClient.From<Event>().Where(x => x.EID == _userSessionService.GetSelectedEvent()!.EID).Delete();
-    }
 
-    public async Task<bool> LoadDataAsync(int mode)
-    {
-        switch (mode)
-        {
-            // Beállítások adatainak betöltése:
-            case 1:
-                {
-                    if (!_userSessionService.IsOfflineMode())
-                    {
-                        List<Budget> budgets = await LoadBudgetsAsync(_userSessionService.GetCurrentHousehold()!);
-                        List<Household> households = await LoadHouseholdsAsync(_userSessionService.GetCurrentUser()!);
-                        await _userSessionService.ChangeHousehold(_userSessionService.GetCurrentHousehold()!, _userSessionService.GetCurrentHouseholdUsers(), households, budgets);
-                    }
-                    else
-                    {
-                        List<OfflineBudget> offlineBudgets = await _sqliteDb.Table<OfflineBudget>().ToListAsync();
-                        List<Budget> budgets = [];
-                        foreach (OfflineBudget budget in offlineBudgets)
-                        {
-                            budgets.Add(new()
-                            {
-                                BID = budget.BID,
-                                BudgetHousehold = budget.BudgetHousehold,
-                                BudgetDate = budget.BudgetDate,
-                                BudgetAmount = budget.BudgetAmount
-                            });
-                        }
-                        await _userSessionService.ChangeHousehold(_userSessionService.GetCurrentHousehold()!, [], [], budgets);
-                    }
-
-                    break;
-                }
-            // Eseménynapló adatainak betöltése:
-            case 2:
-                {
-                    List<Event> eventlog = [];
-                    if (!_userSessionService.IsOfflineMode())
-                        eventlog = await LoadEventLogAsync(_userSessionService.GetCurrentHousehold()!);
-                    else
-                    {
-                        List<OfflineEvent> offlineEventlog = await _sqliteDb.Table<OfflineEvent>().ToListAsync();
-                        foreach (OfflineEvent _event in offlineEventlog)
-                        {
-                            eventlog.Add(new()
-                            {
-                                EID = _event.EID,
-                                EventUser = _event.EventUser,
-                                EventHousehold = _event.EventHousehold,
-                                EventDate = _event.EventDate,
-                                EventName = _event.EventName,
-                                EventUserDate = _event.EventUserDate,
-                                EventType = _event.EventType,
-                                EventCost = _event.EventCost,
-                                EventDescription = _event.EventDescription,
-                                LastModifiedBy = _event.LastModifiedBy
-                            });
-                        }
-                    }
-
-                    await _userSessionService.ReloadEventLog(eventlog);
-                    break;
-                }
-        }
-
-        return true;
+        loadOfflineDBOnce = false;
     }
 
     public async Task<bool> LoadUserPageAsync()
@@ -383,8 +304,12 @@ public class DatabaseService : IDatabaseService
             await _userSessionService.ReloadEventLog(eventlog);
         }
 
-        if (await CopyDataToOfflineDB() == false)
-            return false;
+        if (!_userSessionService.IsOfflineMode() && !loadOfflineDBOnce)
+        {
+            if (await CopyDataToOfflineDB() == false)
+                return false;
+            loadOfflineDBOnce = true;
+        }
 
         return true;
     }
@@ -401,6 +326,8 @@ public class DatabaseService : IDatabaseService
                 User? user = await _supabaseClient.From<User>().Where(x => x.UID == _userSessionService.GetCurrentUser()!.UID).Single();
                 if (user != null)
                     await _userSessionService.ReloadUser(user);
+
+                loadOfflineDBOnce = false; // Új háztartás betöltésekor újra kell másolni az offline adatbázisba a szükséges adatokat.
             }
         }
 
@@ -413,15 +340,32 @@ public class DatabaseService : IDatabaseService
 
             await _userSessionService.ChangeHousehold(currenthousehold, householdUsers, householdList, budgets);
         }
+        else
+            await _userSessionService.ChangeHousehold(null, [], [], []);
 
-        if (await CopyDataToOfflineDB() == false)
-            return false;
+        if (!_userSessionService.IsOfflineMode() && !loadOfflineDBOnce)
+        {
+            if (await CopyDataToOfflineDB() == false)
+                return false;
+            loadOfflineDBOnce = true;
+        }
 
         return true;
     }
 
     public async Task<bool> LoadEventlogPageAsync()
     {
+        // Szükséges adatok: eventlog
+        List<Event> eventlog = await LoadEventLogAsync(_userSessionService.GetCurrentHousehold()!);
+
+        await _userSessionService.ReloadEventLog(eventlog);
+
+        if (!_userSessionService.IsOfflineMode() && !loadOfflineDBOnce)
+        {
+            if (await CopyDataToOfflineDB() == false)
+                return false;
+            loadOfflineDBOnce = true;
+        }
 
         return true;
     }
@@ -553,6 +497,18 @@ public class DatabaseService : IDatabaseService
     {
         try
         {
+            // Offline táblázatok kiürítése:
+            if (!loadOfflineDBOnce)
+            {
+                await Task.WhenAll(
+                    _sqliteDb.DeleteAllAsync<OfflineUser>(),
+                    _sqliteDb.DeleteAllAsync<OfflineHousehold>(),
+                    _sqliteDb.DeleteAllAsync<OfflineBudget>(),
+                    _sqliteDb.DeleteAllAsync<OfflineEvent>(),
+                    _sqliteDb.DeleteAllAsync<OfflineNotification>()
+                    );
+            }
+
             User user = _userSessionService.GetCurrentUser()!;
             Household household = _userSessionService.GetCurrentHousehold() ?? new();
             List<Budget> budgets = _userSessionService.GetCurrentBudgets();
@@ -600,7 +556,7 @@ public class DatabaseService : IDatabaseService
                 }).ToList()
             };
 
-            await _sqliteDb.InsertOrReplaceAsync(offlineData.User);
+            /*await _sqliteDb.InsertOrReplaceAsync(offlineData.User);
             await _sqliteDb.InsertOrReplaceAsync(offlineData.Household);
             if (offlineData.Budgets.Count > 0)
             {
@@ -612,7 +568,14 @@ public class DatabaseService : IDatabaseService
             {
                 foreach (OfflineEvent _event in offlineData.Events)
                     await _sqliteDb.InsertOrReplaceAsync(_event);
-            }
+           }*/
+
+            await _sqliteDb.InsertAsync(offlineData.User);
+            await _sqliteDb.InsertAsync(offlineData.Household);
+            if (offlineData.Budgets.Count > 0)
+                await _sqliteDb.InsertAllAsync(offlineData.Budgets);
+            if (offlineData.Events.Count > 0)
+                await _sqliteDb.InsertAllAsync(offlineData.Events);
 
             return true;
         }

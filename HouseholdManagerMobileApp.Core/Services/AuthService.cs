@@ -84,10 +84,6 @@ public class AuthService : IAuthService
                     // Felhasználói session beállítása:
                     await _userSessionService.SetUserSessionAsync(user);
 
-                    // Offline adatbázis frissítése:
-                    /*if (await _databaseService.CopyDataToOfflineDB() == false)
-                        return false;*/
-
                     // Offline bejelentkezéshez szükséges token beállítása:
                     await SecureStorage.SetAsync($"login-{user.UID}", DateTime.Now.Ticks.ToString());
                     Preferences.Set("last_logged_uid", user.UID);
