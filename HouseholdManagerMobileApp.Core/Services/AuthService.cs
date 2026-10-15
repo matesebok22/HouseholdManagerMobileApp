@@ -59,7 +59,7 @@ public class AuthService : IAuthService
                 { "p_raw_password", password }
             };
 
-            var response = await _supabaseClient.Rpc("login_user_v2", parameters);
+            var response = await _supabaseClient.Rpc("login_user", parameters);
             string rawJson = response.Content ?? "";
 
             if (!string.IsNullOrWhiteSpace(rawJson))

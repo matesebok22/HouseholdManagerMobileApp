@@ -485,14 +485,26 @@ public class SettingsViewModel : ViewModelBase//, IQueryAttributable
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Háztartásnév megadása kötelező!");
             return;
         }
+        // TESZTELNI KELL!!!
+        else if (NewHouseholdName.Length < 3)
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A háztartásnév túl rövid!");
+            return;
+        }
+        else if (NewHouseholdName.Length > 25)
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A háztartásnév túl hosszú!");
+            return;
+        }
 
         bool success = await _databaseService.CreateHouseholdAsync(NewHouseholdName);
         if (success)
         {
             if (Shell.Current != null)
                 _ = Shell.Current.DisplayAlert("Siker", "Háztartás sikeresen létrehozva.", "OK");
-            NewHouseholdName = string.Empty;
+            NewHouseholdName = SelectedHousehold = string.Empty;
             IsCreateHouseholdVisible = false;
+
             await LoadHouseholdsAsync();
         }
         else

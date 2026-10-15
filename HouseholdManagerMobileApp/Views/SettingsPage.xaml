@@ -75,7 +75,7 @@
                 <VerticalStackLayout IsVisible="{Binding IsCreateHouseholdVisible}">
                     <Grid ColumnDefinitions="Auto, *" ColumnSpacing="10">
                         <Label Grid.Column="0" Text="Új háztartás neve: " TextColor="#FFFFFF" VerticalOptions="Center"/>
-                        <Entry Grid.Column="1" Text="{Binding NewHouseholdName}" TextColor="#FFFFFF" Placeholder="3-10 karakter" ReturnType="Send" ReturnCommand="{Binding CreateHouseholdButtonCommand}"/>
+                        <Entry Grid.Column="1" Text="{Binding NewHouseholdName}" TextColor="#FFFFFF" Placeholder="3-25 karakter" ReturnType="Send" ReturnCommand="{Binding CreateHouseholdButtonCommand}"/>
                     </Grid>
 
                     <Button Text="Új háztartás" Command="{Binding CreateHouseholdButtonCommand}" TextColor="#FFFFFF" WidthRequest="200"/>

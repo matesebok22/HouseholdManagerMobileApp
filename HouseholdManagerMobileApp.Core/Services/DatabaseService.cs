@@ -51,9 +51,9 @@ public class DatabaseService : IDatabaseService
     {
         try
         {
-            Dictionary<string, object> parameters = new()
+            Dictionary<string, string> parameters = new()
             {
-                { "p_username", _userSessionService.GetCurrentUser()!.Username },
+                { "p_userid", _userSessionService.GetCurrentUser()!.UID },
                 { "p_householdname", householdName }
             };
 
@@ -61,13 +61,11 @@ public class DatabaseService : IDatabaseService
 
             if (response.Content != null && response.Content.Trim() == "true")
             {
-                User? user = await _supabaseClient.From<User>().Where(x => x.Username == _userSessionService.GetCurrentUser()!.Username).Single();
+                User? user = await _supabaseClient.From<User>().Where(x => x.UID == _userSessionService.GetCurrentUser()!.UID).Single();
                 if (user == null)
                     return false;
 
-                Household? currentHousehold = await _supabaseClient.From<Household>().Where(x => x.HHID == user.CurrentHousehold).Single();
-                if (currentHousehold == null)
-                    return false;
+                await _userSessionService.ReloadUser(user);
 
                 return true;
             }
