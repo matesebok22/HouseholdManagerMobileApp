@@ -425,6 +425,8 @@ public class SettingsViewModel : ViewModelBase
                 }
             }
         }
+        else
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Háztartás váltás sikertelen!");
 
         ShowEditHouseholdButtonCommand.RefreshCanExecute();
         LeaveHouseholdButtonCommand.RefreshCanExecute();
@@ -463,6 +465,11 @@ public class SettingsViewModel : ViewModelBase
         if (HouseholdAccessCode.Trim() == string.Empty)
         {
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Háztartás azonosító megadása kötelező!");
+            return;
+        }
+        else if (HouseholdAccessCode.Length != 6)
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A háztartás azonosítójának 6 karakter hosszúnak kell lennie!");
             return;
         }
 
@@ -512,7 +519,6 @@ public class SettingsViewModel : ViewModelBase
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Háztartásnév megadása kötelező!");
             return;
         }
-        // TESZTELNI KELL!!!
         else if (NewHouseholdName.Length < 3)
         {
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A háztartásnév túl rövid!");
@@ -540,7 +546,6 @@ public class SettingsViewModel : ViewModelBase
 
     private async Task EditHouseholdAsync()
     {
-        // TESZTELNI KELL!!!
         if (EditHouseholdName.Trim() == string.Empty)
         {
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Háztartásnév megadása kötelező!");

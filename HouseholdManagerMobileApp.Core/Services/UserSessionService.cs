@@ -28,19 +28,6 @@ public class UserSessionService : IUserSessionService
     public Event? GetSelectedEvent() => selectedEvent;
     public void SetSelectedEvent(Event? _event) => selectedEvent = _event;
 
-    /*public async Task SetUserSessionAsync(User user, Household household, List<Household> hhList, List<Budget> budgets, List<Event> eventlog)
-    {
-        userLoggedIn = true;
-        isOfflineMode = Connectivity.Current.NetworkAccess != NetworkAccess.Internet;
-        currentUser = user;
-        currentHousehold = household;
-        householdList = hhList;
-        currentBudgets = budgets;
-        currentEventLog = eventlog;
-        currentHouseholdOwner = household != null ? user.UID == household.HouseholdOwner : false;
-        await Task.CompletedTask;
-    }*/
-
     public async Task SetUserSessionAsync(User user)
     {
         userLoggedIn = true;

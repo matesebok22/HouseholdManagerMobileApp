@@ -124,49 +124,6 @@ public class AuthService : IAuthService
                 if (lastLoggedTicks == 0 || (lastLoggedTicks + Constants.OfflineLoginValidity) < currentTicks)
                     return false;
 
-                /*if (user.CurrentHousehold != string.Empty)
-                {
-                    OfflineHousehold? householdquery = await _sqliteDb.Table<OfflineHousehold>().Where(x => x.HHID == user.CurrentHousehold).FirstOrDefaultAsync();
-                    if (householdquery != null)
-                    {
-                        currentHousehold = new Household
-                        {
-                            HHID = householdquery.HHID,
-                            HouseholdName = householdquery.HouseholdName,
-                            HouseholdOwner = householdquery.HouseholdOwner,
-                            HouseholdAccess = householdquery.HouseholdAccess
-                        };
-
-                        var budgetquery = _sqliteDb.Table<OfflineBudget>().Where(x => x.BudgetHousehold == currentHousehold.HHID).ToListAsync();
-
-                        var eventquery = _sqliteDb.Table<OfflineEvent>().Where(x => x.EventHousehold == currentHousehold.HHID).ToListAsync();
-
-                        await Task.WhenAll(budgetquery, eventquery);
-
-                        budgets = budgetquery.Result.Select(x => new Budget
-                        {
-                            BID = x.BID,
-                            BudgetHousehold = x.BudgetHousehold,
-                            BudgetDate = x.BudgetDate,
-                            BudgetAmount = x.BudgetAmount
-                        }).ToList();
-
-                        eventlog = eventquery.Result.Select(x => new Event
-                        {
-                            EID = x.EID,
-                            EventUser = x.EventUser,
-                            EventHousehold = x.EventHousehold,
-                            EventDate = x.EventDate,
-                            EventName = x.EventName,
-                            EventUserDate = x.EventUserDate,
-                            EventType = x.EventType,
-                            EventCost = x.EventCost,
-                            EventDescription = x.EventDescription,
-                            LastModifiedBy = x.LastModifiedBy
-                        }).ToList();
-                    }
-                }*/
-
                 // Felhasználói session beállítása:
                 await _userSessionService.SetUserSessionAsync(user);
 

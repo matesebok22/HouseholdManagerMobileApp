@@ -17,9 +17,6 @@ public class User : BaseModel
     [JsonProperty("u_name")]
     public string Username { get; set; } = string.Empty;
 
-    [SupabaseDB.Column("u_pass")]
-    public string Password { get; set; } = string.Empty;
-
     [SupabaseDB.Column("u_currenthh")]
     [JsonProperty("u_currenthh")]
     public string CurrentHousehold { get; set; } = string.Empty;
@@ -50,9 +47,6 @@ public class OfflineUser
 
     [Column("u_name")]
     public string Username { get; set; } = string.Empty;
-
-    [Column("u_pass")]
-    public string Password { get; set; } = string.Empty;
 
     [Column("u_currenthh")]
     public string CurrentHousehold { get; set; } = string.Empty;

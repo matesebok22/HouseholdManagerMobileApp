@@ -520,7 +520,6 @@ public class DatabaseService : IDatabaseService
                 {
                     UID = user.UID,
                     Username = user.Username,
-                    Password = user.Password,
                     CurrentHousehold = user.CurrentHousehold,
                     HouseHold1 = user.HouseHold1,
                     HouseHold2 = user.HouseHold2,
@@ -555,20 +554,6 @@ public class DatabaseService : IDatabaseService
                     LastModifiedBy = x.LastModifiedBy
                 }).ToList()
             };
-
-            /*await _sqliteDb.InsertOrReplaceAsync(offlineData.User);
-            await _sqliteDb.InsertOrReplaceAsync(offlineData.Household);
-            if (offlineData.Budgets.Count > 0)
-            {
-                foreach (OfflineBudget budget in offlineData.Budgets)
-                    await _sqliteDb.InsertOrReplaceAsync(budget);
-            }
-                
-            if (offlineData.Events.Count > 0)
-            {
-                foreach (OfflineEvent _event in offlineData.Events)
-                    await _sqliteDb.InsertOrReplaceAsync(_event);
-           }*/
 
             await _sqliteDb.InsertAsync(offlineData.User);
             await _sqliteDb.InsertAsync(offlineData.Household);

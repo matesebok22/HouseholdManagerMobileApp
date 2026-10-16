@@ -48,10 +48,12 @@ public class SettingsTests
 
     // Háztartásváltás tesztelése:
     [Test]
-    public void ChangeSelectedHouseholdAsync_Unsuccessful()
+    public void LoadHouseholdsAsync_Unsuccessful()
     {
         // Arrange
-        _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>())).ReturnsAsync(false);
+        _mockUserSessionService.Setup(x => x.IsOfflineMode()).Returns(false);
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(new User() { Nickname = "TesztElek" });
+        _mockDatabaseService.Setup(x => x.LoadSettingsPageAsync(It.IsAny<string>())).ReturnsAsync(false);
 
         // Act
         viewModel.SelectedHousehold = "testHH - ASD123";
@@ -61,10 +63,10 @@ public class SettingsTests
     }
 
     [Test]
-    public void ChangeSelectedHouseholdAsync_Successful()
+    public void LoadHouseholdsAsync_Successful()
     {
         // Arrange
-        _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
+        _mockDatabaseService.Setup(x => x.LoadSettingsPageAsync(It.IsAny<string>())).ReturnsAsync(true);
         User user = new() { UID = "uid123" };
         _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(user);
         Household household = new() { HHID = "hhid123", HouseholdName = "HH123" };
@@ -107,9 +109,11 @@ public class SettingsTests
         Assert.That(viewModel.ErrorMessage, Is.EqualTo("Offline módban nem lehetséges a háztartáshoz csatlakozás."));
     }
 
-    [TestCase("")]
-    [TestCase("    ")]
-    public void JoinHouseholdAsync_EmptyHouseholdAccess(string householdAccess)
+    [TestCase("", "Háztartás azonosító megadása kötelező!")]
+    [TestCase("    ", "Háztartás azonosító megadása kötelező!")]
+    [TestCase("ASDF1234", "A háztartás azonosítójának 6 karakter hosszúnak kell lennie!")]
+    [TestCase("AS12", "A háztartás azonosítójának 6 karakter hosszúnak kell lennie!")]
+    public void JoinHouseholdAsync_HouseholdAccessInvalid(string householdAccess, string errorMessage)
     {
         // Arrange
         _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
@@ -120,15 +124,15 @@ public class SettingsTests
         viewModel.JoinHouseholdButtonCommand.Execute(string.Empty);
 
         // Assert
-        Assert.That(viewModel.ErrorMessage, Is.EqualTo("Háztartás azonosító megadása kötelező!"));
+        Assert.That(viewModel.ErrorMessage, Is.EqualTo(errorMessage));
     }
 
     [Test]
     public void JoinHouseholdAsync_TooManyHouseholds()
     {
         // Arrange
-        _mockDatabaseService.Setup(x => x.JoinHouseholdAsync(It.IsAny<string>())).ReturnsAsync(false);
         _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
+        _mockDatabaseService.Setup(x => x.JoinHouseholdAsync(It.IsAny<string>())).ReturnsAsync(false);
 
         viewModel.HouseholdAccessCode = "ASD123";
 
@@ -143,17 +147,14 @@ public class SettingsTests
     public void JoinHouseholdAsync_Successful()
     {
         // Arrange
-        _mockDatabaseService.Setup(x => x.JoinHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
-        _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
         _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
-        _mockDatabaseService.Setup(x => x.LoadDataAsync(It.IsAny<int>())).ReturnsAsync(true);
-        User user = new() { UID = "uid123" };
-        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(user);
-        Household household = new() { HHID = "hhid123", HouseholdName = "HH123", HouseholdAccess = "ABC123" };
-        _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(household);
-        _mockUserSessionService.Setup(x => x.GetCurrentBudgets()).Returns([]);
-        List<Household> householdList = new List<Household> { household };
-        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdList()).Returns(householdList);
+        _mockUserSessionService.Setup(x => x.IsOfflineMode()).Returns(false);
+        _mockDatabaseService.Setup(x => x.JoinHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
+
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(new User { Nickname = "TesztElek" });
+        _mockDatabaseService.Setup(x => x.LoadSettingsPageAsync(It.IsAny<string>())).ReturnsAsync(true);
+        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdList()).Returns([new Household { HouseholdName = "HH123", HouseholdAccess = "ABC123" }]);
+        _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(new Household { HouseholdName = "HH123", HouseholdAccess = "ABC123" });
         _mockUserSessionService.Setup(x => x.GetCurrentHouseholdUsers()).Returns([]);
 
         viewModel.HouseholdAccessCode = "ABC123";
@@ -198,19 +199,22 @@ public class SettingsTests
         Assert.That(viewModel.ErrorMessage, Is.EqualTo("Offline módban nem lehetséges a háztartás készítése."));
     }
 
-    [Test]
-    public void CreateHouseholdAsync_EmptyName()
+    [TestCase("", "Háztartásnév megadása kötelező!")]
+    [TestCase("    ", "Háztartásnév megadása kötelező!")]
+    [TestCase("Te", "A háztartásnév túl rövid!")]
+    [TestCase("TestHouseholdTestHousehold", "A háztartásnév túl hosszú!")]
+    public void CreateHouseholdAsync_HouseholdNameInvalid(string householdName, string errorMessage)
     {
         // Arrange
         _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
 
-        viewModel.NewHouseholdName = string.Empty;
+        viewModel.NewHouseholdName = householdName;
 
         // Act
         viewModel.CreateHouseholdButtonCommand.Execute(string.Empty);
 
         // Assert
-        Assert.That(viewModel.ErrorMessage, Is.EqualTo("Háztartásnév megadása kötelező!"));
+        Assert.That(viewModel.ErrorMessage, Is.EqualTo(errorMessage));
     }
 
     [Test]
@@ -233,17 +237,14 @@ public class SettingsTests
     public void CreateHouseholdAsync_Successful()
     {
         // Arrange
-        var mockUser = new User { Nickname = "TestUser", Username = "testuser" };
-        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
         _mockUserSessionService.Setup(x => x.IsUserLoggedIn()).Returns(true);
+        _mockUserSessionService.Setup(x => x.IsOfflineMode()).Returns(false);
         _mockDatabaseService.Setup(x => x.CreateHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
-        _mockDatabaseService.Setup(x => x.LoadDataAsync(It.IsAny<int>())).ReturnsAsync(true);
-        _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
-        Household household = new Household { HouseholdName = "testhh", HouseholdAccess = "ASD123" };
-        _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(household);
-        List<Household> householdList = new List<Household> { household };
-        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdList()).Returns(householdList);
-        _mockUserSessionService.Setup(x => x.GetCurrentBudgets()).Returns([]);
+
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(new User { Nickname = "TesztElek" });
+        _mockDatabaseService.Setup(x => x.LoadSettingsPageAsync(It.IsAny<string>())).ReturnsAsync(true);
+        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdList()).Returns([new Household { HouseholdName = "testhh", HouseholdAccess = "ASD123" }]);
+        _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(new Household { HouseholdName = "testhh", HouseholdAccess = "ASD123" });
         _mockUserSessionService.Setup(x => x.GetCurrentHouseholdUsers()).Returns([]);
 
         viewModel.NewHouseholdName = "testhh";
@@ -257,11 +258,29 @@ public class SettingsTests
     }
 
     // Háztartás módosításának tesztelése:
+    [TestCase("", "Háztartásnév megadása kötelező!")]
+    [TestCase("     ", "Háztartásnév megadása kötelező!")]
+    [TestCase("Te", "A háztartásnév túl rövid!")]
+    [TestCase("TestHouseholdTestHousehold", "A háztartásnév túl hosszú!")]
+    public void EditHouseholdAsync_NewHouseholdNameInvalid(string newHouseholdName, string errorMessage)
+    {
+        // Arrange
+        viewModel.EditHouseholdName = newHouseholdName;
+
+        // Act
+        viewModel.EditHouseholdButtonCommand.Execute(string.Empty);
+
+        // Assert
+        Assert.That(viewModel.ErrorMessage, Is.EqualTo(errorMessage));
+    }
+
     [Test]
     public void EditHouseholdAsync_CurrentHouseholdNotExist()
     {
         // Arrange
         _mockDatabaseService.Setup(x => x.EditHouseholdAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<int>())).ReturnsAsync(false);
+
+        viewModel.EditHouseholdName = "TestHousehold";
 
         // Act
         viewModel.EditHouseholdButtonCommand.Execute(string.Empty);
@@ -274,21 +293,15 @@ public class SettingsTests
     public void EditHouseholdAsync_Successful()
     {
         // Arrange
-        var mockUser = new User { Nickname = "TestUser", Username = "testuser" };
-        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
-        var mockHousehold = new Household { HouseholdName = "testhh", HouseholdAccess = "ASD123" };
-        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
-        var householdList = new List<Household> { mockHousehold };
-        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdList()).Returns(householdList);
         _mockDatabaseService.Setup(x => x.EditHouseholdAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<int>())).ReturnsAsync(true);
-        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
-        _mockDatabaseService.Setup(x => x.LoadDataAsync(It.IsAny<int>())).ReturnsAsync(true);
-        _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
-        _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(mockHousehold);
-        _mockUserSessionService.Setup(x => x.GetCurrentBudgets()).Returns([]);
+        _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(new Household { HouseholdName = "testhh", HouseholdAccess = "ASD123" });
+
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(new User { Nickname = "TesztElek" });
+        _mockDatabaseService.Setup(x => x.LoadSettingsPageAsync(It.IsAny<string>())).ReturnsAsync(true);
+        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdList()).Returns([new Household { HouseholdName = "testhh", HouseholdAccess = "ASD123" }]);
         _mockUserSessionService.Setup(x => x.GetCurrentHouseholdUsers()).Returns([]);
 
-        viewModel.NewHouseholdName = "testhh";
+        viewModel.EditHouseholdName = "testhh";
         viewModel.HouseholdAccessCode = "ASD123";
 
         // Act
@@ -330,22 +343,14 @@ public class SettingsTests
     public void LeaveHouseholdAsync_Successful()
     {
         // Arrange
-        var mockUser = new User { Nickname = "TestUser", Username = "testuser" };
-        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
-        var mockHousehold = new Household { HouseholdName = "testhh", HouseholdAccess = "ASD123" };
-        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
-        var householdList = new List<Household> { mockHousehold };
-        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdList()).Returns(householdList);
+        _mockUserSessionService.Setup(x => x.IsOfflineMode()).Returns(false);
         _mockDatabaseService.Setup(x => x.LeaveHouseholdAsync()).ReturnsAsync(true);
-        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
-        _mockDatabaseService.Setup(x => x.LoadDataAsync(It.IsAny<int>())).ReturnsAsync(true);
-        _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
-        _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(mockHousehold);
-        _mockUserSessionService.Setup(x => x.GetCurrentBudgets()).Returns([]);
-        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdUsers()).Returns([]);
 
-        viewModel.NewHouseholdName = "testhh";
-        viewModel.HouseholdAccessCode = "ASD123";
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(new User { Nickname = "TesztElek" });
+        _mockDatabaseService.Setup(x => x.LoadSettingsPageAsync(It.IsAny<string>())).ReturnsAsync(true);
+        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdList()).Returns([new Household { HouseholdName = "testhh", HouseholdAccess = "ASD123" }]);
+        _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(new Household { HouseholdName = "testhh", HouseholdAccess = "ASD123" });
+        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdUsers()).Returns([]);
 
         // Act
         viewModel.LeaveHouseholdButtonCommand.Execute(string.Empty);
@@ -386,22 +391,14 @@ public class SettingsTests
     public void DisbandHouseholdAsync_Successful()
     {
         // Arrange
-        var mockUser = new User { Nickname = "TestUser", Username = "testuser" };
-        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
-        var mockHousehold = new Household { HouseholdName = "testhh", HouseholdAccess = "ASD123" };
-        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
-        var householdList = new List<Household> { mockHousehold };
-        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdList()).Returns(householdList);
+        _mockUserSessionService.Setup(x => x.IsOfflineMode()).Returns(false);
         _mockDatabaseService.Setup(x => x.LeaveHouseholdAsync()).ReturnsAsync(true);
-        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(mockUser);
-        _mockDatabaseService.Setup(x => x.LoadDataAsync(It.IsAny<int>())).ReturnsAsync(true);
-        _mockDatabaseService.Setup(x => x.ChangeSelectedHouseholdAsync(It.IsAny<string>())).ReturnsAsync(true);
-        _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(mockHousehold);
-        _mockUserSessionService.Setup(x => x.GetCurrentBudgets()).Returns([]);
-        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdUsers()).Returns([]);
 
-        viewModel.NewHouseholdName = "testhh";
-        viewModel.HouseholdAccessCode = "ASD123";
+        _mockUserSessionService.Setup(x => x.GetCurrentUser()).Returns(new User { Nickname = "TesztElek" });
+        _mockDatabaseService.Setup(x => x.LoadSettingsPageAsync(It.IsAny<string>())).ReturnsAsync(true);
+        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdList()).Returns([new Household { HouseholdName = "testhh", HouseholdAccess = "ASD123" }]);
+        _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(new Household { HouseholdName = "testhh", HouseholdAccess = "ASD123" });
+        _mockUserSessionService.Setup(x => x.GetCurrentHouseholdUsers()).Returns([]);
 
         // Act
         viewModel.DisbandHouseholdButtonCommand.Execute(string.Empty);
