@@ -412,7 +412,35 @@ public class DatabaseService : IDatabaseService
         // Jelenlegi háztartás:
         Household? currenthousehold = null;
         if (!_userSessionService.IsOfflineMode())
+        {
+            // Ha a felhasználó jelenlegi háztartása nem szerepel a háztartásai között, akkor az első elérhető háztartást állítja be:
+            string[] householdList = [user.HouseHold1, user.HouseHold2, user.HouseHold3];
+            if (!householdList.Contains(user.CurrentHousehold))
+            {
+                if (user.HouseHold1 != null)
+                {
+                    await _supabaseClient.From<User>().Where(x => x.UID == user.UID).Set(x => x.CurrentHousehold, user.HouseHold1).Update();
+                    user.CurrentHousehold = user.HouseHold1;
+                }
+                else if (user.HouseHold2 != null)
+                {
+                    await _supabaseClient.From<User>().Where(x => x.UID == user.UID).Set(x => x.CurrentHousehold, user.HouseHold2).Update();
+                    user.CurrentHousehold = user.HouseHold2;
+                }
+                else if (user.HouseHold3 != null)
+                {
+                    await _supabaseClient.From<User>().Where(x => x.UID == user.UID).Set(x => x.CurrentHousehold, user.HouseHold3).Update();
+                    user.CurrentHousehold = user.HouseHold3;
+                }
+                else 
+                {
+                    await _supabaseClient.From<User>().Where(x => x.UID == user.UID).Set(x => x.CurrentHousehold, null).Update();
+                    user.CurrentHousehold = null!;
+                }
+            }
+
             currenthousehold = await _supabaseClient.From<Household>().Where(x => x.HHID == user.CurrentHousehold).Single();
+        }
         else
         {
             OfflineHousehold? offlineHousehold = await _sqliteDb.Table<OfflineHousehold>().Where(x => x.HHID == user.CurrentHousehold).FirstOrDefaultAsync();

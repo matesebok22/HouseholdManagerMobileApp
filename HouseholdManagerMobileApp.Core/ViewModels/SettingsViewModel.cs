@@ -291,7 +291,7 @@ public class SettingsViewModel : ViewModelBase
         NavigateNotificationsButtonCommand = new RelayCommand(async _ => await NavigateToNotificationsAsync());
         ShowJoinHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(1, IsJoinHouseholdVisible)));
         ShowCreateHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(2, IsCreateHouseholdVisible)));
-        ShowEditHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(3, IsEditHouseholdVisible)), _ => _userSessionService.IsCurrentHouseholdOwner());
+        ShowEditHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(3, IsEditHouseholdVisible)));
         CreateHouseholdButtonCommand = new RelayCommand(async _ => await CreateHouseholdAsync());
         JoinHouseholdButtonCommand = new RelayCommand(async _ => await JoinHouseholdAsync());
         EditHouseholdButtonCommand = new RelayCommand(async _ => await EditHouseholdAsync());
@@ -546,6 +546,12 @@ public class SettingsViewModel : ViewModelBase
 
     private async Task EditHouseholdAsync()
     {
+        if (!_userSessionService.IsCurrentHouseholdOwner())
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Csak a háztartás tulajdonosa módosíthatja a háztartást.");
+            return;
+        }
+
         if (EditHouseholdName.Trim() == string.Empty)
         {
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Háztartásnév megadása kötelező!");

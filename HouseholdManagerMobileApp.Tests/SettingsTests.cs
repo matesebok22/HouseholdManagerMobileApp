@@ -258,6 +258,19 @@ public class SettingsTests
     }
 
     // Háztartás módosításának tesztelése:
+    [Test]
+    public void EditHouseholdAsync_NotHouseholdOwner()
+    {
+        // Arrange
+        _mockUserSessionService.Setup(x => x.IsCurrentHouseholdOwner()).Returns(false);
+
+        // Act
+        viewModel.EditHouseholdButtonCommand.Execute(string.Empty);
+
+        // Assert
+        Assert.That(viewModel.ErrorMessage, Is.EqualTo("Csak a háztartás tulajdonosa módosíthatja a háztartást."));
+    }
+
     [TestCase("", "Háztartásnév megadása kötelező!")]
     [TestCase("     ", "Háztartásnév megadása kötelező!")]
     [TestCase("Te", "A háztartásnév túl rövid!")]
@@ -265,6 +278,8 @@ public class SettingsTests
     public void EditHouseholdAsync_NewHouseholdNameInvalid(string newHouseholdName, string errorMessage)
     {
         // Arrange
+        _mockUserSessionService.Setup(x => x.IsCurrentHouseholdOwner()).Returns(true);
+
         viewModel.EditHouseholdName = newHouseholdName;
 
         // Act
@@ -278,6 +293,7 @@ public class SettingsTests
     public void EditHouseholdAsync_CurrentHouseholdNotExist()
     {
         // Arrange
+        _mockUserSessionService.Setup(x => x.IsCurrentHouseholdOwner()).Returns(true);
         _mockDatabaseService.Setup(x => x.EditHouseholdAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<int>())).ReturnsAsync(false);
 
         viewModel.EditHouseholdName = "TestHousehold";
@@ -293,6 +309,7 @@ public class SettingsTests
     public void EditHouseholdAsync_Successful()
     {
         // Arrange
+        _mockUserSessionService.Setup(x => x.IsCurrentHouseholdOwner()).Returns(true);
         _mockDatabaseService.Setup(x => x.EditHouseholdAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<int>())).ReturnsAsync(true);
         _mockUserSessionService.Setup(x => x.GetCurrentHousehold()).Returns(new Household { HouseholdName = "testhh", HouseholdAccess = "ASD123" });
 

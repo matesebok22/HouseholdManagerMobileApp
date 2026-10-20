@@ -23,6 +23,10 @@
                     <TimePicker Time="{Binding EventTime}" TextColor="#FFFFFF" Margin="10, 0, 0, 0"/>
                 </HorizontalStackLayout>
                 <Entry Placeholder="Esemény típusa (opcionális, maximum 20 karakter)" Text="{Binding EventType}" TextColor="#FFFFFF" ReturnType="Next"/>
+                <HorizontalStackLayout>
+                    <Label Text="Felhasználható összeg: "/>
+                    <Label Text="{Binding UseableBudgetLabel}"/>
+                </HorizontalStackLayout>
                 <Entry Keyboard="Numeric" Placeholder="Esemény költsége" Text="{Binding EventCost}" TextColor="#FFFFFF" ReturnType="Next"/>
                 <Editor Placeholder="Esemény leírása (opcionális, maximum 500 karakter)" Text="{Binding EventDesc}" TextColor="#FFFFFF" AutoSize="TextChanges"/>
 

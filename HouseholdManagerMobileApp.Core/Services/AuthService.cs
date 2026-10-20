@@ -74,7 +74,8 @@ public class AuthService : IAuthService
                     if (!string.IsNullOrEmpty(lastLoggedUID))
                         SecureStorage.Remove($"login-{lastLoggedUID}");
 
-                    if (user.CurrentHousehold != string.Empty)
+                    string[] householdList = [user.HouseHold1, user.HouseHold2, user.HouseHold3];
+                    if (user.CurrentHousehold != string.Empty && householdList.Contains(user.CurrentHousehold))
                     {
                         // Offline-Online adatbázis szinkronizálása:
                         if (await _databaseService.SyncDatabasesAsync() == false)

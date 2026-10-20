@@ -4,6 +4,7 @@ using HouseholdManagerMobileApp.Core.Commands;
 using HouseholdManagerMobileApp.Core.Helpers;
 using HouseholdManagerMobileApp.Core.Models;
 using HouseholdManagerMobileApp.Core.Services;
+using Microsoft.IdentityModel.Tokens;
 
 namespace HouseholdManagerMobileApp.Core.ViewModels;
 
@@ -252,6 +253,8 @@ public class EventLogViewModel : ViewModelBase
             return;
         }
 
+        _userSessionService.SetSelectedEvent(null);
+
         IsMenuVisible = false;
         await Shell.Current.GoToAsync("//NotificationsPage");
     }
@@ -267,7 +270,7 @@ public class EventLogViewModel : ViewModelBase
 
         _userSessionService.SetSelectedEvent(null);
 
-        await Shell.Current.GoToAsync("//SettingsPage?test=asd123");
+        await Shell.Current.GoToAsync("//SettingsPage");
     }
 
     private async Task NavigateToNewEventAsync()
@@ -279,7 +282,17 @@ public class EventLogViewModel : ViewModelBase
             return;
         }
 
-        await Shell.Current.GoToAsync("//NewEventPage");
+        _userSessionService.SetSelectedEvent(null);
+
+        /*if (SelectedMonthUseableBudget == "- Ft")
+        {
+            ChangeSortTypeName = "Dátum nézet";
+            SelectedMonth = DateTime.Today;
+            await LoadMonthAsync();
+        }
+
+        await Shell.Current.GoToAsync($"//NewEventPage?useableBudget={SelectedMonthUseableBudget.Split(' ')[0]}");*/
+        await Shell.Current.GoToAsync($"//NewEventPage");
     }
 
     private async Task LoadEventlogAsync()
@@ -320,7 +333,7 @@ public class EventLogViewModel : ViewModelBase
 
                 foreach (Event _event in sortedEventLog)
                 {
-                    if (!EventTypes.Contains(_event.EventType))
+                    if (!_event.EventType.Trim().IsNullOrEmpty() && !EventTypes.Contains(_event.EventType))
                         EventTypes.Add(_event.EventType);
                 }
 
@@ -330,7 +343,7 @@ public class EventLogViewModel : ViewModelBase
             // Kategória szerinti rendszerezés:
             foreach (Event _event in sortedEventLog)
             {
-                if (_event.EventType == SelectedCategory)
+                if (_event.EventType == SelectedCategory || (_event.EventType.Trim().IsNullOrEmpty() && SelectedCategory == "Kategória nélküli"))
                     EventLog.Add(_event);
             }
 
@@ -375,8 +388,17 @@ public class EventLogViewModel : ViewModelBase
             return;
         }
 
+        /*if (SelectedMonthUseableBudget == "- Ft")
+        {
+            ChangeSortTypeName = "Dátum nézet";
+            SelectedMonth = _userSessionService.GetSelectedEvent()!.EventUserDate;
+            await LoadMonthAsync();
+        }
+
         if (Shell.Current != null)
-            await Shell.Current.GoToAsync("//NewEventPage");
+            await Shell.Current.GoToAsync($"//NewEventPage?useableBudget={SelectedMonthUseableBudget.Split(' ')[0]}");*/
+        if (Shell.Current != null)
+            await Shell.Current.GoToAsync($"//NewEventPage");
     }
 
     private async Task DeleteEventAsync()
