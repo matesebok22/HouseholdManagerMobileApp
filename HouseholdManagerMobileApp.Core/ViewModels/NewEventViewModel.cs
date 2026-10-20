@@ -2,7 +2,6 @@
 using HouseholdManagerMobileApp.Core.Services;
 using HouseholdManagerMobileApp.Core.Models;
 using HouseholdManagerMobileApp.Core.Helpers;
-using System.ComponentModel.Design;
 
 namespace HouseholdManagerMobileApp.Core.ViewModels;
 
@@ -36,7 +35,7 @@ public class NewEventViewModel : ViewModelBase
         }
     }
 
-    private DateTime eventDate = DateTime.Today;
+    private DateTime eventDate;
     public DateTime EventDate
     {
         get => eventDate;
@@ -150,6 +149,7 @@ public class NewEventViewModel : ViewModelBase
             if (isLoading == value) return;
             isLoading = value;
             OnPropertyChanged();
+
             CreateEventButtonCommand.RefreshCanExecute();
         }
     }
@@ -168,35 +168,33 @@ public class NewEventViewModel : ViewModelBase
         
         if (Shell.Current != null)
         {
-            if (_userSessionService.IsOfflineMode())
-                WelcomeMessage = $"{_userSessionService.GetCurrentUser()!.Nickname} (Offline)";
-            else
-                WelcomeMessage = _userSessionService.GetCurrentUser()!.Nickname;
-
-            if (_userSessionService.GetSelectedEvent() != null)
-            {
-                Event eventToEdit = _userSessionService.GetSelectedEvent() ?? new();
-                EventName = eventToEdit.EventName;
-                EventDate = eventToEdit.EventUserDate.Date;
-                EventTime = eventToEdit.EventUserDate.TimeOfDay;
-                EventType = eventToEdit.EventType;
-                EventCost = eventToEdit.EventCost;
-                EventDesc = eventToEdit.EventDescription;
-            }
-            else
-                _ = CalculateUseableBudgetAsync();
+            _ = LoadEventEditorAsync();
         }
     }
 
-    // A GotoPage folyamán elküldött értékek feldolgozása:
-    /*public void ApplyQueryAttributes(IDictionary<string, object> query)
+    private async Task LoadEventEditorAsync()
     {
-        UseableBudget = int.Parse(query["useableBudget"].ToString()!);
-        if (_userSessionService.GetSelectedEvent() != null)
-            UseableBudget += _userSessionService.GetSelectedEvent()!.EventCost;
+        if (_userSessionService.IsOfflineMode())
+            WelcomeMessage = $"{_userSessionService.GetCurrentUser()!.Nickname} (Offline)";
+        else
+            WelcomeMessage = _userSessionService.GetCurrentUser()!.Nickname;
 
-        UseableBudgetLabel = (UseableBudget - EventCost).ToString();
-    }*/
+        if (_userSessionService.GetSelectedEvent() != null)
+        {
+            Event eventToEdit = _userSessionService.GetSelectedEvent() ?? new();
+            EventName = eventToEdit.EventName;
+            EventDate = eventToEdit.EventUserDate.Date;
+            EventTime = eventToEdit.EventUserDate.TimeOfDay;
+            EventType = eventToEdit.EventType;
+            EventCost = eventToEdit.EventCost;
+            EventDesc = eventToEdit.EventDescription;
+        }
+        else
+        {
+            EventDate = DateTime.Today;
+            await CalculateUseableBudgetAsync();
+        }
+    }
 
     private async Task NavigateToEventLogAsync()
     {

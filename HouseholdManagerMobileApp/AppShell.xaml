@@ -15,4 +15,5 @@
     <ShellContent ContentTemplate="{DataTemplate views:EventLogPage}" Route="EventLogPage"/>
     <ShellContent ContentTemplate="{DataTemplate views:NewEventPage}" Route="NewEventPage"/>
     <ShellContent ContentTemplate="{DataTemplate views:NotificationsPage}" Route="NotificationsPage"/>
+    <ShellContent ContentTemplate="{DataTemplate views:AnalyticsPage}" Route="AnalyticsPage"/>
 </Shell>

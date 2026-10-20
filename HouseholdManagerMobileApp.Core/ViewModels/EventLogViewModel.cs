@@ -47,6 +47,10 @@ public class EventLogViewModel : ViewModelBase
             if (isLoading == value) return;
             isLoading = value;
             OnPropertyChanged();
+
+            NavigateNewEventButtonCommand.RefreshCanExecute();
+            NavigateAnalyticsButtonCommand.RefreshCanExecute();
+            ChangeSortTypeButtonCommand.RefreshCanExecute();
         }
     }
 
@@ -118,6 +122,18 @@ public class EventLogViewModel : ViewModelBase
         {
             if (changeSortTypeName == value) return;
             changeSortTypeName = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private string analyticsButtonName = "Hónap/Év statisztikák";
+    public string AnalyticsButtonName
+    {
+        get => analyticsButtonName;
+        set
+        {
+            if (analyticsButtonName == value) return;
+            analyticsButtonName = value;
             OnPropertyChanged();
         }
     }
@@ -199,6 +215,7 @@ public class EventLogViewModel : ViewModelBase
     public RelayCommand NavigateNotificationsButtonCommand { get; }
     public RelayCommand NavigateSettingsButtonCommand { get; }
     public RelayCommand NavigateNewEventButtonCommand { get; }
+    public RelayCommand NavigateAnalyticsButtonCommand { get; }
     public RelayCommand ToggleEventExpandCommand { get; }
     public RelayCommand EditEventButtonCommand { get; }
     public RelayCommand DeleteEventButtonCommand { get; }
@@ -217,11 +234,12 @@ public class EventLogViewModel : ViewModelBase
         NavigateHomeButtonCommand = new RelayCommand(async _ => await NavigateToHomeAsync());
         NavigateNotificationsButtonCommand = new RelayCommand(async _ => await NavigateToNotificationsAsync());
         NavigateSettingsButtonCommand = new RelayCommand(async _ => await NavigateToSettingsAsync());
-        NavigateNewEventButtonCommand = new RelayCommand(async _ => await NavigateToNewEventAsync());
+        NavigateNewEventButtonCommand = new RelayCommand(async _ => await NavigateToNewEventAsync(), _ => !IsLoading);
+        NavigateAnalyticsButtonCommand = new RelayCommand(async _ => await NavigatoToAnalyticsAsync(), _ => !IsLoading);
         ToggleEventExpandCommand = new RelayCommand(async parameter => await ToggleEventExpandAsync(parameter));
         EditEventButtonCommand = new RelayCommand(async _ => await EditEventAsync());
         DeleteEventButtonCommand = new RelayCommand(async _ => await DeleteEventAsync());
-        ChangeSortTypeButtonCommand = new RelayCommand(async _ => await ChangeSortTypeAsync());
+        ChangeSortTypeButtonCommand = new RelayCommand(async _ => await ChangeSortTypeAsync(), _ => !IsLoading);
         PreviousMonthButtonCommand = new RelayCommand(async _ => await SelectTypeAsync(-1));
         NextMonthButtonCommand = new RelayCommand(async _ => await SelectTypeAsync(1));
         LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
@@ -284,19 +302,30 @@ public class EventLogViewModel : ViewModelBase
 
         _userSessionService.SetSelectedEvent(null);
 
-        /*if (SelectedMonthUseableBudget == "- Ft")
+        await Shell.Current.GoToAsync($"//NewEventPage");
+    }
+
+    private async Task NavigatoToAnalyticsAsync()
+    {
+        if (!_userSessionService.IsUserLoggedIn())
         {
-            ChangeSortTypeName = "Dátum nézet";
-            SelectedMonth = DateTime.Today;
-            await LoadMonthAsync();
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az új esemény létrehozásához való navigálás sikertelen. Kérlek, jelentkezz be újra.");
+            await LogoutAsync();
+            return;
         }
 
-        await Shell.Current.GoToAsync($"//NewEventPage?useableBudget={SelectedMonthUseableBudget.Split(' ')[0]}");*/
-        await Shell.Current.GoToAsync($"//NewEventPage");
+        _userSessionService.SetSelectedEvent(null);
+
+        if (AnalyticsButtonName.Contains("Hónap/Év statisztikák"))
+            await Shell.Current.GoToAsync($"//AnalyticsPage?isDate=1&category={SelectedTypeName}");
+        else
+            await Shell.Current.GoToAsync($"//AnalyticsPage?isDate=0&category={SelectedTypeName}");
     }
 
     private async Task LoadEventlogAsync()
     {
+        IsLoading = true;
+
         if (_userSessionService.IsOfflineMode())
             WelcomeMessage = $"{_userSessionService.GetCurrentUser()!.Nickname} (Offline)";
         else
@@ -318,6 +347,8 @@ public class EventLogViewModel : ViewModelBase
         Event? currentlySelected = _userSessionService.GetSelectedEvent();
         if (currentlySelected != null)
             ExpandedEventId = currentlySelected.EID;
+
+        IsLoading = false;
     }
 
     private async Task LoadMonthAsync()
@@ -388,15 +419,6 @@ public class EventLogViewModel : ViewModelBase
             return;
         }
 
-        /*if (SelectedMonthUseableBudget == "- Ft")
-        {
-            ChangeSortTypeName = "Dátum nézet";
-            SelectedMonth = _userSessionService.GetSelectedEvent()!.EventUserDate;
-            await LoadMonthAsync();
-        }
-
-        if (Shell.Current != null)
-            await Shell.Current.GoToAsync($"//NewEventPage?useableBudget={SelectedMonthUseableBudget.Split(' ')[0]}");*/
         if (Shell.Current != null)
             await Shell.Current.GoToAsync($"//NewEventPage");
     }
@@ -429,6 +451,7 @@ public class EventLogViewModel : ViewModelBase
     private async Task ChangeSortTypeAsync()
     {
         ChangeSortTypeName = ChangeSortTypeName == "Kategória nézet" ? "Dátum nézet" : "Kategória nézet";
+        AnalyticsButtonName = ChangeSortTypeName == "Kategória nézet" ? "Kategória statisztikák" : "Hónap/Év statisztikák";
 
         if (Shell.Current != null)
             await LoadMonthAsync();

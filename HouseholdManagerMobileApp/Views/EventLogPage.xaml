@@ -39,9 +39,10 @@
             <Label Grid.Row="0" Text="{Binding CurrentHouseholdName}" TextColor="#FFFFFF" HorizontalOptions="Center" FontSize="30"/>
 
             <VerticalStackLayout Grid.Row="1">
-                <Grid ColumnDefinitions="*, *">
-                    <Button Grid.Column="0" Text="Új esemény létrehozása" Command="{Binding NavigateNewEventButtonCommand}" IsEnabled="{Binding ActiveHousehold}" TextColor="#FFFFFF" LineBreakMode="WordWrap" Margin="10"/>
-                    <Button Grid.Column="1" Text="{Binding ChangeSortTypeName}" Command="{Binding ChangeSortTypeButtonCommand}" TextColor="#FFFFFF" LineBreakMode="WordWrap" Margin="10"/>
+                <Grid ColumnDefinitions="*, *" RowDefinitions="*, *">
+                    <Button Grid.Column="0" Grid.Row="0" Text="Új esemény létrehozása" Command="{Binding NavigateNewEventButtonCommand}" IsEnabled="{Binding ActiveHousehold}" TextColor="#FFFFFF" LineBreakMode="WordWrap" Margin="10"/>
+                    <Button Grid.Column="1" Grid.Row="0" Text="{Binding AnalyticsButtonName}" Command="{Binding NavigateAnalyticsButtonCommand}" TextColor="#FFFFFF" LineBreakMode="WordWrap" Margin="10"/>
+                    <Button Grid.ColumnSpan="2" Grid.Row="1" Text="{Binding ChangeSortTypeName}" Command="{Binding ChangeSortTypeButtonCommand}" TextColor="#FFFFFF" LineBreakMode="WordWrap" Margin="100, 0, 100, 0"/>
                 </Grid>
                 
                 <Grid ColumnDefinitions="*, 200, *" Padding="10">

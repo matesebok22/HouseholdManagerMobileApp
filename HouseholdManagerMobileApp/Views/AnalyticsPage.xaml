@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="HouseholdManagerMobileApp.Views.AnalyticsPage"
+             BackgroundColor="#1F1F1F">
+
+    <ScrollView>
+        <Grid RowDefinitions="Auto,*" Padding="0">
+            <!-- Fejléc -->
+            <Grid ColumnDefinitions="Auto,*" Padding="10" BackgroundColor="Grey">
+                <Button Grid.Column="0" Text="☰" FontSize="24" IsEnabled="False" BackgroundColor="Grey" TextColor="White" Padding="0" WidthRequest="44"/>
+                <Label Grid.Column="1" Text="{Binding WelcomeMessage}" TextColor="#FFFFFF" FontSize="20" FontAttributes="Bold" VerticalOptions="Center" Margin="10,0,0,0"/>
+            </Grid>
+
+            <!-- Fő tartalom -->
+            <VerticalStackLayout Grid.Row="1" Padding="10" Spacing="15" VerticalOptions="Center">
+                <Label Text="{Binding CurrentHouseholdName}" TextColor="#FFFFFF" HorizontalOptions="Center" FontSize="30"/>
+                <Label Text="{Binding CategoryName}" TextColor="#FFFFFF" HorizontalOptions="Center" FontSize="Large" FontAttributes="Bold"/>
+
+                <!-- LISTÁK KINÉZETÉT MEGCSINÁLNI!!! -->
+                
+                <!-- Alapértelmezett lista -->
+                <CollectionView ItemsSource="{Binding DefaultList}" IsVisible="{Binding DefaultListVisible}">
+                    
+                </CollectionView>
+                
+                <!-- Teljes lista -->
+                <CollectionView ItemsSource="{Binding FullList}" IsVisible="{Binding FullListVisible}">
+                    
+                </CollectionView>
+                
+                <Grid ColumnDefinitions="*, *" ColumnSpacing="20">
+                    <Button Grid.Column="0" Text="Vissza az eseménynaplóba" Command="{Binding NavigateEventLogButtonCommand}" TextColor="#FFFFFF" LineBreakMode="WordWrap"/>
+                    <Button Grid.Column="1" Text="{Binding ChangeListButtonName}" Command="{Binding ChangeListButtonCommand}" TextColor="#FFFFFF" LineBreakMode="WordWrap"/>
+                </Grid>
+            </VerticalStackLayout>
+        </Grid>
+    </ScrollView>
+</ContentPage>
