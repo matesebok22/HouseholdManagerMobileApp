@@ -5,7 +5,7 @@
              BackgroundColor="#1F1F1F">
 
     <ScrollView>
-        <Grid RowDefinitions="Auto,*" Padding="0">
+        <Grid RowDefinitions="Auto, Auto, *, Auto" Padding="0">
             <!-- Fejléc -->
             <Grid ColumnDefinitions="Auto,*" Padding="10" BackgroundColor="Grey">
                 <Button Grid.Column="0" Text="☰" FontSize="24" IsEnabled="False" BackgroundColor="Grey" TextColor="White" Padding="0" WidthRequest="44"/>
@@ -13,27 +13,73 @@
             </Grid>
 
             <!-- Fő tartalom -->
-            <VerticalStackLayout Grid.Row="1" Padding="10" Spacing="15" VerticalOptions="Center">
+            <VerticalStackLayout Grid.Row="1">
                 <Label Text="{Binding CurrentHouseholdName}" TextColor="#FFFFFF" HorizontalOptions="Center" FontSize="30"/>
                 <Label Text="{Binding CategoryName}" TextColor="#FFFFFF" HorizontalOptions="Center" FontSize="Large" FontAttributes="Bold"/>
+            </VerticalStackLayout>
 
+            <VerticalStackLayout Grid.Row="2" Padding="10" Spacing="15">
                 <!-- LISTÁK KINÉZETÉT MEGCSINÁLNI!!! -->
                 
                 <!-- Alapértelmezett lista -->
-                <CollectionView ItemsSource="{Binding DefaultList}" IsVisible="{Binding DefaultListVisible}">
-                    
-                </CollectionView>
-                
+                <VerticalStackLayout IsVisible="{Binding DefaultListVisible}">
+                    <Grid ColumnDefinitions="*, Auto">
+                        <Label Grid.Column="0" Text="Összesen" FontAttributes="Bold"/>
+                        <HorizontalStackLayout Grid.Column="1">
+                            <Label Text="{Binding DefaultListValue}" FontAttributes="Bold"/>
+                            <Label Text=" Ft" FontAttributes="Bold"/>
+                        </HorizontalStackLayout>
+                    </Grid>
+
+                    <CollectionView ItemsSource="{Binding DefaultList}" Margin="0, 15, 0, 0">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnDefinitions="*, Auto" Margin="0, 10, 0, 0">
+                                    <BoxView Grid.ColumnSpan="2" BackgroundColor="#1D4ED8" HorizontalOptions="Fill" VerticalOptions="Fill" AnchorX="0" ScaleX="{Binding Ratio}"/>
+
+                                    <Label Grid.Column="0" Text="{Binding Name}" Margin="10, 10, 0, 10"/>
+                                    <HorizontalStackLayout Grid.Column="1" Margin="0, 10, 0, 10">
+                                        <Label Text="{Binding Sum}"/>
+                                        <Label Text=" Ft"/>
+                                    </HorizontalStackLayout>
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+
                 <!-- Teljes lista -->
-                <CollectionView ItemsSource="{Binding FullList}" IsVisible="{Binding FullListVisible}">
-                    
-                </CollectionView>
-                
-                <Grid ColumnDefinitions="*, *" ColumnSpacing="20">
-                    <Button Grid.Column="0" Text="Vissza az eseménynaplóba" Command="{Binding NavigateEventLogButtonCommand}" TextColor="#FFFFFF" LineBreakMode="WordWrap"/>
-                    <Button Grid.Column="1" Text="{Binding ChangeListButtonName}" Command="{Binding ChangeListButtonCommand}" TextColor="#FFFFFF" LineBreakMode="WordWrap"/>
-                </Grid>
+                <VerticalStackLayout IsVisible="{Binding FullListVisible}">
+                    <Grid ColumnDefinitions="*, Auto">
+                        <Label Grid.Column="0" Text="Összesen" FontAttributes="Bold"/>
+                        <HorizontalStackLayout Grid.Column="1">
+                            <Label Text="{Binding FullListValue}" FontAttributes="Bold"/>
+                            <Label Text=" Ft" FontAttributes="Bold"/>
+                        </HorizontalStackLayout>
+                    </Grid>
+
+                    <CollectionView ItemsSource="{Binding FullList}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnDefinitions="*, Auto" Margin="0, 15, 0, 0">
+                                    <BoxView Grid.ColumnSpan="2" BackgroundColor="#1D4ED8" HorizontalOptions="Fill" VerticalOptions="Fill" AnchorX="0" ScaleX="{Binding Ratio}"/>
+                                    
+                                    <Label Grid.Column="0" Text="{Binding Name}" Margin="10, 10, 0, 10"/>
+                                    <HorizontalStackLayout Grid.Column="1" Margin="0, 10, 0, 10">
+                                        <Label Text="{Binding Sum}"/>
+                                        <Label Text=" Ft"/>
+                                    </HorizontalStackLayout>
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
             </VerticalStackLayout>
+
+            <Grid Grid.Row="3" ColumnDefinitions="*, *" ColumnSpacing="20" Margin="10">
+                <Button Grid.Column="0" Text="Vissza az eseménynaplóba" Command="{Binding NavigateEventLogButtonCommand}" TextColor="#FFFFFF" LineBreakMode="WordWrap"/>
+                <Button Grid.Column="1" Text="{Binding ChangeListButtonName}" Command="{Binding ChangeListButtonCommand}" TextColor="#FFFFFF" LineBreakMode="WordWrap"/>
+            </Grid>
         </Grid>
     </ScrollView>
 </ContentPage>

@@ -85,8 +85,11 @@ public class AnalyticsViewModel : ViewModelBase, IQueryAttributable
         }
     }
 
-    private ObservableCollection<(string, int)> defaultList = [];
-    public ObservableCollection<(string, int)> DefaultList
+    // Segédrekord a XAML-ban kiíratáshoz (sima tuple nem működik CollectionView-ban):
+    public record DisplayTuple(string Name, int Sum, double Ratio);
+
+    private ObservableCollection<DisplayTuple> defaultList = [];
+    public ObservableCollection<DisplayTuple> DefaultList
     {
         get => defaultList;
         set
@@ -97,14 +100,38 @@ public class AnalyticsViewModel : ViewModelBase, IQueryAttributable
         }
     }
 
-    private ObservableCollection<(string, int)> fullList = [];
-    public ObservableCollection<(string, int)> FullList
+    private ObservableCollection<DisplayTuple> fullList = [];
+    public ObservableCollection<DisplayTuple> FullList
     {
         get => fullList;
         set
         {
             if (fullList == value) return;
             fullList = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private int defaultListValue = 0;
+    public int DefaultListValue
+    {
+        get => defaultListValue;
+        set
+        {
+            if (defaultListValue == value) return;
+            defaultListValue = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private int fullListValue = 0;
+    public int FullListValue
+    {
+        get => fullListValue;
+        set
+        {
+            if (fullListValue == value) return;
+            fullListValue = value;
             OnPropertyChanged();
         }
     }
@@ -204,31 +231,60 @@ public class AnalyticsViewModel : ViewModelBase, IQueryAttributable
         // Alapértelmezett lista betöltése:
         if (QueryIsDate)
         {
-            DateTime currentMonth = DateTime.Parse(QueryCategory);
-            List<(string, int)> filteredEvents = eventlog.Where(x => x.EventUserDate.Date == currentMonth.Date).GroupBy(x => x.EventType).Select(x => (x.Key, x.Sum(x => x.EventCost))).ToList();
+            var rawEvents = eventlog.Where(x => x.EventUserDate.ToString("yyyy. MMMM") == QueryCategory).GroupBy(x => x.EventType).Select(x => (x.Key, x.Sum(e => e.EventCost))).ToList();
 
-            DefaultList = new ObservableCollection<(string, int)>(filteredEvents);
+            DefaultListValue = rawEvents.Sum(x => x.Item2);
+
+            List<DisplayTuple> filteredEvents = rawEvents.Select(x => new DisplayTuple(x.Key, x.Item2, DefaultListValue > 0 ? (double)x.Item2 / DefaultListValue : 0.0)).ToList();
+
+            for (int i = 0; i < filteredEvents.Count; i++)
+            {
+                if (filteredEvents[i].Name == "")
+                    filteredEvents[i] = new DisplayTuple("Kategória nélküli", filteredEvents[i].Sum, filteredEvents[i].Ratio);
+            }
+
+            DefaultList = new ObservableCollection<DisplayTuple>(filteredEvents);
         }
         else
         {
-            List<(string, int)> filteredEvents = eventlog.Where(x => x.EventType == QueryCategory && x.EventUserDate.Year == DateTime.Today.Year).GroupBy(x => x.EventUserDate.ToString("yyyy. MMMM")).Select(x => (x.Key, x.Sum(x => x.EventCost))).ToList();
+            string eventType = QueryCategory == "Kategória nélküli" ? "" : QueryCategory;
+            var rawEvents = eventlog.Where(x => x.EventType == eventType && x.EventUserDate.Year == DateTime.Today.Year).GroupBy(x => x.EventUserDate.ToString("yyyy. MMMM")).Select(x => (x.Key, x.Sum(e => e.EventCost))).ToList();
 
-            DefaultList = new ObservableCollection<(string, int)>(filteredEvents);
+            DefaultListValue = rawEvents.Sum(x => x.Item2);
+
+            List<DisplayTuple> filteredEvents = rawEvents.Select(x => new DisplayTuple(x.Key, x.Item2, DefaultListValue > 0 ? (double)x.Item2 / DefaultListValue : 0.0)).ToList();
+
+            DefaultList = new ObservableCollection<DisplayTuple>(filteredEvents);
         }
 
         // Teljes lista betöltése:
         if (QueryIsDate)
         {
-            DateTime currentYear = DateTime.Parse(QueryCategory);
-            List<(string, int)> filteredFullEvents = eventlog.Where(x => x.EventUserDate.Year == currentYear.Year).GroupBy(x => x.EventType).Select(x => (x.Key, x.Sum(x => x.EventCost))).ToList();
+            string currentYear = QueryCategory.Split(' ')[0];
+            var rawFullEvents = eventlog.Where(x => x.EventUserDate.ToString("yyyy.") == currentYear).GroupBy(x => x.EventType).Select(x => (x.Key, x.Sum(e => e.EventCost))).ToList();
 
-            FullList = new ObservableCollection<(string, int)>(filteredFullEvents);
+            FullListValue = rawFullEvents.Sum(x => x.Item2);
+
+            List<DisplayTuple> filteredFullEvents = rawFullEvents.Select(x => new DisplayTuple(x.Key, x.Item2, FullListValue > 0 ? (double)x.Item2 / FullListValue : 0.0)).ToList();
+
+            for (int i = 0; i < filteredFullEvents.Count; i++)
+            {
+                if (filteredFullEvents[i].Name == "")
+                    filteredFullEvents[i] = new DisplayTuple("Kategória nélküli", filteredFullEvents[i].Sum, filteredFullEvents[i].Ratio);
+            }
+
+            FullList = new ObservableCollection<DisplayTuple>(filteredFullEvents);
         }
         else
         {
-            List<(string, int)> filteredFullEvents = eventlog.Where(x => x.EventType == QueryCategory).GroupBy(x => x.EventUserDate.ToString("yyyy.")).Select(x => (x.Key, x.Sum(x => x.EventCost))).ToList();
+            string eventType = QueryCategory == "Kategória nélküli" ? "" : QueryCategory;
+            var rawFullEvents = eventlog.Where(x => x.EventType == eventType).GroupBy(x => x.EventUserDate.ToString("yyyy.")).Select(x => (x.Key, x.Sum(e => e.EventCost))).ToList();
 
-            FullList = new ObservableCollection<(string, int)>(filteredFullEvents);
+            FullListValue = rawFullEvents.Sum(x => x.Item2);
+
+            List<DisplayTuple> filteredFullEvents = rawFullEvents.Select(x => new DisplayTuple(x.Key, x.Item2, FullListValue > 0 ? (double)x.Item2 / FullListValue : 0.0)).ToList();
+
+            FullList = new ObservableCollection<DisplayTuple>(filteredFullEvents);
         }
 
         await Task.CompletedTask;
@@ -243,7 +299,7 @@ public class AnalyticsViewModel : ViewModelBase, IQueryAttributable
         {
             if (FullListVisible)
             {
-                CategoryName = DateTime.Parse(QueryCategory).ToString("yyyy");
+                CategoryName = DateTime.Parse(QueryCategory).ToString("yyyy.");
                 ChangeListButtonName = "Hónap nézet";
             }
             else
