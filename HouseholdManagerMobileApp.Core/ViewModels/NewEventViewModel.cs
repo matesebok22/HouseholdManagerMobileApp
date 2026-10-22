@@ -86,7 +86,7 @@ public class NewEventViewModel : ViewModelBase
             eventCost = value;
 
             if (UseableBudgetLabel.Contains("Ft"))
-                UseableBudgetLabel = $"{(UseableBudget - eventCost).ToString()} Ft";
+                UseableBudgetLabel = $"{UseableBudget - eventCost} Ft";
 
             OnPropertyChanged();
         }
@@ -271,7 +271,6 @@ public class NewEventViewModel : ViewModelBase
         IsLoading = false;
     }
 
-    // TESZTELNI!!!
     private async Task CalculateUseableBudgetAsync()
     {
         string selectedMonth = EventDate.ToString("yyyy. MMMM");

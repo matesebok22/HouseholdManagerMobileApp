@@ -165,4 +165,73 @@ public class NewEventTests
         // Assert
         Assert.That(viewModel.ErrorMessage, Is.EqualTo(string.Empty));
     }
+
+    // Felhasználható költségkeret tesztelése:
+    [Test]
+    public void CalculateUseableBudgetAsync_NotSuccessful()
+    {
+        // Arrange
+        List<Budget> budgets = [new Budget { BudgetDate = new DateTime(2026, 10, 1), BudgetAmount = 0 }, new Budget { BudgetDate = new DateTime(2026, 9, 1), BudgetAmount = 200000 }];
+        _mockUserSessionService.Setup(x => x.GetCurrentBudgets()).Returns(budgets);
+        List<Event> events = [new Event { EventUserDate = new DateTime(2026, 10, 4), EventCost = 15000 }, new Event { EventUserDate = new DateTime(2026, 10, 14), EventCost = 20000 }, new Event { EventUserDate = new DateTime(2026, 8, 30), EventCost = 150000 }];
+        _mockUserSessionService.Setup(x => x.GetCurrentEventLog()).Returns(events);
+
+        // Act
+        viewModel.EventDate = new DateTime(2026, 10, 20);
+
+        // Assert
+        Assert.That(viewModel.UseableBudgetLabel, Is.EqualTo("Nincs beállítva költségkeret!"));
+    }
+
+    [Test]
+    public void CalculateUseableBudgetAsync_NoSelectedEventSuccessful()
+    {
+        // Arrange
+        List<Budget> budgets = [new Budget { BudgetDate = new DateTime(2026, 10, 1), BudgetAmount = 100000 }, new Budget { BudgetDate = new DateTime(2026, 9, 1), BudgetAmount = 200000 }];
+        _mockUserSessionService.Setup(x => x.GetCurrentBudgets()).Returns(budgets);
+        List<Event> events = [new Event { EventUserDate = new DateTime(2026, 10, 4), EventCost = 15000 }, new Event { EventUserDate = new DateTime(2026, 10, 14), EventCost = 20000 }, new Event { EventUserDate = new DateTime(2026, 8, 30), EventCost = 150000 }];
+        _mockUserSessionService.Setup(x => x.GetCurrentEventLog()).Returns(events);
+        Event? selectedEvent = null;
+        _mockUserSessionService.Setup(x => x.GetSelectedEvent()).Returns(selectedEvent);
+
+        // Act
+        viewModel.EventDate = new DateTime(2026, 10, 20);
+
+        // Assert
+        Assert.That(viewModel.UseableBudgetLabel, Is.EqualTo("65000 Ft"));
+    }
+
+    [Test]
+    public void CalculateUseableBudgetAsync_SelectedEventSuccessful()
+    {
+        // Arrange
+        List<Budget> budgets = [new Budget { BudgetDate = new DateTime(2026, 10, 1), BudgetAmount = 100000 }, new Budget { BudgetDate = new DateTime(2026, 9, 1), BudgetAmount = 200000 }];
+        _mockUserSessionService.Setup(x => x.GetCurrentBudgets()).Returns(budgets);
+        List<Event> events = [new Event { EventUserDate = new DateTime(2026, 10, 4), EventCost = 15000 }, new Event { EventUserDate = new DateTime(2026, 10, 14), EventCost = 20000 }, new Event { EventUserDate = new DateTime(2026, 8, 30), EventCost = 150000 }];
+        _mockUserSessionService.Setup(x => x.GetCurrentEventLog()).Returns(events);
+        Event? selectedEvent = new Event { EventUserDate = new DateTime(2026, 10, 4), EventCost = 15000 };
+        _mockUserSessionService.Setup(x => x.GetSelectedEvent()).Returns(selectedEvent);
+
+        // Act
+        viewModel.EventDate = new DateTime(2026, 10, 20);
+
+        // Assert
+        Assert.That(viewModel.UseableBudgetLabel, Is.EqualTo("80000 Ft"));
+    }
+
+    [TestCase(100000, 10000, "90000 Ft")]
+    [TestCase(50000, 45000, "5000 Ft")]
+    [TestCase(10000, 54000, "-44000 Ft")]
+    public void EventCostChanged_Successful(int useableBudget, int eventCost, string useableBudgetLabel)
+    {
+        // Arrange
+        viewModel.UseableBudgetLabel = "Ft";
+        viewModel.UseableBudget = useableBudget;
+
+        // Act
+        viewModel.EventCost = eventCost;
+
+        // Assert
+        Assert.That(viewModel.UseableBudgetLabel, Is.EqualTo(useableBudgetLabel));
+    }
 }
