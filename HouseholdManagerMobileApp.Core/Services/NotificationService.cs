@@ -168,7 +168,6 @@ public class NotificationService : INotificationService
                 RelatedHouseholdId = offlineNotification.RelatedHouseholdId,
                 IsRead = offlineNotification.IsRead,
                 CreatedAt = offlineNotification.CreatedAt,
-                UpdatedAt = offlineNotification.UpdatedAt
             });
         }
 
