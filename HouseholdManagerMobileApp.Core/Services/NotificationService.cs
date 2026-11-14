@@ -140,10 +140,7 @@ public class NotificationService : INotificationService
         List<string> disabledHouseholds = [];
         User currentUser = _userSessionService.GetCurrentUser()!;
 
-        List<string> householdIds = [];
-        householdIds.Add(currentUser.HouseHold1);
-        householdIds.Add(currentUser.HouseHold2);
-        householdIds.Add(currentUser.HouseHold3);
+        string[] householdIds = [currentUser.HouseHold1, currentUser.HouseHold2, currentUser.HouseHold3];
         foreach (string householdId in householdIds)
         {
             string value = await SecureStorage.GetAsync($"notifications-{currentUser.UID}-{householdId}") ?? "";
@@ -171,7 +168,6 @@ public class NotificationService : INotificationService
                 RelatedHouseholdId = offlineNotification.RelatedHouseholdId,
                 IsRead = offlineNotification.IsRead,
                 CreatedAt = offlineNotification.CreatedAt,
-                UpdatedAt = offlineNotification.UpdatedAt
             });
         }
 

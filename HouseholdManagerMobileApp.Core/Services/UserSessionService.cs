@@ -28,16 +28,12 @@ public class UserSessionService : IUserSessionService
     public Event? GetSelectedEvent() => selectedEvent;
     public void SetSelectedEvent(Event? _event) => selectedEvent = _event;
 
-    public async Task SetUserSessionAsync(User user, Household household, List<Household> hhList, List<Budget> budgets, List<Event> eventlog)
+    public async Task SetUserSessionAsync(User user)
     {
         userLoggedIn = true;
         isOfflineMode = Connectivity.Current.NetworkAccess != NetworkAccess.Internet;
         currentUser = user;
-        currentHousehold = household;
-        householdList = hhList;
-        currentBudgets = budgets;
-        currentEventLog = eventlog;
-        currentHouseholdOwner = household != null ? user.UID == household.HouseholdOwner : false;
+
         await Task.CompletedTask;
     }
 
@@ -57,9 +53,9 @@ public class UserSessionService : IUserSessionService
         await Task.CompletedTask;
     }
 
-    public async Task ChangeHousehold(Household currenthousehold, List<User> householdusers, List<Household> households, List<Budget> budgets)
+    public async Task ChangeHousehold(Household? currenthousehold, List<User> householdusers, List<Household> households, List<Budget> budgets)
     {
-        currentHouseholdOwner = currentUser!.UID == currenthousehold.HouseholdOwner;
+        currentHouseholdOwner = currentUser!.UID == currenthousehold?.HouseholdOwner;
         currentHousehold = currenthousehold;
         householdUsers = householdusers;
         householdList.Clear();
@@ -67,6 +63,13 @@ public class UserSessionService : IUserSessionService
         currentEventLog.Clear();
         householdList = households;
         currentBudgets = budgets;
+
+        await Task.CompletedTask;
+    }
+
+    public async Task ReloadUser(User user)
+    {
+        currentUser = user;
 
         await Task.CompletedTask;
     }

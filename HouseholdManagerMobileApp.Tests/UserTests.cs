@@ -10,6 +10,7 @@ public class UserTests
 {
     private Mock<IAuthService> _mockAuthService;
     private Mock<IUserSessionService> _mockUserSessionService;
+    private Mock<IDatabaseService> _mockDatabaseService;
     private Mock<INotificationService> _mockNotificationService;
     private UserViewModel viewModel;
 
@@ -18,8 +19,9 @@ public class UserTests
     {
         _mockAuthService = new Mock<IAuthService>();
         _mockNotificationService = new Mock<INotificationService>();
+        _mockDatabaseService = new Mock<IDatabaseService>();
         _mockUserSessionService = new Mock<IUserSessionService>();
-        viewModel = new(_mockAuthService.Object, _mockUserSessionService.Object, _mockNotificationService.Object);
+        viewModel = new(_mockAuthService.Object, _mockUserSessionService.Object, _mockDatabaseService.Object, _mockNotificationService.Object);
     }
 
     [Test]

@@ -51,8 +51,27 @@ public class RegistrationTests
         Assert.That(viewModel.ErrorMessage, Is.EqualTo("Kérlek tölts ki minden mezőt!"));
     }
 
-    [TestCase("password123", "password")]
-    [TestCase("password", "password123")]
+    [TestCase("pass", "pass", "A jelszónak legalább 8 karakter hosszúnak kell lennie!")]
+    [TestCase("password123", "password123", "A jelszónak tartalmaznia kell legalább egy nagybetűt!")]
+    [TestCase("PASSWORD", "PASSWORD", "A jelszónak tartalmaznia kell legalább egy kisbetűt!")]
+    [TestCase("Password", "Password", "A jelszónak tartalmaznia kell legalább egy számot!")]
+    public void RegisterAsync_WeakPassword(string password, string password2, string errorMessage)
+    {
+        // Arrange
+        viewModel.Username = "testuser";
+        viewModel.Nickname = "TestUser";
+        viewModel.Password = password;
+        viewModel.ConfirmPassword = password2;
+
+        // Act
+        viewModel.RegisterButtonCommand.Execute(string.Empty);
+
+        // Assert
+        Assert.That(viewModel.ErrorMessage, Is.EqualTo(errorMessage));
+    }
+
+    [TestCase("Password123", "Password321")]
+    [TestCase("Password321", "Password123")]
     public void RegisterAsync_NoMatchingPasswords(string password, string password2)
     {
         // Arrange
@@ -76,8 +95,8 @@ public class RegistrationTests
 
         viewModel.Username = "testuser";
         viewModel.Nickname = "TestUser";
-        viewModel.Password = "password123";
-        viewModel.ConfirmPassword = "password123";
+        viewModel.Password = "Password123";
+        viewModel.ConfirmPassword = "Password123";
 
         // Act
         viewModel.RegisterButtonCommand.Execute(string.Empty);
@@ -90,12 +109,12 @@ public class RegistrationTests
     public void RegisterAsync_SuccessfulRegistration()
     {
         // Arrange
-        _mockAuthService.Setup(x => x.RegisterAsync("testuser", "TestUser", "password123")).ReturnsAsync(true);
+        _mockAuthService.Setup(x => x.RegisterAsync("testuser", "TestUser", "Password123")).ReturnsAsync(true);
 
         viewModel.Username = "testuser";
         viewModel.Nickname = "TestUser";
-        viewModel.Password = "password123";
-        viewModel.ConfirmPassword = "password123";
+        viewModel.Password = "Password123";
+        viewModel.ConfirmPassword = "Password123";
 
         // Act
         viewModel.RegisterButtonCommand.Execute(string.Empty);

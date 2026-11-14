@@ -7,7 +7,7 @@ namespace HouseholdManagerMobileApp.Core.ViewModels;
 public class LoginViewModel : ViewModelBase
 {
     private readonly IAuthService _authService;
-    private CancellationTokenSource _connectivityCTS;
+    private CancellationTokenSource? _connectivityCTS;
     private Task? _connectivityCheckTask;
 
     private string username = string.Empty;

@@ -25,7 +25,7 @@ public class AuthService : IAuthService
     {
         try
         {
-            Dictionary<string, object> parameters = new()
+            Dictionary<string, string> parameters = new()
             {
                 { "p_username", username },
                 { "p_nickname", nickname },
@@ -53,13 +53,13 @@ public class AuthService : IAuthService
 
         try
         {
-            Dictionary<string, object> parameters = new()
+            Dictionary<string, string> parameters = new()
             {
                 { "p_username", username },
                 { "p_raw_password", password }
             };
 
-            var response = await _supabaseClient.Rpc("login_user_v2", parameters);
+            var response = await _supabaseClient.Rpc("login_user", parameters);
             string rawJson = response.Content ?? "";
 
             if (!string.IsNullOrWhiteSpace(rawJson))
@@ -68,40 +68,22 @@ public class AuthService : IAuthService
                 if (userList != null && userList.Count > 0)
                 {
                     User user = userList[0];
-                    List<Budget> budgets = [];
-                    List<Event> eventlog = [];
-                    Household? currentHousehold = null;
 
                     // Minden online bejelentkezésnél a korábbi offline token törlése:
                     string? lastLoggedUID = Preferences.Get("last_logged_uid", null);
                     if (!string.IsNullOrEmpty(lastLoggedUID))
                         SecureStorage.Remove($"login-{lastLoggedUID}");
 
-                    if (user.CurrentHousehold != string.Empty)
+                    string[] householdList = [user.HouseHold1, user.HouseHold2, user.HouseHold3];
+                    if (user.CurrentHousehold != string.Empty && householdList.Contains(user.CurrentHousehold))
                     {
                         // Offline-Online adatbázis szinkronizálása:
                         if (await _databaseService.SyncDatabasesAsync() == false)
                             return false;
-
-                        currentHousehold = await _supabaseClient.From<Household>().Where(x => x.HHID == user.CurrentHousehold).Single();
-                        if (currentHousehold != null)
-                        {
-                            var budgetquery = _supabaseClient.From<Budget>().Where(x => x.BudgetHousehold == currentHousehold.HHID).Get();
-                            var eventquery = _supabaseClient.From<Event>().Where(x => x.EventHousehold == currentHousehold.HHID).Get();
-
-                            await Task.WhenAll(budgetquery,  eventquery);
-
-                            budgets = budgetquery.Result.Models.ToList();
-                            eventlog = eventquery.Result.Models.ToList();
-                        }
                     }
 
                     // Felhasználói session beállítása:
-                    await _userSessionService.SetUserSessionAsync(user, currentHousehold!, [], budgets, eventlog);
-
-                    // Offline adatbázis frissítése:
-                    if (await _databaseService.CopyDataToOfflineDB() == false)
-                        return false;
+                    await _userSessionService.SetUserSessionAsync(user);
 
                     // Offline bejelentkezéshez szükséges token beállítása:
                     await SecureStorage.SetAsync($"login-{user.UID}", DateTime.Now.Ticks.ToString());
@@ -143,55 +125,8 @@ public class AuthService : IAuthService
                 if (lastLoggedTicks == 0 || (lastLoggedTicks + Constants.OfflineLoginValidity) < currentTicks)
                     return false;
 
-                List<Budget> budgets = [];
-                List<Event> eventlog = [];
-                Household? currentHousehold = null;
-
-                if (user.CurrentHousehold != string.Empty)
-                {
-                    OfflineHousehold? householdquery = await _sqliteDb.Table<OfflineHousehold>().Where(x => x.HHID == user.CurrentHousehold).FirstOrDefaultAsync();
-                    if (householdquery != null)
-                    {
-                        currentHousehold = new Household
-                        {
-                            HHID = householdquery.HHID,
-                            HouseholdName = householdquery.HouseholdName,
-                            HouseholdOwner = householdquery.HouseholdOwner,
-                            HouseholdAccess = householdquery.HouseholdAccess
-                        };
-
-                        var budgetquery = _sqliteDb.Table<OfflineBudget>().Where(x => x.BudgetHousehold == currentHousehold.HHID).ToListAsync();
-
-                        var eventquery = _sqliteDb.Table<OfflineEvent>().Where(x => x.EventHousehold == currentHousehold.HHID).ToListAsync();
-
-                        await Task.WhenAll(budgetquery, eventquery);
-
-                        budgets = budgetquery.Result.Select(x => new Budget
-                        {
-                            BID = x.BID,
-                            BudgetHousehold = x.BudgetHousehold,
-                            BudgetDate = x.BudgetDate,
-                            BudgetAmount = x.BudgetAmount
-                        }).ToList();
-
-                        eventlog = eventquery.Result.Select(x => new Event
-                        {
-                            EID = x.EID,
-                            EventUser = x.EventUser,
-                            EventHousehold = x.EventHousehold,
-                            EventDate = x.EventDate,
-                            EventName = x.EventName,
-                            EventUserDate = x.EventUserDate,
-                            EventType = x.EventType,
-                            EventCost = x.EventCost,
-                            EventDescription = x.EventDescription,
-                            LastModifiedBy = x.LastModifiedBy
-                        }).ToList();
-                    }
-                }
-
                 // Felhasználói session beállítása:
-                await _userSessionService.SetUserSessionAsync(user, currentHousehold!, [], budgets, eventlog);
+                await _userSessionService.SetUserSessionAsync(user);
 
                 return true;
             }
@@ -208,7 +143,7 @@ public class AuthService : IAuthService
     {
         try
         {
-            Dictionary<string, object> parameters = new()
+            Dictionary<string, string> parameters = new()
             {
                 { "p_username", _userSessionService.GetCurrentUser()!.Username },
                 { "p_old_password", oldPassword },

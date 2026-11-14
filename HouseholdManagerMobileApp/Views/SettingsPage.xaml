@@ -37,8 +37,8 @@
                     <Picker Grid.Row="1" Grid.Column="0" ItemsSource="{Binding HouseholdsList}" SelectedItem="{Binding SelectedHousehold}" TextColor="#FFFFFF"/>
                     <ActivityIndicator Grid.Row="1" Grid.Column="1" IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}" Color="#FFFFFF"/>
 
-                    <Label Grid.Row="2" Grid.ColumnSpan="2" Text="Jelenlegi háztartás tagjai:" TextColor="#FFFFFF"/>
-                    <CollectionView Grid.Row="3" Grid.ColumnSpan="2" ItemsSource="{Binding UsersInHousehold}" MaximumHeightRequest="60" Margin="10, 0, 0, 0">
+                    <Label Grid.Row="2" Grid.ColumnSpan="2" IsVisible="{Binding ActiveHousehold}" Text="Jelenlegi háztartás tagjai:" TextColor="#FFFFFF"/>
+                    <CollectionView Grid.Row="3" Grid.ColumnSpan="2" ItemsSource="{Binding UsersInHousehold}" IsVisible="{Binding ActiveHousehold}" IsEnabled="{Binding ActiveHousehold}" MaximumHeightRequest="60" Margin="10, 0, 0, 0">
                         <CollectionView.ItemTemplate>
                             <DataTemplate>
                                 <Label Text="{Binding .}" TextColor="#FFFFFF"/>
@@ -65,7 +65,7 @@
                 <VerticalStackLayout IsVisible="{Binding IsJoinHouseholdVisible}">
                     <Grid ColumnDefinitions="Auto, *" ColumnSpacing="10">
                         <Label Grid.Column="0" Text="Csatlakozás háztartásba: " TextColor="#FFFFFF" VerticalOptions="Center"/>
-                        <Entry Grid.Column="1" Text="{Binding HouseholdAccessCode}" TextColor="#FFFFFF" Placeholder="Azonosító kód (6 karakter)" MaxLength="6" TextTransform="Uppercase"/>
+                        <Entry Grid.Column="1" Text="{Binding HouseholdAccessCode}" TextColor="#FFFFFF" Placeholder="Azonosító kód (6 karakter)" MaxLength="6" TextTransform="Uppercase" ReturnType="Send" ReturnCommand="{Binding JoinHouseholdButtonCommand}"/>
                     </Grid>
 
                     <Button Text="Csatlakozás" TextColor="#FFFFFF" Command="{Binding JoinHouseholdButtonCommand}" WidthRequest="200"/>
@@ -75,7 +75,7 @@
                 <VerticalStackLayout IsVisible="{Binding IsCreateHouseholdVisible}">
                     <Grid ColumnDefinitions="Auto, *" ColumnSpacing="10">
                         <Label Grid.Column="0" Text="Új háztartás neve: " TextColor="#FFFFFF" VerticalOptions="Center"/>
-                        <Entry Grid.Column="1" Text="{Binding NewHouseholdName}" TextColor="#FFFFFF" Placeholder="3-10 karakter"/>
+                        <Entry Grid.Column="1" Text="{Binding NewHouseholdName}" TextColor="#FFFFFF" Placeholder="3-25 karakter" ReturnType="Send" ReturnCommand="{Binding CreateHouseholdButtonCommand}"/>
                     </Grid>
 
                     <Button Text="Új háztartás" Command="{Binding CreateHouseholdButtonCommand}" TextColor="#FFFFFF" WidthRequest="200"/>
@@ -85,7 +85,7 @@
                 <VerticalStackLayout IsVisible="{Binding IsEditHouseholdVisible}">
                     <Grid ColumnDefinitions="Auto, *" ColumnSpacing="10">
                         <Label Grid.Column="0" Text="Háztartás átnevezése: " TextColor="#FFFFFF" VerticalOptions="Center"/>
-                        <Entry Grid.Column="1" Text="{Binding EditHouseholdName}" TextColor="#FFFFFF" Placeholder="3-10 karakter"/>
+                        <Entry Grid.Column="1" Text="{Binding EditHouseholdName}" TextColor="#FFFFFF" Placeholder="3-25 karakter"/>
                     </Grid>
 
                     <Grid ColumnDefinitions="Auto, *" ColumnSpacing="10">
@@ -95,7 +95,7 @@
 
                     <Grid ColumnDefinitions="Auto, *" ColumnSpacing="10">
                         <Label Grid.Column="0" Text="Havi összeg módosítása: " TextColor="#FFFFFF" VerticalOptions="Center"/>
-                        <Entry Grid.Column="1" Text="{Binding EditHouseholdBudget}" TextColor="#FFFFFF" Placeholder="3-10 karakter"/>
+                        <Entry Keyboard="Numeric" Grid.Column="1" Text="{Binding EditHouseholdBudget}" TextColor="#FFFFFF" Placeholder="3-10 karakter"/>
                     </Grid>
 
                     <Button Text="Módosítás" Command="{Binding EditHouseholdButtonCommand}" TextColor="#FFFFFF" WidthRequest="200"/>
@@ -120,9 +120,9 @@
                 <!-- Jelszó kezelés -->
                 <Label Text="Jelszó változtatása" TextColor="#FFFFFF" FontSize="Medium"/>
 
-                <Entry Placeholder="Régi jelszó" IsPassword="True" Text="{Binding OldPassword}" TextColor="#FFFFFF"/>
-                <Entry Placeholder="Új jelszó" IsPassword="True" Text="{Binding NewPassword}" TextColor="#FFFFFF"/>
-                <Entry Placeholder="Új jelszó megerősítése" IsPassword="True" Text="{Binding ConfirmNewPassword}" TextColor="#FFFFFF"/>
+                <Entry Placeholder="Régi jelszó" IsPassword="True" Text="{Binding OldPassword}" TextColor="#FFFFFF" ReturnType="Next"/>
+                <Entry Placeholder="Új jelszó" IsPassword="True" Text="{Binding NewPassword}" TextColor="#FFFFFF" ReturnType="Next"/>
+                <Entry Placeholder="Új jelszó megerősítése" IsPassword="True" Text="{Binding ConfirmNewPassword}" TextColor="#FFFFFF" ReturnType="Send" ReturnCommand="{Binding ChangePasswordButtonCommand}"/>
 
                 <Button Text="Jelszó megváltoztatása" Command="{Binding ChangePasswordButtonCommand}" TextColor="#FFFFFF"/>
 

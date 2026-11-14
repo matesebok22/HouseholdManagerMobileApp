@@ -34,9 +34,6 @@ public class Notification : BaseModel
 
     [SupabaseDB.Column("created_at")]
     public DateTime CreatedAt { get; set; }
-
-    [SupabaseDB.Column("updated_at")]
-    public DateTime UpdatedAt { get; set; }
 }
 
 // SQLite offline adatbázis Notification osztálya:
@@ -69,7 +66,4 @@ public class OfflineNotification
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }
-
-    [Column("updated_at")]
-    public DateTime UpdatedAt { get; set; }
 }

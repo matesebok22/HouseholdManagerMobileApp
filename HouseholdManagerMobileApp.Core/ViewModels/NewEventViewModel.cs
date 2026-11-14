@@ -43,6 +43,9 @@ public class NewEventViewModel : ViewModelBase
         {
             if (eventDate == value) return;
             eventDate = value;
+
+            _ = CalculateUseableBudgetAsync();
+
             OnPropertyChanged();
         }
     }
@@ -73,7 +76,7 @@ public class NewEventViewModel : ViewModelBase
         }
     }
 
-    private int eventCost;
+    private int eventCost = 0;
     public int EventCost
     {
         get => eventCost;
@@ -81,6 +84,10 @@ public class NewEventViewModel : ViewModelBase
         {
             if (eventCost == value) return;
             eventCost = value;
+
+            if (UseableBudgetLabel.Contains("Ft"))
+                UseableBudgetLabel = $"{UseableBudget - eventCost} Ft";
+
             OnPropertyChanged();
         }
     }
@@ -93,6 +100,30 @@ public class NewEventViewModel : ViewModelBase
         {
             if (eventDesc == value) return;
             eventDesc = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private int useableBudget = 0;
+    public int UseableBudget
+    {
+        get => useableBudget;
+        set
+        {
+            if (useableBudget == value) return;
+            useableBudget = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private string useableBudgetLabel = string.Empty;
+    public string UseableBudgetLabel
+    {
+        get => useableBudgetLabel;
+        set
+        {
+            if (useableBudgetLabel == value) return;
+            useableBudgetLabel = value;
             OnPropertyChanged();
         }
     }
@@ -118,6 +149,7 @@ public class NewEventViewModel : ViewModelBase
             if (isLoading == value) return;
             isLoading = value;
             OnPropertyChanged();
+
             CreateEventButtonCommand.RefreshCanExecute();
         }
     }
@@ -136,21 +168,7 @@ public class NewEventViewModel : ViewModelBase
         
         if (Shell.Current != null)
         {
-            if (_userSessionService.IsOfflineMode())
-                WelcomeMessage = $"{_userSessionService.GetCurrentUser()!.Nickname} (Offline)";
-            else
-                WelcomeMessage = _userSessionService.GetCurrentUser()!.Nickname;
-
-            if (_userSessionService.GetSelectedEvent() != null)
-            {
-                Event eventToEdit = _userSessionService.GetSelectedEvent() ?? new();
-                EventName = eventToEdit.EventName;
-                EventDate = eventToEdit.EventUserDate.Date;
-                EventTime = eventToEdit.EventUserDate.TimeOfDay;
-                EventType = eventToEdit.EventType;
-                EventCost = eventToEdit.EventCost;
-                EventDesc = eventToEdit.EventDescription;
-            }
+            _ = LoadEventEditorAsync();
         }
     }
 
@@ -169,6 +187,27 @@ public class NewEventViewModel : ViewModelBase
         EventCost = 0;
 
         await Shell.Current.GoToAsync("//EventLogPage");
+    }
+
+    private async Task LoadEventEditorAsync()
+    {
+        if (_userSessionService.IsOfflineMode())
+            WelcomeMessage = $"{_userSessionService.GetCurrentUser()!.Nickname} (Offline)";
+        else
+            WelcomeMessage = _userSessionService.GetCurrentUser()!.Nickname;
+
+        if (_userSessionService.GetSelectedEvent() != null)
+        {
+            Event eventToEdit = _userSessionService.GetSelectedEvent()!;
+            EventName = eventToEdit.EventName;
+            EventDate = eventToEdit.EventUserDate.Date;
+            EventTime = eventToEdit.EventUserDate.TimeOfDay;
+            EventType = eventToEdit.EventType;
+            EventCost = eventToEdit.EventCost;
+            EventDesc = eventToEdit.EventDescription;
+        }
+        else
+            await CalculateUseableBudgetAsync();
     }
 
     private async Task CreateEventAsync()
@@ -227,6 +266,30 @@ public class NewEventViewModel : ViewModelBase
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Új esemény létrehozása sikertelen!");
 
         IsLoading = false;
+    }
+
+    private async Task CalculateUseableBudgetAsync()
+    {
+        string selectedMonth = EventDate.ToString("yyyy. MMMM");
+        Budget? currentMonthBudget = _userSessionService.GetCurrentBudgets().Find(x => x.BudgetDate.ToString("yyyy. MMMM") == selectedMonth);
+        int currentMonthEventCosts = _userSessionService.GetCurrentEventLog().Where(x => x.EventUserDate.ToString("yyyy. MMMM") == selectedMonth).Sum(x => x.EventCost);
+
+        if (currentMonthBudget != null && currentMonthBudget.BudgetAmount != 0)
+        {
+            UseableBudget = currentMonthBudget.BudgetAmount - currentMonthEventCosts;
+
+            if (_userSessionService.GetSelectedEvent() != null)
+            {
+                if (_userSessionService.GetSelectedEvent()!.EventUserDate.ToString("yyyy. MMMM") == selectedMonth)
+                    UseableBudget += _userSessionService.GetSelectedEvent()!.EventCost;
+            }
+
+            UseableBudgetLabel = $"{UseableBudget - EventCost} Ft";
+        }
+        else
+            UseableBudgetLabel = $"Nincs beállítva költségkeret!";
+
+        await Task.CompletedTask;
     }
 
     private async Task LogoutAsync()

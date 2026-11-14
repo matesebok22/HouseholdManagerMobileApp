@@ -4,10 +4,11 @@ using HouseholdManagerMobileApp.Core.Commands;
 using HouseholdManagerMobileApp.Core.Helpers;
 using HouseholdManagerMobileApp.Core.Models;
 using HouseholdManagerMobileApp.Core.Services;
+using Microsoft.IdentityModel.Tokens;
 
 namespace HouseholdManagerMobileApp.Core.ViewModels;
 
-public class SettingsViewModel : ViewModelBase, IQueryAttributable
+public class SettingsViewModel : ViewModelBase
 {
     private readonly IAuthService _authService;
     private readonly IDatabaseService _databaseService;
@@ -57,6 +58,18 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         {
             if (isLoading == value) return;
             isLoading = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private bool activeHousehold = false;
+    public bool ActiveHousehold
+    {
+        get => activeHousehold;
+        set
+        {
+            if (activeHousehold == value) return;
+            activeHousehold = value;
             OnPropertyChanged();
         }
     }
@@ -121,18 +134,6 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         }
     }
 
-    private string selectedHouseholdID = string.Empty;
-    public string SelectedHouseholdID
-    {
-        get => selectedHouseholdID;
-        set
-        {
-            if (selectedHouseholdID == value) return;
-            selectedHouseholdID = value;
-            OnPropertyChanged();
-        }
-    }
-
     private string selectedHousehold = string.Empty;
     public string SelectedHousehold
     {
@@ -143,9 +144,9 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
             selectedHousehold = value;
             OnPropertyChanged();
 
-            if (!string.IsNullOrEmpty(selectedHousehold))
+            if (!string.IsNullOrEmpty(selectedHousehold) && !IsLoading)
             {
-                _ = ChangeSelectedHouseholdAsync();
+                _ = LoadHouseholdsAsync();
             }
         }
     }
@@ -285,147 +286,127 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         _userSessionService = userSessionService;
 
         ToggleMenuButtonCommand = new RelayCommand(async _ => await Task.Run(() => IsMenuVisible = !IsMenuVisible));
-        NavigateHomeButtonCommand = new RelayCommand(async _ => await NavigateToHomeAsync());
-        NavigateEventLogButtonCommand = new RelayCommand(async _ => await NavigateToEventLogAsync());
-        NavigateNotificationsButtonCommand = new RelayCommand(async _ => await NavigateToNotificationsAsync());
+        NavigateHomeButtonCommand = new RelayCommand(async _ => await NavigateToAsync("//UserPage", "A kezdőlaphoz való navigálás sikertelen. Kérlek, jelentkezz be újra."));
+        NavigateEventLogButtonCommand = new RelayCommand(async _ => await NavigateToAsync("//EventLogPage", "Az eseménynaplóhoz való navigálás sikertelen. Kérlek, jelentkezz be újra."));
+        NavigateNotificationsButtonCommand = new RelayCommand(async _ => await NavigateToAsync("//NotificationsPage", "Az értesítésekhez való navigálás sikertelen. Kérlek, jelentkezz be újra."));
         ShowJoinHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(1, IsJoinHouseholdVisible)));
         ShowCreateHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(2, IsCreateHouseholdVisible)));
-        ShowEditHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(3, IsEditHouseholdVisible)), _ => _userSessionService.IsCurrentHouseholdOwner());
+        ShowEditHouseholdButtonCommand = new RelayCommand(async _ => await Task.Run(() => ChangeVisibility(3, IsEditHouseholdVisible)));
         CreateHouseholdButtonCommand = new RelayCommand(async _ => await CreateHouseholdAsync());
         JoinHouseholdButtonCommand = new RelayCommand(async _ => await JoinHouseholdAsync());
         EditHouseholdButtonCommand = new RelayCommand(async _ => await EditHouseholdAsync());
         ChangePasswordButtonCommand = new RelayCommand(async _ => await ChangePasswordAsync());
-        LeaveHouseholdButtonCommand = new RelayCommand(async _ => await LeaveHouseholdAsync(), _ => !_userSessionService.IsCurrentHouseholdOwner());
-        DisbandHouseholdButtonCommand = new RelayCommand(async _ => await DisbandHouseholdAsync(), _ => _userSessionService.IsCurrentHouseholdOwner());
+        LeaveHouseholdButtonCommand = new RelayCommand(async _ => await LeaveHouseholdAsync(), _ => (ActiveHousehold && !_userSessionService.IsCurrentHouseholdOwner()));
+        DisbandHouseholdButtonCommand = new RelayCommand(async _ => await DisbandHouseholdAsync(), _ => (ActiveHousehold && _userSessionService.IsCurrentHouseholdOwner()));
         ToggleNotificationsCommand = new RelayCommand(async _ => await Task.Run(() => NotificationsIsChecked = !NotificationsIsChecked));
         LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
 
         if (Shell.Current != null)
-        {
-            if (_userSessionService.IsOfflineMode())
-                WelcomeMessage = $"{_userSessionService.GetCurrentUser()!.Nickname} (Offline)";
-            else
-                WelcomeMessage = _userSessionService.GetCurrentUser()!.Nickname;
-        }
+            _ = LoadHouseholdsAsync();
     }
 
-    // Csak akkor fut le, ha van paraméter az útvonal végén (? után)
-    public void ApplyQueryAttributes(IDictionary<string, object> query)
-    {
-        _ = LoadHouseholdsAsync();
-    }
-
-    private async Task NavigateToHomeAsync()
+    private async Task NavigateToAsync(string page, string errorMessage)
     {
         if (!_userSessionService.IsUserLoggedIn())
         {
-            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A kezdőlaphoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync(errorMessage);
             await LogoutAsync();
             return;
         }
 
         IsMenuVisible = false;
-        await Shell.Current.GoToAsync("//UserPage");
-    }
-
-    private async Task NavigateToEventLogAsync()
-    {
-        if (!_userSessionService.IsUserLoggedIn())
-        {
-            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az eseménynaplóhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
-            await LogoutAsync();
-            return;
-        }
-
-        IsMenuVisible = false;
-        await Shell.Current.GoToAsync("//EventLogPage");
-    }
-
-    private async Task NavigateToNotificationsAsync()
-    {
-        if (!_userSessionService.IsUserLoggedIn())
-        {
-            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az értesítésekhez való navigálás sikertelen. Kérlek, jelentkezz be újra.");
-            await LogoutAsync();
-            return;
-        }
-
-        IsMenuVisible = false;
-        await Shell.Current.GoToAsync("//NotificationsPage");
+        await Shell.Current.GoToAsync(page);
     }
 
     private async Task LoadHouseholdsAsync()
     {
-        HouseholdsList.Clear();
+        if (_userSessionService.IsOfflineMode())
+            WelcomeMessage = $"{_userSessionService.GetCurrentUser()!.Nickname} (Offline)";
+        else
+        {
+            WelcomeMessage = _userSessionService.GetCurrentUser()!.Nickname;
 
-        bool success = await _databaseService.LoadDataAsync(1);
+            if (Shell.Current != null)
+            {
+                if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+                {
+                    ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Nincs internetkapcsolat. Kérlek, jelentkezz be újra.");
+                    await LogoutAsync();
+                    return;
+                }
+            }
+        }
+
+        IsLoading = true;
+        IsCreateHouseholdVisible = IsEditHouseholdVisible = IsJoinHouseholdVisible = false;
+        bool success = false;
+
+        if (SelectedHousehold.IsNullOrEmpty())
+            success = await _databaseService.LoadSettingsPageAsync();
+        else
+        {
+            string[] parts = SelectedHousehold.Split(" - ");
+            success = await _databaseService.LoadSettingsPageAsync(parts[1]);
+        }
+
+        ActiveHousehold = _userSessionService.GetCurrentHousehold() != null;
+
         if (success)
         {
-            string userID = _userSessionService.GetCurrentUser()!.UID;
-            Household userHH = _userSessionService.GetCurrentHousehold()!;
-
+            HouseholdsList.Clear();
             if (!_userSessionService.IsOfflineMode())
             {
                 foreach (Household household in _userSessionService.GetCurrentHouseholdList())
                     HouseholdsList.Add($"{household.HouseholdName} - {household.HouseholdAccess}");
             }
             else
-                HouseholdsList.Add($"{userHH.HouseholdName} - {userHH.HouseholdAccess}");
-
-            SelectedHousehold = $"{userHH.HouseholdName} - {userHH.HouseholdAccess}";
-
-            if (Shell.Current != null)
-                NotificationsIsChecked = bool.Parse(await SecureStorage.GetAsync($"notifications-{userID}-{userHH.HHID}") ?? "true");
-        }
-    }
-
-    private async Task ChangeSelectedHouseholdAsync()
-    {
-        try
-        {
-            IsLoading = true;
-            IsCreateHouseholdVisible = IsEditHouseholdVisible = IsJoinHouseholdVisible = false;
-
-            string[] parts = SelectedHousehold.Split(" - ");
-            if (parts.Length == 2)
             {
-                string householdAccessCode = parts[1];
-                bool success = await _databaseService.ChangeSelectedHouseholdAsync(householdAccessCode);
-                if (success)
-                {
-                    ShowEditHouseholdButtonCommand.RefreshCanExecute();
-                    LeaveHouseholdButtonCommand.RefreshCanExecute();
-                    DisbandHouseholdButtonCommand.RefreshCanExecute();
-
-                    EditHouseholdName = _userSessionService.GetCurrentHousehold()!.HouseholdName;
-                    EditHouseholdDate = DateTime.Today;
-                    LoadSelectedMonthBudget();
-
-                    string userID = _userSessionService.GetCurrentUser()!.UID;
-                    string userHH = _userSessionService.GetCurrentHousehold()!.HHID;
-                    if (Shell.Current != null)
-                        NotificationsIsChecked = bool.Parse(await SecureStorage.GetAsync($"notifications-{userID}-{userHH}") ?? "true");
-
-                    // Jelenlegi háztartás tagjainak listázása:
-                    UsersInHousehold.Clear();
-                    foreach (User user in _userSessionService.GetCurrentHouseholdUsers())
-                    {
-                        string userText = user.Nickname;
-                        userText += user.UID == _userSessionService.GetCurrentUser()!.UID ? " (Ön)" : "";
-                        userText += user.UID == _userSessionService.GetCurrentHousehold()!.HouseholdOwner ? " (Alapító)" : "";
-                        UsersInHousehold.Add(userText);
-                    }
-                }
-                else
-                    ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Háztartás váltás sikertelen!");
+                Household userHH = _userSessionService.GetCurrentHousehold()!;
+                HouseholdsList.Add($"{userHH.HouseholdName} - {userHH.HouseholdAccess}");
             }
 
-            IsLoading = false;
+            Household? currentHousehold = _userSessionService.GetCurrentHousehold();
+            if (currentHousehold != null)
+            {
+                string householdDisplay = $"{currentHousehold.HouseholdName} - {currentHousehold.HouseholdAccess}";
+                if (HouseholdsList.Contains(householdDisplay))
+                {
+                    selectedHousehold = householdDisplay;
+                    OnPropertyChanged(nameof(SelectedHousehold));
+                }
+            }
+
+            UsersInHousehold.Clear();
+            foreach (User user in _userSessionService.GetCurrentHouseholdUsers())
+            {
+                string userText = user.Nickname;
+                userText += user.UID == _userSessionService.GetCurrentUser()!.UID ? " (Ön)" : "";
+                userText += user.UID == _userSessionService.GetCurrentHousehold()!.HouseholdOwner ? " (Alapító)" : "";
+                UsersInHousehold.Add(userText);
+            }
+
+            if (Shell.Current != null)
+            {
+                string userID = _userSessionService.GetCurrentUser()!.UID;
+                Household? userHH = _userSessionService.GetCurrentHousehold();
+                if (userHH != null)
+                {
+                    NotificationsIsChecked = bool.Parse(await SecureStorage.GetAsync($"notifications-{userID}-{userHH.HHID}") ?? "true");
+
+                    EditHouseholdName = userHH.HouseholdName;
+                    EditHouseholdDate = DateTime.Today;
+                    LoadSelectedMonthBudget();
+                }
+            }
         }
-        catch (Exception ex)
-        {
-            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync($"Hiba a háztartás váltásakor: {ex.Message}");
-        }
+        else
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Háztartás váltás sikertelen!");
+
+        ShowEditHouseholdButtonCommand.RefreshCanExecute();
+        LeaveHouseholdButtonCommand.RefreshCanExecute();
+        DisbandHouseholdButtonCommand.RefreshCanExecute();
+
+        IsLoading = false;
     }
 
     private async Task JoinHouseholdAsync()
@@ -442,10 +423,27 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Offline módban nem lehetséges a háztartáshoz csatlakozás.");
             return;
         }
+        else
+        {
+            if (Shell.Current != null)
+            {
+                if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+                {
+                    ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Nincs internetkapcsolat. Kérlek, jelentkezz be újra.");
+                    await LogoutAsync();
+                    return;
+                }
+            }
+        }
 
         if (HouseholdAccessCode.Trim() == string.Empty)
         {
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Háztartás azonosító megadása kötelező!");
+            return;
+        }
+        else if (HouseholdAccessCode.Length != 6)
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A háztartás azonosítójának 6 karakter hosszúnak kell lennie!");
             return;
         }
 
@@ -454,8 +452,9 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         {
             if (Shell.Current != null)
                 _ = Shell.Current.DisplayAlert("Siker", "Háztartáshoz sikeresen csatlakozva.", "OK");
-            HouseholdAccessCode = string.Empty;
+            HouseholdAccessCode = SelectedHousehold = string.Empty;
             IsJoinHouseholdVisible = false;
+
             await LoadHouseholdsAsync();
         }
         else
@@ -476,10 +475,32 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Offline módban nem lehetséges a háztartás készítése.");
             return;
         }
+        else
+        {
+            if (Shell.Current != null)
+            {
+                if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+                {
+                    ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Nincs internetkapcsolat. Kérlek, jelentkezz be újra.");
+                    await LogoutAsync();
+                    return;
+                }
+            }
+        }
 
         if (NewHouseholdName.Trim() == string.Empty)
         {
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Háztartásnév megadása kötelező!");
+            return;
+        }
+        else if (NewHouseholdName.Length < 3)
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A háztartásnév túl rövid!");
+            return;
+        }
+        else if (NewHouseholdName.Length > 25)
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A háztartásnév túl hosszú!");
             return;
         }
 
@@ -488,8 +509,9 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         {
             if (Shell.Current != null)
                 _ = Shell.Current.DisplayAlert("Siker", "Háztartás sikeresen létrehozva.", "OK");
-            NewHouseholdName = string.Empty;
+            NewHouseholdName = SelectedHousehold = string.Empty;
             IsCreateHouseholdVisible = false;
+
             await LoadHouseholdsAsync();
         }
         else
@@ -498,6 +520,28 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
 
     private async Task EditHouseholdAsync()
     {
+        if (!_userSessionService.IsCurrentHouseholdOwner())
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Csak a háztartás tulajdonosa módosíthatja a háztartást.");
+            return;
+        }
+
+        if (EditHouseholdName.Trim() == string.Empty)
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Háztartásnév megadása kötelező!");
+            return;
+        }
+        else if (EditHouseholdName.Length < 3)
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A háztartásnév túl rövid!");
+            return;
+        }
+        else if (EditHouseholdName.Length > 25)
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A háztartásnév túl hosszú!");
+            return;
+        }
+
         bool success = await _databaseService.EditHouseholdAsync(EditHouseholdName, EditHouseholdDate, EditHouseholdBudget);
 
         if (success)
@@ -507,6 +551,8 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
             IsEditHouseholdVisible = false;
             
             EditHouseholdName = _userSessionService.GetCurrentHousehold()!.HouseholdName;
+
+            SelectedHousehold = string.Empty;
 
             await LoadHouseholdsAsync();
         }
@@ -521,6 +567,18 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Offline módban nem lehetséges a háztartásból való kilépés.");
             return;
         }
+        else
+        {
+            if (Shell.Current != null)
+            {
+                if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+                {
+                    ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Nincs internetkapcsolat. Kérlek, jelentkezz be újra.");
+                    await LogoutAsync();
+                    return;
+                }
+            }
+        }
 
         if (Shell.Current != null)
         {
@@ -533,6 +591,9 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         {
             if (Shell.Current != null)
                 _ = Shell.Current.DisplayAlert("Siker", "Háztartásból sikeresen kilépve.", "OK");
+
+            SelectedHousehold = string.Empty;
+
             await LoadHouseholdsAsync();
         }
         else
@@ -546,6 +607,18 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Offline módban nem lehetséges a háztartás felbontása.");
             return;
         }
+        else
+        {
+            if (Shell.Current != null)
+            {
+                if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+                {
+                    ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Nincs internetkapcsolat. Kérlek, jelentkezz be újra.");
+                    await LogoutAsync();
+                    return;
+                }
+            }
+        }
 
         if (Shell.Current != null)
         {
@@ -558,6 +631,9 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         {
             if (Shell.Current != null)
                 _ = Shell.Current.DisplayAlert("Siker", "Háztartás sikeresen felbontva.", "OK");
+
+            SelectedHousehold = string.Empty;
+
             await LoadHouseholdsAsync();
         }
         else
@@ -578,6 +654,18 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Offline módban nem lehetséges a jelszó megváltoztatása.");
             return;
         }
+        else
+        {
+            if (Shell.Current != null)
+            {
+                if (Connectivity.Current.NetworkAccess != NetworkAccess.Internet)
+                {
+                    ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Nincs internetkapcsolat. Kérlek, jelentkezz be újra.");
+                    await LogoutAsync();
+                    return;
+                }
+            }
+        }
 
         if (string.IsNullOrEmpty(OldPassword) || string.IsNullOrEmpty(NewPassword) || string.IsNullOrEmpty(ConfirmNewPassword))
         {
@@ -588,6 +676,26 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
         if (OldPassword == NewPassword || OldPassword == ConfirmNewPassword)
         {
             ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A régi jelszó nem egyezhet az új jelszóval.");
+            return;
+        }
+        else if (NewPassword.Length < 8)
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az új jelszónak legalább 8 karakter hosszúnak kell lennie!");
+            return;
+        }
+        else if (!NewPassword.Any(char.IsUpper))
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az új jelszónak tartalmaznia kell legalább egy nagybetűt!");
+            return;
+        }
+        else if (!NewPassword.Any(char.IsLower))
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az új jelszónak tartalmaznia kell legalább egy kisbetűt!");
+            return;
+        }
+        else if (!NewPassword.Any(char.IsDigit))
+        {
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az új jelszónak tartalmaznia kell legalább egy számot!");
             return;
         }
 
@@ -610,7 +718,7 @@ public class SettingsViewModel : ViewModelBase, IQueryAttributable
 
     private async Task ToggleNotificationsAsync()
     {
-        // A telefon értesítések engedélyezése vagy letiltása a felhasználói beállítások alapján:
+        // Az értesítések engedélyezése vagy letiltása a felhasználói beállítások alapján:
         string userID = _userSessionService.GetCurrentUser()!.UID;
         string userHH = _userSessionService.GetCurrentHousehold()!.HHID;
         await SecureStorage.SetAsync($"notifications-{userID}-{userHH}", NotificationsIsChecked.ToString());

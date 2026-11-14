@@ -4,6 +4,7 @@ using HouseholdManagerMobileApp.Core.Commands;
 using HouseholdManagerMobileApp.Core.Helpers;
 using HouseholdManagerMobileApp.Core.Models;
 using HouseholdManagerMobileApp.Core.Services;
+using Microsoft.IdentityModel.Tokens;
 
 namespace HouseholdManagerMobileApp.Core.ViewModels;
 
@@ -45,6 +46,22 @@ public class EventLogViewModel : ViewModelBase
         {
             if (isLoading == value) return;
             isLoading = value;
+            OnPropertyChanged();
+
+            NavigateNewEventButtonCommand.RefreshCanExecute();
+            NavigateAnalyticsButtonCommand.RefreshCanExecute();
+            ChangeSortTypeButtonCommand.RefreshCanExecute();
+        }
+    }
+
+    private bool activeHousehold = false;
+    public bool ActiveHousehold
+    {
+        get => activeHousehold;
+        set
+        {
+            if (activeHousehold == value) return;
+            activeHousehold = value;
             OnPropertyChanged();
         }
     }
@@ -105,6 +122,18 @@ public class EventLogViewModel : ViewModelBase
         {
             if (changeSortTypeName == value) return;
             changeSortTypeName = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private string analyticsButtonName = "Hónap/Év statisztikák";
+    public string AnalyticsButtonName
+    {
+        get => analyticsButtonName;
+        set
+        {
+            if (analyticsButtonName == value) return;
+            analyticsButtonName = value;
             OnPropertyChanged();
         }
     }
@@ -186,6 +215,7 @@ public class EventLogViewModel : ViewModelBase
     public RelayCommand NavigateNotificationsButtonCommand { get; }
     public RelayCommand NavigateSettingsButtonCommand { get; }
     public RelayCommand NavigateNewEventButtonCommand { get; }
+    public RelayCommand NavigateAnalyticsButtonCommand { get; }
     public RelayCommand ToggleEventExpandCommand { get; }
     public RelayCommand EditEventButtonCommand { get; }
     public RelayCommand DeleteEventButtonCommand { get; }
@@ -201,73 +231,39 @@ public class EventLogViewModel : ViewModelBase
         _userSessionService = userSessionService;
 
         ToggleMenuButtonCommand = new RelayCommand(async _ => await Task.Run(() => IsMenuVisible = !IsMenuVisible));
-        NavigateHomeButtonCommand = new RelayCommand(async _ => await NavigateToHomeAsync());
-        NavigateNotificationsButtonCommand = new RelayCommand(async _ => await NavigateToNotificationsAsync());
-        NavigateSettingsButtonCommand = new RelayCommand(async _ => await NavigateToSettingsAsync());
-        NavigateNewEventButtonCommand = new RelayCommand(async _ => await NavigateToNewEventAsync());
+        NavigateHomeButtonCommand = new RelayCommand(async _ => await NavigateToAsync("//UserPage", "A kezdőlaphoz való navigálás sikertelen. Kérlek, jelentkezz be újra."));
+        NavigateNotificationsButtonCommand = new RelayCommand(async _ => await NavigateToAsync("//NotificationsPage", "Az értesítésekhez való navigálás sikertelen. Kérlek, jelentkezz be újra."));
+        NavigateSettingsButtonCommand = new RelayCommand(async _ => await NavigateToAsync("//SettingsPage", "A beállításokhoz való navigálás sikertelen. Kérlek, jelentkezz be újra."));
+        NavigateNewEventButtonCommand = new RelayCommand(async _ => await NavigateToAsync("//NewEventPage", "Az új esemény létrehozásához való navigálás sikertelen. Kérlek, jelentkezz be újra."), _ => !IsLoading);
+        NavigateAnalyticsButtonCommand = new RelayCommand(async _ => await NavigatoToAnalyticsAsync(), _ => !IsLoading);
         ToggleEventExpandCommand = new RelayCommand(async parameter => await ToggleEventExpandAsync(parameter));
         EditEventButtonCommand = new RelayCommand(async _ => await EditEventAsync());
         DeleteEventButtonCommand = new RelayCommand(async _ => await DeleteEventAsync());
-        ChangeSortTypeButtonCommand = new RelayCommand(async _ => await ChangeSortTypeAsync());
+        ChangeSortTypeButtonCommand = new RelayCommand(async _ => await ChangeSortTypeAsync(), _ => !IsLoading);
         PreviousMonthButtonCommand = new RelayCommand(async _ => await SelectTypeAsync(-1));
         NextMonthButtonCommand = new RelayCommand(async _ => await SelectTypeAsync(1));
         LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
 
         if (Shell.Current != null)
-        {
-            if (_userSessionService.IsOfflineMode())
-                WelcomeMessage = $"{_userSessionService.GetCurrentUser()!.Nickname} (Offline)";
-            else
-                WelcomeMessage = _userSessionService.GetCurrentUser()!.Nickname;
-            
-            CurrentHouseholdName = _userSessionService.GetCurrentHousehold()!.HouseholdName;
-
             _ = LoadEventlogAsync();
-        }
     }
 
-    private async Task NavigateToHomeAsync()
+    private async Task NavigateToAsync(string page, string errorMessage)
     {
         if (!_userSessionService.IsUserLoggedIn())
         {
-            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A kezdőlaphoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync(errorMessage);
             await LogoutAsync();
             return;
         }
 
         _userSessionService.SetSelectedEvent(null);
-
-        await Shell.Current.GoToAsync("//UserPage");
-    }
-
-    private async Task NavigateToNotificationsAsync()
-    {
-        if (!_userSessionService.IsUserLoggedIn())
-        {
-            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az értesítésekhez való navigálás sikertelen. Kérlek, jelentkezz be újra.");
-            await LogoutAsync();
-            return;
-        }
 
         IsMenuVisible = false;
-        await Shell.Current.GoToAsync("//NotificationsPage");
+        await Shell.Current.GoToAsync(page);
     }
 
-    private async Task NavigateToSettingsAsync()
-    {
-        if (!_userSessionService.IsUserLoggedIn())
-        {
-            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A beállításokhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
-            await LogoutAsync();
-            return;
-        }
-
-        _userSessionService.SetSelectedEvent(null);
-
-        await Shell.Current.GoToAsync("//SettingsPage?test=asd123");
-    }
-
-    private async Task NavigateToNewEventAsync()
+    private async Task NavigatoToAnalyticsAsync()
     {
         if (!_userSessionService.IsUserLoggedIn())
         {
@@ -276,20 +272,41 @@ public class EventLogViewModel : ViewModelBase
             return;
         }
 
-        await Shell.Current.GoToAsync("//NewEventPage");
+        _userSessionService.SetSelectedEvent(null);
+
+        if (AnalyticsButtonName.Contains("Hónap/Év statisztikák"))
+            await Shell.Current.GoToAsync($"//AnalyticsPage?isDate=1&category={SelectedTypeName}");
+        else
+            await Shell.Current.GoToAsync($"//AnalyticsPage?isDate=0&category={SelectedTypeName}");
     }
 
     private async Task LoadEventlogAsync()
     {
+        IsLoading = true;
+
+        if (_userSessionService.IsOfflineMode())
+            WelcomeMessage = $"{_userSessionService.GetCurrentUser()!.Nickname} (Offline)";
+        else
+            WelcomeMessage = _userSessionService.GetCurrentUser()!.Nickname;
+
+        if (_userSessionService.GetCurrentHousehold() != null)
+            CurrentHouseholdName = _userSessionService.GetCurrentHousehold()!.HouseholdName;
+        else
+            CurrentHouseholdName = "Nem vagy háztartásban";
+
+        ActiveHousehold = _userSessionService.GetCurrentHousehold() != null;
+
         EventTypes.Clear();
 
-        bool success = await _databaseService.LoadDataAsync(2);
+        bool success = await _databaseService.LoadEventlogPageAsync();
         if (success)
             await LoadMonthAsync();
 
         Event? currentlySelected = _userSessionService.GetSelectedEvent();
         if (currentlySelected != null)
             ExpandedEventId = currentlySelected.EID;
+
+        IsLoading = false;
     }
 
     private async Task LoadMonthAsync()
@@ -305,7 +322,7 @@ public class EventLogViewModel : ViewModelBase
 
                 foreach (Event _event in sortedEventLog)
                 {
-                    if (!EventTypes.Contains(_event.EventType))
+                    if (!_event.EventType.Trim().IsNullOrEmpty() && !EventTypes.Contains(_event.EventType))
                         EventTypes.Add(_event.EventType);
                 }
 
@@ -315,7 +332,7 @@ public class EventLogViewModel : ViewModelBase
             // Kategória szerinti rendszerezés:
             foreach (Event _event in sortedEventLog)
             {
-                if (_event.EventType == SelectedCategory)
+                if (_event.EventType == SelectedCategory || (_event.EventType.Trim().IsNullOrEmpty() && SelectedCategory == "Kategória nélküli"))
                     EventLog.Add(_event);
             }
 
@@ -361,7 +378,7 @@ public class EventLogViewModel : ViewModelBase
         }
 
         if (Shell.Current != null)
-            await Shell.Current.GoToAsync("//NewEventPage");
+            await Shell.Current.GoToAsync($"//NewEventPage");
     }
 
     private async Task DeleteEventAsync()
@@ -392,6 +409,7 @@ public class EventLogViewModel : ViewModelBase
     private async Task ChangeSortTypeAsync()
     {
         ChangeSortTypeName = ChangeSortTypeName == "Kategória nézet" ? "Dátum nézet" : "Kategória nézet";
+        AnalyticsButtonName = ChangeSortTypeName == "Kategória nézet" ? "Kategória statisztikák" : "Hónap/Év statisztikák";
 
         if (Shell.Current != null)
             await LoadMonthAsync();
