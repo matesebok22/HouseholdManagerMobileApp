@@ -35,7 +35,7 @@ public class NewEventViewModel : ViewModelBase
         }
     }
 
-    private DateTime eventDate;
+    private DateTime eventDate = DateTime.Today;
     public DateTime EventDate
     {
         get => eventDate;
@@ -172,30 +172,6 @@ public class NewEventViewModel : ViewModelBase
         }
     }
 
-    private async Task LoadEventEditorAsync()
-    {
-        if (_userSessionService.IsOfflineMode())
-            WelcomeMessage = $"{_userSessionService.GetCurrentUser()!.Nickname} (Offline)";
-        else
-            WelcomeMessage = _userSessionService.GetCurrentUser()!.Nickname;
-
-        if (_userSessionService.GetSelectedEvent() != null)
-        {
-            Event eventToEdit = _userSessionService.GetSelectedEvent() ?? new();
-            EventName = eventToEdit.EventName;
-            EventDate = eventToEdit.EventUserDate.Date;
-            EventTime = eventToEdit.EventUserDate.TimeOfDay;
-            EventType = eventToEdit.EventType;
-            EventCost = eventToEdit.EventCost;
-            EventDesc = eventToEdit.EventDescription;
-        }
-        else
-        {
-            EventDate = DateTime.Today;
-            await CalculateUseableBudgetAsync();
-        }
-    }
-
     private async Task NavigateToEventLogAsync()
     {
         if (!_userSessionService.IsUserLoggedIn())
@@ -211,6 +187,27 @@ public class NewEventViewModel : ViewModelBase
         EventCost = 0;
 
         await Shell.Current.GoToAsync("//EventLogPage");
+    }
+
+    private async Task LoadEventEditorAsync()
+    {
+        if (_userSessionService.IsOfflineMode())
+            WelcomeMessage = $"{_userSessionService.GetCurrentUser()!.Nickname} (Offline)";
+        else
+            WelcomeMessage = _userSessionService.GetCurrentUser()!.Nickname;
+
+        if (_userSessionService.GetSelectedEvent() != null)
+        {
+            Event eventToEdit = _userSessionService.GetSelectedEvent()!;
+            EventName = eventToEdit.EventName;
+            EventDate = eventToEdit.EventUserDate.Date;
+            EventTime = eventToEdit.EventUserDate.TimeOfDay;
+            EventType = eventToEdit.EventType;
+            EventCost = eventToEdit.EventCost;
+            EventDesc = eventToEdit.EventDescription;
+        }
+        else
+            await CalculateUseableBudgetAsync();
     }
 
     private async Task CreateEventAsync()

@@ -168,9 +168,9 @@ public class UserViewModel : ViewModelBase
         _notificationService = notificationService;
 
         ToggleMenuButtonCommand = new RelayCommand(async _ => await Task.Run(() => IsMenuVisible = !IsMenuVisible));
-        NavigateSettingsButtonCommand = new RelayCommand(async _ => await NavigateToSettingsAsync());
-        NavigateEventLogButtonCommand = new RelayCommand(async _ => await NavigateToEventLogAsync());
-        NavigateNotificationsButtonCommand = new RelayCommand(async _ => await NavigateToNotificationsAsync());
+        NavigateSettingsButtonCommand = new RelayCommand(async _ => await NavigateToAsync("//SettingsPage", "A beállításokhoz való navigálás sikertelen. Kérlek, jelentkezz be újra."));
+        NavigateEventLogButtonCommand = new RelayCommand(async _ => await NavigateToAsync("//EventLogPage", "Az eseménynaplóhoz való navigálás sikertelen. Kérlek, jelentkezz be újra."));
+        NavigateNotificationsButtonCommand = new RelayCommand(async _ => await NavigateToAsync("//NotificationsPage", "Az értesítésekhez való navigálás sikertelen. Kérlek, jelentkezz be újra."));
         ToggleEventExpandCommand = new RelayCommand(async parameter => await ToggleEventExpandAsync(parameter));
         MondayEventsButtonCommand = new RelayCommand(async _ => await LoadSelectedDayEventsAsync(0));
         TuesdayEventsButtonCommand = new RelayCommand(async _ => await LoadSelectedDayEventsAsync(1));
@@ -185,45 +185,17 @@ public class UserViewModel : ViewModelBase
             _ = LoadUserPageAsync();
     }
 
-    private async Task NavigateToSettingsAsync()
+    private async Task NavigateToAsync(string page, string errorMessage)
     {
         if (!_userSessionService.IsUserLoggedIn())
         {
-            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A beállításokhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync(errorMessage);
             await LogoutAsync();
         }
 
         IsMenuVisible = false;
         await _notificationService.MarkAllNotificationsAsReadAsync();
-        await Shell.Current.GoToAsync("//SettingsPage?test=asd123");
-    }
-
-    private async Task NavigateToEventLogAsync()
-    {
-        if (!_userSessionService.IsUserLoggedIn())
-        {
-            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az eseménynaplóhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
-            await LogoutAsync();
-            return;
-        }
-
-        IsMenuVisible = false;
-        await _notificationService.MarkAllNotificationsAsReadAsync();
-        await Shell.Current.GoToAsync("//EventLogPage");
-    }
-
-    private async Task NavigateToNotificationsAsync()
-    {
-        if (!_userSessionService.IsUserLoggedIn())
-        {
-            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az értesítésekhez való navigálás sikertelen. Kérlek, jelentkezz be újra.");
-            await LogoutAsync();
-            return;
-        }
-
-        IsMenuVisible = false;
-        await _notificationService.MarkAllNotificationsAsReadAsync();
-        await Shell.Current.GoToAsync("//NotificationsPage");
+        await Shell.Current.GoToAsync(page);
     }
 
     private async Task LoadUserPageAsync()
@@ -281,18 +253,8 @@ public class UserViewModel : ViewModelBase
     private async Task ToggleEventExpandAsync(object parameter)
     {
         if (parameter is Event selectedEvent)
-        {
-            if (ExpandedEventId == selectedEvent.EID)
-            {
-                ExpandedEventId = string.Empty;
-                _userSessionService.SetSelectedEvent(null);
-            }
-            else
-            {
-                ExpandedEventId = selectedEvent.EID;
-                _userSessionService.SetSelectedEvent(selectedEvent);
-            }
-        }
+            ExpandedEventId = ExpandedEventId == selectedEvent.EID ? string.Empty : selectedEvent.EID;
+
         await Task.CompletedTask;
     }
 

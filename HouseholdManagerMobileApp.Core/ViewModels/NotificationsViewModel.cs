@@ -75,9 +75,9 @@ public class NotificationsViewModel : ViewModelBase
         _notificationService = notificationService;
 
         ToggleMenuButtonCommand = new RelayCommand(async _ => await Task.Run(() => IsMenuVisible = !IsMenuVisible));
-        NavigateHomeButtonCommand = new RelayCommand(async _ => await NavigateToHomeAsync());
-        NavigateSettingsButtonCommand = new RelayCommand(async _ => await NavigateToSettingsAsync());
-        NavigateEventLogButtonCommand = new RelayCommand(async _ => await NavigateToEventLogAsync());
+        NavigateHomeButtonCommand = new RelayCommand(async _ => await NavigateToAsync("//UserPage", "A kezdőlaphoz való navigálás sikertelen. Kérlek, jelentkezz be újra."));
+        NavigateSettingsButtonCommand = new RelayCommand(async _ => await NavigateToAsync("//SettingsPage", "A beállításokhoz való navigálás sikertelen. Kérlek, jelentkezz be újra."));
+        NavigateEventLogButtonCommand = new RelayCommand(async _ => await NavigateToAsync("//EventLogPage", "Az eseménynaplóhoz való navigálás sikertelen. Kérlek, jelentkezz be újra."));
         DeleteAllNotificationsButtonCommand = new RelayCommand(async _ => await DeleteAllNotificationsAsync());
         LogoutButtonCommand = new RelayCommand(async _ => await LogoutAsync());
 
@@ -92,42 +92,17 @@ public class NotificationsViewModel : ViewModelBase
         _ = LoadNotificationsPageAsync();
     }
 
-    private async Task NavigateToHomeAsync()
+    private async Task NavigateToAsync(string page, string errorMessage)
     {
         if (!_userSessionService.IsUserLoggedIn())
         {
-            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A kezdőlaphoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
+            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync(errorMessage);
             await LogoutAsync();
             return;
         }
 
         IsMenuVisible = false;
-        await Shell.Current.GoToAsync("//UserPage");
-    }
-
-    private async Task NavigateToSettingsAsync()
-    {
-        if (!_userSessionService.IsUserLoggedIn())
-        {
-            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("A beállításokhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
-            await LogoutAsync();
-            return;
-        }
-
-        await Shell.Current.GoToAsync("//SettingsPage?test=asd123");
-    }
-
-    private async Task NavigateToEventLogAsync()
-    {
-        if (!_userSessionService.IsUserLoggedIn())
-        {
-            ErrorMessage = await DisplayErrorHelper.DisplayErrorAsync("Az eseménynaplóhoz való navigálás sikertelen. Kérlek, jelentkezz be újra.");
-            await LogoutAsync();
-            return;
-        }
-
-        IsMenuVisible = false;
-        await Shell.Current.GoToAsync("//EventLogPage");
+        await Shell.Current.GoToAsync(page);
     }
 
     public async Task LoadNotificationsPageAsync()

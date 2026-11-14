@@ -235,12 +235,15 @@ public class AnalyticsViewModel : ViewModelBase, IQueryAttributable
 
             DefaultListValue = rawEvents.Sum(x => x.Item2);
 
-            List<DisplayTuple> filteredEvents = rawEvents.Select(x => new DisplayTuple(x.Key, x.Item2, DefaultListValue > 0 ? (double)x.Item2 / DefaultListValue : 0.0)).ToList();
+            List<DisplayTuple> filteredEvents = rawEvents.Select(x => new DisplayTuple(x.Key, x.Item2, DefaultListValue > 0 ? (double)x.Item2 / DefaultListValue : 0.0)).OrderByDescending(x => x.Sum).ToList();
 
             for (int i = 0; i < filteredEvents.Count; i++)
             {
                 if (filteredEvents[i].Name == "")
+                {
                     filteredEvents[i] = new DisplayTuple("Kategória nélküli", filteredEvents[i].Sum, filteredEvents[i].Ratio);
+                    break;
+                }
             }
 
             DefaultList = new ObservableCollection<DisplayTuple>(filteredEvents);
@@ -252,7 +255,7 @@ public class AnalyticsViewModel : ViewModelBase, IQueryAttributable
 
             DefaultListValue = rawEvents.Sum(x => x.Item2);
 
-            List<DisplayTuple> filteredEvents = rawEvents.Select(x => new DisplayTuple(x.Key, x.Item2, DefaultListValue > 0 ? (double)x.Item2 / DefaultListValue : 0.0)).ToList();
+            List<DisplayTuple> filteredEvents = rawEvents.Select(x => new DisplayTuple(x.Key, x.Item2, DefaultListValue > 0 ? (double)x.Item2 / DefaultListValue : 0.0)).OrderByDescending(x => x.Sum).ToList();
 
             DefaultList = new ObservableCollection<DisplayTuple>(filteredEvents);
         }
@@ -265,7 +268,7 @@ public class AnalyticsViewModel : ViewModelBase, IQueryAttributable
 
             FullListValue = rawFullEvents.Sum(x => x.Item2);
 
-            List<DisplayTuple> filteredFullEvents = rawFullEvents.Select(x => new DisplayTuple(x.Key, x.Item2, FullListValue > 0 ? (double)x.Item2 / FullListValue : 0.0)).ToList();
+            List<DisplayTuple> filteredFullEvents = rawFullEvents.Select(x => new DisplayTuple(x.Key, x.Item2, FullListValue > 0 ? (double)x.Item2 / FullListValue : 0.0)).OrderByDescending(x => x.Sum).ToList();
 
             for (int i = 0; i < filteredFullEvents.Count; i++)
             {
@@ -282,7 +285,7 @@ public class AnalyticsViewModel : ViewModelBase, IQueryAttributable
 
             FullListValue = rawFullEvents.Sum(x => x.Item2);
 
-            List<DisplayTuple> filteredFullEvents = rawFullEvents.Select(x => new DisplayTuple(x.Key, x.Item2, FullListValue > 0 ? (double)x.Item2 / FullListValue : 0.0)).ToList();
+            List<DisplayTuple> filteredFullEvents = rawFullEvents.Select(x => new DisplayTuple(x.Key, x.Item2, FullListValue > 0 ? (double)x.Item2 / FullListValue : 0.0)).OrderByDescending(x => x.Sum).ToList();
 
             FullList = new ObservableCollection<DisplayTuple>(filteredFullEvents);
         }
